@@ -1,0 +1,25 @@
+{
+  "name": "quan-ly-nhan-su",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Phần mềm quản lý nhân sự – bản đầy đủ (Cloudflare Worker + D1) – Quản trị tử tế",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://github.com/quantritute/quan-ly-nhan-su",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "MA_CAI_DAT": {
+        "description": "**Mã cài đặt** do anh/chị tự đặt (từ 8 ký tự). Chỉ dùng **một lần** khi mở trang `/quan-ly` để tạo tài khoản quản trị đầu tiên. Ghi lại cẩn thận, không chia sẻ."
+      },
+      "DB": {
+        "description": "Cơ sở dữ liệu D1 lưu toàn bộ dữ liệu nhân sự của đơn vị. Giữ tên mặc định cũng được."
+      }
+    }
+  }
+}

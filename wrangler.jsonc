@@ -1,0 +1,16 @@
+{
+  // Phần mềm quản lý nhân sự – bản đầy đủ (Quản trị tử tế, AGPL-3.0)
+  // Cloudflare Worker + cơ sở dữ liệu D1 trên tài khoản của chính đơn vị.
+  // database_id: nút Deploy to Cloudflare hoặc lệnh cai-dat.cmd tự tạo cơ sở dữ liệu và điền vào.
+  "name": "quan-ly-nhan-su",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "d1_databases": [
+    { "binding": "DB", "database_name": "quan-ly-nhan-su-db", "database_id": "9c151f92-b477-490a-9ec6-f7f159d38e4e" }
+  ],
+  // Gửi báo cáo định kỳ: máy chủ tự kiểm tra 15 phút/lần, đến giờ thì gửi
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "observability": { "enabled": true }
+}
