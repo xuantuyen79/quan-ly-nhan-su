@@ -14,7 +14,7 @@ import { TAY_LATIN, TAY_VI } from './font-tay.js'; // 12/11: phông viết tay c
 import { OG_QL_B64, OG_NV_B64 } from './og-anh.js'; // 08/11: ảnh chia sẻ Facebook/Zalo cho bản chạy thử
 import HRM_HTML from './phan-mem.html'; // 08/11: Phần mềm quản lý nhân sự toàn diện bản xem trước (build/index.html chép sang khi node build.js)
 
-const VER = '1.0.2';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
+const VER = '1.0.2-ksb.2';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
 // trước: VER '0.4.1'  // 07/11/2026: nối Phần mềm quản lý nhân sự toàn diện (đồng bộ nhân viên, lượt chấm, đơn nghỉ, xác nhận công)
 /* 07/11/2026 17:42 – CHẾ ĐỘ BẢN THỬ (để mọi người trải nghiệm, góp ý): bật khi chạy ở tên miền chamcong-thu.* hoặc biến môi trường DEMO=1.
    Không cần mật khẩu trang Quản lý và trang Mã QR chấm công; có sẵn tài khoản nhân viên mẫu (PIN chung DEMO_PIN); khóa các thao tác làm hỏng dữ liệu dùng chung;
@@ -828,6 +828,31 @@ const DEMO_QT = { DS001: 'gd', SG001: 'gd', DS002: 'kt', DS004: 'ns', SG002: 'ns
 function demoQtOf(ma) { const r = DEMO_QT[ma] || (demoFind(ma) && (demoFind(ma).hs || {}).truong ? 'tbp' : ''); return r ? { r, t: DEMO_QT_T[r], sys: 0 } : null; }
 
 /* ---------- API ---------- */
+// KSB: one durable counter in the existing cfg table; never reset on deletion.
+async function ksbNextCodes(db, count = 1) {
+  if (!Number.isInteger(count) || count < 1 || count > 1000) throw new Error('Mỗi lần cấp từ 1 đến 1000 mã.');
+  if (!await db.prepare("SELECT v FROM cfg WHERE k='ksb_employee_seq'").first()) {
+    let highest = 0;
+    const keys = (await db.prepare("SELECT k,z FROM qt_kv WHERE k LIKE 'unit:%'").all()).results;
+    for (const item of keys) {
+      let text = (await db.prepare('SELECT v FROM qt_part WHERE k=? ORDER BY i').bind(item.k).all()).results.map(p => p.v).join('');
+      if (item.z) text = await new Response(new Blob([b64ToBytes(text)]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+      for (const match of text.matchAll(/\bKSB(\d+)\b/g)) {
+        const n = Number(match[1]); if (!Number.isSafeInteger(n)) throw new Error('Mã hiện có vượt giới hạn số an toàn.');
+        highest = Math.max(highest, n);
+      }
+    }
+    await db.prepare("INSERT OR IGNORE INTO cfg(k,v) VALUES ('ksb_employee_seq',?)").bind(String(highest)).run();
+  }
+  // A single UPDATE is atomic in D1, including requests from different Workers.
+  const row = await db.prepare(`UPDATE cfg SET v=CAST(CAST(v AS INTEGER)+CAST(? AS INTEGER) AS TEXT)
+    WHERE k='ksb_employee_seq' AND v<>'' AND v NOT GLOB '*[^0-9]*'
+      AND CAST(v AS INTEGER)<=? RETURNING v`).bind(count, Number.MAX_SAFE_INTEGER - count).first();
+  if (!row) throw new Error('Bộ đếm mã nhân viên không hợp lệ hoặc đã hết giới hạn.');
+  const last = Number(row.v);
+  return Array.from({ length: count }, (_, i) => 'KSB' + String(last - count + i + 1).padStart(4, '0'));
+}
+
 async function api(req, env, url) {
   const db = env.DB; await ensureSchema(db);
   const p = url.pathname, now = Date.now(), ip = clientIP(req, env);
@@ -943,23 +968,7 @@ async function api(req, env, url) {
     }
     // 17/11/2026 (thử nghiệm hadu.vn, góp ý mục 4): ĐỔI MÃ NV – chuyển mọi dữ liệu trên máy chủ từ mã cũ sang mã mới.
     // Mã mới không được trùng mã đang có / đã từng có trên máy chủ. PIN giữ nguyên; phiên đăng nhập cũ bị hủy → nhân viên đăng nhập lại bằng mã mới.
-    if (r === 'doi-ma' && req.method === 'POST') {
-      const cu = String(body.cu || '').trim().toUpperCase(), moi = String(body.moi || '').trim().toUpperCase(), RX = MA_RE;
-      if (!RX.test(cu) || !RX.test(moi) || cu === moi) return jc({ ok: false, loi: 'Mã NV không hợp lệ (chữ, số, dấu . _ -, tối đa 20 ký tự).' }, 400);
-      const T = ['nv', 'phien', 'cham', 'tu_choi', 'may_nv', 'don', 'cong', 'phieu', 'lich', 'dk_ca', 'ho_so', 'kho_file', 'anh', 'bao_sai', 'hn_xong', 'dt_kq', 'xin_muon', 'push_sub', 'tb_doc'];
-      for (const t of T) { try { const x = await db.prepare('SELECT 1 AS c FROM ' + t + ' WHERE ma = ? LIMIT 1').bind(moi).first(); if (x && t !== 'phien') return jc({ ok: false, loi: 'Mã ' + moi + ' đã có hoặc đã từng có dữ liệu trên máy chủ – chọn mã khác.' }, 409); } catch (e) { } }
-      const st = [db.prepare("DELETE FROM phien WHERE vai = 'nv' AND ma = ?").bind(cu)];
-      for (const t of T) if (t !== 'phien') st.push(db.prepare('UPDATE ' + t + ' SET ma = ? WHERE ma = ?').bind(moi, cu));
-      for (const t of ['don', 'xin_muon']) st.push(db.prepare('UPDATE ' + t + ' SET duyet_ma = ? WHERE duyet_ma = ?').bind(moi, cu));
-      st.push(db.prepare('UPDATE phien SET ma = ? WHERE ma = ? AND vai <> ?').bind(moi, cu, 'nv'));
-      const sv = []; for (const q of st) sv.push(q); let n = 0;
-      for (const q of sv) { try { const x = await q.run(); n += (x.meta && x.meta.changes) || 0; } catch (e) { /* bảng chưa có ở máy chủ cũ thì bỏ qua */ } }
-      try { // người nhận thông báo theo danh sách mã
-        const L = (await db.prepare("SELECT id, den FROM tb WHERE den LIKE ?").bind('%"' + cu + '"%').all()).results;
-        for (const x of L) { const d = tbDen(x); if (Array.isArray(d.ma)) { d.ma = d.ma.map(v => String(v).toUpperCase() === cu ? moi : v); await db.prepare('UPDATE tb SET den = ? WHERE id = ?').bind(JSON.stringify(d), x.id).run(); } }
-      } catch (e) { }
-      return jc({ ok: true, n });
-    }
+    if (r === 'doi-ma' && req.method === 'POST') return jc({ ok: false, loi: 'KSB: mã nhân viên không được sửa sau khi tạo.' }, 403);
     if (r === 'pin' && req.method === 'POST') {
       const ma = String(body.ma || '').trim().toUpperCase(), pin = String(body.pin || '');
       if (!/^\d{4,8}$/.test(pin)) return jc({ ok: false, loi: 'Mã PIN 4–8 chữ số.' }, 400);
@@ -1098,6 +1107,10 @@ async function api(req, env, url) {
     if (r === 'toi') return U ? json({ ok: true, me: U, ten_cty: cfg.ten_cty, ver: VER, now }) : bad('Chưa đăng nhập.', 401);
     if (r === 'dang-xuat' && req.method === 'POST') { const tok = cookies(req)[COOKIE.qt]; if (tok) await db.prepare('DELETE FROM phien WHERE tok = ?').bind(await sha256(tok)).run(); return json({ ok: true }, 200, { 'set-cookie': setCookie(COOKIE.qt, '', 0) }); }
     if (!U) return bad('Phiên đăng nhập trang quản trị đã hết. Đăng nhập lại.', 401);
+    if (r === 'ma-nv-moi' && req.method === 'POST') {
+      try { return json({ ok: true, codes: await ksbNextCodes(db, body.count === undefined ? 1 : body.count) }); }
+      catch (e) { return bad(e.message); }
+    }
     if (r === 'doi-mk' && req.method === 'POST') {
       const cu = String(body.cu || ''), moi = String(body.moi || ''), e = pwBad(moi); if (e) return bad(e);
       if (!U.ma) { if (!await checkPw(cu, cfg.ql_salt, cfg.ql_pin)) return bad('Mật khẩu hiện tại chưa đúng.'); const salt = randHex(16); await setCfg(db, { ql_pin: await hashPw(moi, salt), ql_salt: salt }); return json({ ok: true }); }
@@ -1785,7 +1798,7 @@ export default {
       // 13/11/2026: trang quản trị của đơn vị = Phần mềm quản lý nhân sự toàn diện chạy ngay trên máy chủ này, dữ liệu lưu trên máy chủ (bản thử: chuyển sang /phan-mem dùng dữ liệu mẫu)
       if (/^\/quan-tri\/?$/.test(url.pathname)) {
         if (isDemo(env, url)) return Response.redirect(url.origin + '/phan-mem' + url.search, 302);
-        const sv = '<script>window.QTT_SV=' + JSON.stringify({ v: VER, api: '/api/qt/' }) + ';window.QTT_BR=' + brJs(await brCfg(env)) + ';</script>';
+        const sv = '<script>window.QTT_SV=' + JSON.stringify({ v: VER, api: '/api/qt/', ksbCodes: true }) + ';window.QTT_BR=' + brJs(await brCfg(env)) + ';</script>';
         return withMay(new Response(HRM_HTML.replace(/<head([^>]*)>/i, m => m + sv), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...SEC } }));
       }
       if (/^\/og-(ql|nv)\.jpg$/.test(url.pathname) && isDemo(env, url)) return new Response(b64ToBytes(url.pathname === '/og-ql.jpg' ? OG_QL_B64 : OG_NV_B64), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'max-age=86400' } });
@@ -1794,6 +1807,7 @@ export default {
       const route = ROUTES[url.pathname.replace(/\/+$/, '') || '/'];
       if (!route) return new Response('Không có trang này', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
       let html = APP_HTML.replace('{{ROUTE}}', route).replace(/{{VER}}/g, VER);
+      if (!isDemo(env, url)) html = html.replace('</head>', '<script>window.KSB_EMPLOYEE_CODES=true;</script></head>');
       if (!isDemo(env, url)) { const c = await brCfg(env), nm = (c.br_ten || c.ten_cty || '').slice(0, 40), lg = /^data:image\/(png|webp|jpeg|svg\+xml);base64,/.exec(c.br_logo || ''); if (nm) html = html.replace('<title>Chấm công</title>', '<title>' + htmlEsc(nm) + '</title>').replace('content="Chấm công">', 'content="' + htmlEsc(nm.slice(0, 24)) + '">'); if (lg) { const ext = lg[1] === 'jpeg' ? 'jpg' : lg[1] === 'svg+xml' ? 'svg' : lg[1]; html = html.replace('<link rel="icon" href="/icon.svg" type="image/svg+xml">', '<link rel="icon" href="/logo.' + ext + '">'); } html = html.replace('</head>', '<script>window.QTT_BR=' + brJs(c) + ';</script>\n</head>'); } // 16/11/2026: thương hiệu riêng
       // 08/11: thẻ chia sẻ (tiêu đề + ảnh) khi dán link bản chạy thử lên Facebook/Zalo – chỉ ở bản thử, máy chủ của công ty không có
       if (isDemo(env, url) && (route === 'ql' || route === 'nv')) {

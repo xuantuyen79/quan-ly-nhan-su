@@ -2404,7 +2404,7 @@ function tabMc() {
 }
 function tabNv() {
   var d = Object.assign({}, QL.d, { nv: QL.d.nv.filter(function (x) { return qlInCty(x.ma); }) }), multi = qlCtys().length > 1;
-  var h = '<div class="card"><h3 style="font-size:16px">Thêm nhân viên</h3><div class="grid2" style="margin-top:4px"><div><label class="lbl">Mã nhân viên</label><input id="n-ma" type="text" autocapitalize="characters" placeholder="NV001"></div><div><label class="lbl">Họ tên</label><input id="n-ten" type="text"></div></div>' +
+  var h = window.KSB_EMPLOYEE_CODES ? '<div class="card"><h3 style="font-size:16px">Thêm nhân viên</h3><p>Mã KSB được cấp tự động tại trang quản trị.</p><a class="btn pri" href="/quan-tri#nv">Thêm nhân viên</a></div>' : '<div class="card"><h3 style="font-size:16px">Thêm nhân viên</h3><div class="grid2" style="margin-top:4px"><div><label class="lbl">Mã nhân viên</label><input id="n-ma" type="text" autocapitalize="characters" placeholder="NV001"></div><div><label class="lbl">Họ tên</label><input id="n-ten" type="text"></div></div>' +
     '<label class="lbl">Mã PIN ban đầu (4–8 chữ số) – báo riêng cho nhân viên</label><input id="n-pin" type="tel" inputmode="numeric" style="max-width:220px"><div style="margin-top:10px"><button class="btn pri" id="n-go">Thêm</button></div></div>';
   h += '<div class="card"><h3 style="font-size:16px;margin-bottom:6px">Danh sách (' + d.nv.length + ')</h3><div class="tblw"><table><thead><tr><th>Mã</th><th>Họ tên</th><th>Trạng thái</th><th>Đang đăng nhập trên</th><th></th></tr></thead><tbody>' +
     (d.nv.length ? d.nv.map(function (x) {
@@ -2412,7 +2412,7 @@ function tabNv() {
         '<td><div class="row" style="gap:6px"><button class="btn sm" data-a="pin" data-m="' + esc(x.ma) + '">Đặt lại PIN</button><button class="btn sm" data-a="go" data-m="' + esc(x.ma) + '">Gỡ đăng nhập</button>' + (x.khoa ? '<button class="btn sm" data-a="mo" data-m="' + esc(x.ma) + '">Mở khóa</button>' : '') + '<button class="btn sm ' + (x.active ? 'dan' : '') + '" data-a="act" data-v="' + (x.active ? 0 : 1) + '" data-m="' + esc(x.ma) + '">' + (x.active ? 'Ngừng' : 'Dùng lại') + '</button></div></td></tr>';
     }).join('') : '<tr><td colspan="5" class="empty">Chưa có nhân viên</td></tr>') + '</tbody></table></div><p class="hint">Mỗi điện thoại/trình duyệt đăng nhập là một dòng. Trên iPhone, ứng dụng ghim ở màn hình chính và Safari tính là 2 nơi đăng nhập riêng.</p></div>';
   $('#body').innerHTML = h;
-  $('#n-go').onclick = function () { api('/api/ql/nv', { ma: $('#n-ma').value, ten: $('#n-ten').value, pin: $('#n-pin').value }).then(function (j) { after(j, 'Đã thêm nhân viên.'); }); };
+  if ($('#n-go')) $('#n-go').onclick = function () { api('/api/ql/nv', { ma: $('#n-ma').value, ten: $('#n-ten').value, pin: $('#n-pin').value }).then(function (j) { after(j, 'Đã thêm nhân viên.'); }); };
   $('#body').querySelectorAll('[data-a]').forEach(function (b) {
     b.onclick = function () {
       var ma = b.getAttribute('data-m'), a = b.getAttribute('data-a'), body = { ma: ma };
