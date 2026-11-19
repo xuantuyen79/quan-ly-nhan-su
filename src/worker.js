@@ -14,7 +14,7 @@ import { TAY_LATIN, TAY_VI } from './font-tay.js'; // 12/11: phông viết tay c
 import { OG_QL_B64, OG_NV_B64 } from './og-anh.js'; // 08/11: ảnh chia sẻ Facebook/Zalo cho bản chạy thử
 import HRM_HTML from './phan-mem.html'; // 08/11: Phần mềm quản lý nhân sự toàn diện bản xem trước (build/index.html chép sang khi node build.js)
 
-const VER = '1.0.1';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
+const VER = '1.0.2';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
 // trước: VER '0.4.1'  // 07/11/2026: nối Phần mềm quản lý nhân sự toàn diện (đồng bộ nhân viên, lượt chấm, đơn nghỉ, xác nhận công)
 /* 07/11/2026 17:42 – CHẾ ĐỘ BẢN THỬ (để mọi người trải nghiệm, góp ý): bật khi chạy ở tên miền chamcong-thu.* hoặc biến môi trường DEMO=1.
    Không cần mật khẩu trang Quản lý và trang Mã QR chấm công; có sẵn tài khoản nhân viên mẫu (PIN chung DEMO_PIN); khóa các thao tác làm hỏng dữ liệu dùng chung;
@@ -40,7 +40,7 @@ function demoPunchSt(db, ma, t, loai, ghi) { return db.prepare("INSERT INTO cham
 const DEMO_LOCKED = (() => { let m = ''; for (const c of DEMO.cty) for (const e of c.ds) for (const x of e.congs) if (!x.du_lieu.tam && x.ym > m) m = x.ym; return m; })();
 function isDemo(env, url) { return env.DEMO === '1' || /^chamcong-thu\./i.test(url.hostname); }
 /* ----- 0.4.2: lịch xếp ca ----- */
-const ISO_RE = /^\d{4}-\d{2}-\d{2}$/, MA_RE = /^[A-Z0-9._-]{1,20}$/;
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/, MA_RE = /^[^\x00-\x1f<>"'`\\]{1,20}$/; // 18/11/2026 1.0.2: Mã NV linh hoạt (khớp phần mềm), chỉ chặn ký tự đặc biệt nguy hiểm
 function lichCfg(cfg) { try { return JSON.parse(cfg.lich_cfg || 'null'); } catch (e) { return null; } }
 function lichClean(c) { // chỉ giữ trường cần cho trang nhân viên
   const s = (v, n) => String(v == null ? '' : v).slice(0, n), col = v => /^#[0-9a-fA-F]{3,8}$/.test(String(v || '')) ? v : '#64748b';
@@ -931,7 +931,7 @@ async function api(req, env, url) {
       const list = Array.isArray(body.list) ? body.list.slice(0, 2000) : [], out = { them: 0, sua: 0, chua_pin: [] }, st = [];
       for (const x of list) {
         const ma = String(x.ma || '').trim().toUpperCase(), ten = String(x.ten || '').trim().slice(0, 120);
-        if (!/^[A-Z0-9._-]{1,20}$/.test(ma) || !ten) continue;
+        if (!MA_RE.test(ma) || !ten) continue;
         const old = await db.prepare('SELECT ma, pin FROM nv WHERE ma = ?').bind(ma).first();
         const cty = String(x.cty || '').slice(0, 120);
         if (!old) { st.push(db.prepare("INSERT INTO nv (ma, ten, active, created, pb, ncc, nguon, cty) VALUES (?, ?, ?, ?, ?, ?, 'phan-mem', ?) ON CONFLICT(ma) DO UPDATE SET ten = excluded.ten, active = excluded.active, pb = excluded.pb, ncc = excluded.ncc, nguon = 'phan-mem', cty = excluded.cty").bind(ma, ten, x.active ? 1 : 0, now, String(x.pb || '').slice(0, 120), x.ncc ? 1 : 0, cty)); out.them++; out.chua_pin.push(ma); }
@@ -944,7 +944,7 @@ async function api(req, env, url) {
     // 17/11/2026 (thử nghiệm hadu.vn, góp ý mục 4): ĐỔI MÃ NV – chuyển mọi dữ liệu trên máy chủ từ mã cũ sang mã mới.
     // Mã mới không được trùng mã đang có / đã từng có trên máy chủ. PIN giữ nguyên; phiên đăng nhập cũ bị hủy → nhân viên đăng nhập lại bằng mã mới.
     if (r === 'doi-ma' && req.method === 'POST') {
-      const cu = String(body.cu || '').trim().toUpperCase(), moi = String(body.moi || '').trim().toUpperCase(), RX = /^[A-Z0-9._-]{1,20}$/;
+      const cu = String(body.cu || '').trim().toUpperCase(), moi = String(body.moi || '').trim().toUpperCase(), RX = MA_RE;
       if (!RX.test(cu) || !RX.test(moi) || cu === moi) return jc({ ok: false, loi: 'Mã NV không hợp lệ (chữ, số, dấu . _ -, tối đa 20 ký tự).' }, 400);
       const T = ['nv', 'phien', 'cham', 'tu_choi', 'may_nv', 'don', 'cong', 'phieu', 'lich', 'dk_ca', 'ho_so', 'kho_file', 'anh', 'bao_sai', 'hn_xong', 'dt_kq', 'xin_muon', 'push_sub', 'tb_doc'];
       for (const t of T) { try { const x = await db.prepare('SELECT 1 AS c FROM ' + t + ' WHERE ma = ? LIMIT 1').bind(moi).first(); if (x && t !== 'phien') return jc({ ok: false, loi: 'Mã ' + moi + ' đã có hoặc đã từng có dữ liệu trên máy chủ – chọn mã khác.' }, 409); } catch (e) { } }
@@ -1024,7 +1024,7 @@ async function api(req, env, url) {
       const ym = String(body.ym || ''); if (!/^\d{4}-\d{2}$/.test(ym)) return jc({ ok: false, loi: 'ym dạng YYYY-MM' }, 400);
       const list = Array.isArray(body.list) ? body.list.slice(0, 2000) : [], st = [];
       for (const x of list) {
-        const ma = String(x.ma || '').toUpperCase(); if (!/^[A-Z0-9._-]{1,20}$/.test(ma)) continue;
+        const ma = String(x.ma || '').trim().toUpperCase(); if (!MA_RE.test(ma)) continue;
         st.push(db.prepare("INSERT INTO phieu (ym, ma, du_lieu, chot, nguoi, gui, xem_at, hoi) VALUES (?, ?, ?, ?, ?, ?, NULL, '[]') ON CONFLICT(ym, ma) DO UPDATE SET du_lieu = excluded.du_lieu, chot = excluded.chot, nguoi = excluded.nguoi, gui = excluded.gui, xem_at = CASE WHEN phieu.du_lieu = excluded.du_lieu THEN phieu.xem_at ELSE NULL END").bind(ym, ma, JSON.stringify(x.du_lieu || {}).slice(0, 30000), String(body.chot || '').slice(0, 40), String(body.nguoi || '').slice(0, 80), now));
       }
       if (st.length) await db.batch(st);
@@ -1663,7 +1663,7 @@ async function api(req, env, url) {
     }
     if (r === 'nv' && req.method === 'POST') {
       const ma = String(body.ma || '').trim().toUpperCase(), ten = String(body.ten || '').trim().slice(0, 120);
-      if (!/^[A-Z0-9._-]{1,20}$/.test(ma)) return bad('Mã nhân viên chỉ gồm chữ, số, dấu chấm, gạch (tối đa 20 ký tự).');
+      if (!MA_RE.test(ma)) return bad('Mã nhân viên tối đa 20 ký tự, không dùng các ký tự < > " \' ` \\');
       const old = await db.prepare('SELECT ma FROM nv WHERE ma = ?').bind(ma).first();
       if (body.pin !== undefined && body.pin !== '' && !/^\d{4,8}$/.test(String(body.pin))) return bad('Mã PIN nhân viên cần 4–8 chữ số.');
       if (!old) {

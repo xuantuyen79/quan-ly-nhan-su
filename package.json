@@ -1,6 +1,6 @@
 {
   "name": "quan-ly-nhan-su",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Phần mềm quản lý nhân sự – bản đầy đủ (Cloudflare Worker + D1) – Quản trị tử tế",
   "license": "AGPL-3.0-only",
