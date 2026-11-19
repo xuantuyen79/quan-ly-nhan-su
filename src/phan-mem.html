@@ -1435,6 +1435,10 @@ button.seat{background:none;border:0;padding:0;font:inherit;color:inherit;cursor
 .oroot .od{min-width:260px;max-width:420px}
 .org-kids{display:flex;gap:14px;align-items:flex-start;justify-content:center}
 .org-kid{position:relative;padding-top:22px;flex:0 0 auto;width:214px}
+.org-kid.org-branch{width:auto;display:flex;flex-direction:column;align-items:center}
+.org-branch>.od{width:260px;max-width:420px}
+.org-branch>.org-kids{position:relative;margin-top:22px}
+.org-branch>.org-kids::before{content:"";position:absolute;top:-22px;left:50%;height:22px;width:2px;background:var(--line-2)}
 .org-kid::before{content:"";position:absolute;top:0;left:-7px;right:-7px;border-top:2px solid var(--line-2)}
 .org-kid:first-child::before{left:50%}.org-kid:last-child::before{right:50%}.org-kid:only-child::before{display:none}
 .org-kid::after{content:"";position:absolute;top:0;left:50%;width:2px;height:22px;background:var(--line-2)}
@@ -6373,10 +6377,18 @@ if (typeof module !== 'undefined') module.exports = XW;
 
   /* ================== SƠ ĐỒ TỔ CHỨC ================== */
   var ROOT_RE = /^(ban\s+(tổng\s+)?giám\s+đốc|ban\s+lãnh\s+đạo|ban\s+điều\s+hành|hội\s+đồng\s+quản\s+trị)/i;
+  // KSB parent company only: use its configured departments, never infer membership from job rank.
+  function ksbOrgDepartments(u) {
+    if (u.id !== 'umwlvah146e7w') return null;
+    var names = (u.data.PB || []).map(function (p) { return p['Tên phòng ban']; });
+    var board = names.filter(function (n) { return /^(hđqt|hội\s+đồng\s+quản\s+trị)(?:\s*\(hđqt\))?$/i.test(String(n || '').trim()); })[0];
+    var executive = names.filter(function (n) { return /^ban\s+điều\s+hành$/i.test(String(n || '').trim()); })[0];
+    return board && executive ? { board: board, executive: executive } : null;
+  }
   function cvRank(u) { var o = {}; (u.data.CV || []).forEach(function (c) { if (c['Tên chức vụ']) o[c['Tên chức vụ']] = +c['Cấp bậc'] || 9; }); return function (e) { var r = o[e['Chức vụ']]; if (r) return r; return /tổng giám đốc|giám đốc|chủ tịch|chủ doanh nghiệp/i.test(e['Chức vụ'] || '') ? 1 : 9; }; }
   // Dựng cấu trúc tổ chức 1 công ty tại ngày R
   function orgOf(u, R) {
-    var d = u.data, mat = HR.maternitySet(d, R), r = HR.dnum(R), rank = cvRank(u), byHd = HRR.contractsOf(d), nv = nvIndex(u);
+    var d = u.data, ksbOrg = ksbOrgDepartments(u), mat = HR.maternitySet(d, R), r = HR.dnum(R), rank = cvRank(u), byHd = HRR.contractsOf(d), nv = nvIndex(u);
     var people = d.NV.map(function (e) {
       var st = HR.staffState(e, R, mat), c = HRR.currentContract(byHd[e['Mã NV']], r);
       var nghi = HR.dnum(e['Ngày nghỉ việc']), recentLeft = st === 'left' && nghi !== null && r - nghi <= 31;
@@ -6390,7 +6402,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       if (p.st === 'working' || p.st === 'maternity') x.members.push(p); else if (p.st === 'left') x.left.push(p);
     });
     var minRank = Math.min.apply(null, people.filter(function (p) { return p.st === 'working' || p.st === 'maternity'; }).map(function (p) { return p.rank; }).concat([9]));
-    var leaders = people.filter(function (p) { return (p.st === 'working' || p.st === 'maternity') && p.rank === minRank && minRank <= 2; });
+    var leaders = people.filter(function (p) { return (p.st === 'working' || p.st === 'maternity') && (ksbOrg ? p.e['Phòng ban'] === ksbOrg.board : p.rank === minRank && minRank <= 2); });
     depts.forEach(function (x) {
       var hid = x.pb ? x.pb['Mã NV trưởng bộ phận'] : '', h = hid ? people.filter(function (p) { return p.id === hid; })[0] : null;
       x.head = h || null; x.headId = hid || '';
@@ -6399,12 +6411,12 @@ if (typeof module !== 'undefined') module.exports = XW;
       x.headKiem = hLead && (x.members.length > 1 || x.members.indexOf(h) < 0); // lãnh đạo kiêm phụ trách
       x.working = x.members.filter(function (p) { return p.st === 'working'; }).length;
       // 17/11 đợt 2: người kiêm nhiệm (cùng hoặc khác công ty) lấp vị trí theo định biên, không tính vào số người đang làm
-      x.kn = knPeople(u, R, function (r) { return r.pb && r.pb === x.name; }).filter(function (p) { return !(p.u === u && x.members.some(function (m) { return m.id === p.id; })); });
+      x.kn = knPeople(u, R, function (r) { return (r.pb && r.pb === x.name) || (ksbOrg && x.name === ksbOrg.executive && !r.pb); }).filter(function (p) { return !(p.u === u && x.members.some(function (m) { return m.id === p.id; })); });
       x.nShow = x.members.length + x.kn.length;
       x.vac = x.plan !== null ? Math.max(0, x.plan - x.nShow) : 0;
       x.over = x.plan !== null && x.nShow > x.plan;
       x.members.sort(function (a, b) { return (a === x.head ? -1 : b === x.head ? 1 : 0) || a.rank - b.rank || cmp(a.e['Ngày vào làm'], b.e['Ngày vào làm']); });
-      x.isRoot = (x.members.length > 0 && x.members.every(function (p) { return leaders.indexOf(p) >= 0; })) || (!!x.pb && ROOT_RE.test(x.name));
+      x.isRoot = ksbOrg ? x.name === ksbOrg.board : (x.members.length > 0 && x.members.every(function (p) { return leaders.indexOf(p) >= 0; })) || (!!x.pb && ROOT_RE.test(x.name));
       var notes = [];
       if (!x.head && !x.isRoot && !x.kn.length) notes.push(['warn', 'Chưa có trưởng bộ phận']);
       if (x.headOut) notes.push(['warn', 'Trưởng bộ phận ' + shortName(x.head.e['Họ và tên']) + (x.head.st === 'left' ? ' đã nghỉ việc' : ' không còn thuộc phòng này')]);
@@ -6415,8 +6427,9 @@ if (typeof module !== 'undefined') module.exports = XW;
       if (x.orphan) notes.push(['warn', 'Chưa có trong Danh mục phòng ban']);
       x.notes = notes;
     });
-    var root = depts.filter(function (x) { return x.isRoot && x.pb && ROOT_RE.test(x.name); })[0] || depts.filter(function (x) { return x.isRoot; })[0] || null;
-    if (root) { // lãnh đạo đang ghi ở phòng khác (kiêm phụ trách) vẫn hiện ở Ban Giám đốc
+    var root = ksbOrg ? byName[ksbOrg.board] : depts.filter(function (x) { return x.isRoot && x.pb && ROOT_RE.test(x.name); })[0] || depts.filter(function (x) { return x.isRoot; })[0] || null;
+    if (ksbOrg) root.extra = []; // HĐQT is the parent node; Ban Điều Hành remains a child with its own members.
+    if (root && !ksbOrg) { // lãnh đạo đang ghi ở phòng khác (kiêm phụ trách) vẫn hiện ở Ban Giám đốc
       root.extra = leaders.filter(function (p) { return root.members.indexOf(p) < 0 && p !== root.head; });
       if (!root.head && root.extra.length) { root.head = root.extra.shift(); }
       var nR = root.members.length + root.extra.length + (root.head && root.members.indexOf(root.head) < 0 ? 1 : 0);
@@ -6425,15 +6438,24 @@ if (typeof module !== 'undefined') module.exports = XW;
       root.notes = root.notes.filter(function (n) { return !/so với định biên|Chưa có trưởng/.test(n[1]); }); if (root.vac) root.notes.push(['vac', 'Thiếu ' + root.vac + ' so với định biên']);
     }
     // 17/11/2026 góp ý mục 7: Ban Giám đốc chọn người trong toàn hệ thống (u.bgd = [{ u, id }]) – không sửa hồ sơ gốc; người ở vị trí / công ty khác hiện "kiêm nhiệm"
-    var bg = knPeople(u, R, function (r) { return !r.pb || (root && r.pb === root.name); });
-    if (root) root.kn = [];
+    var bg = ksbOrg ? [] : knPeople(u, R, function (r) { return !r.pb || (root && r.pb === root.name); });
+    if (root && !ksbOrg) root.kn = [];
     if (root && bg.length) {
       var have = root.members.concat(root.extra || [], root.head ? [root.head] : []);
       bg.forEach(function (p) { if (!have.some(function (h) { return h.id === p.id && (h.u || u) === p.u; })) root.extra.push(p); });
       var nR2 = root.members.length + root.extra.length + (root.head && root.members.indexOf(root.head) < 0 ? 1 : 0); root.nShow = nR2;
       root.vac = root.plan !== null ? Math.max(0, root.plan - nR2) : 0; root.notes = root.notes.filter(function (n) { return !/so với định biên/.test(n[1]); }); if (root.vac) root.notes.push(['vac', 'Thiếu ' + root.vac + ' so với định biên']);
     }
-    return { u: u, people: people, depts: depts, leaders: leaders, root: root, bgd: root ? [] : bg.filter(function (p) { return !leaders.some(function (l) { return l.id === p.id && p.u === u; }); }), children: depts.filter(function (x) { return x !== root && (x.members.length || x.pb || x.left.length); }) };
+    var children = depts.filter(function (x) { return x !== root && (x.members.length || x.pb || x.left.length); });
+    if (ksbOrg) {
+      // Correct the model relationship: HĐQT → Ban Điều Hành → existing departments.
+      // Other departments retain their executive parent; stored PB/NV records are unchanged.
+      var executive = byName[ksbOrg.executive];
+      executive.children = children.filter(function (x) { return x !== executive; });
+      executive.children.forEach(function (x) { x.parent = executive.code; });
+      executive.parent = root.code; root.parent = null; root.children = [executive]; children = root.children;
+    }
+    return { u: u, people: people, depts: depts, leaders: leaders, root: root, bgd: root ? [] : bg.filter(function (p) { return !leaders.some(function (l) { return l.id === p.id && p.u === u; }); }), children: children };
   }
   /* 17/11 đợt 2 (anh duyệt): KIÊM NHIỆM MỌI BỘ PHẬN – u.kn = [{ u: công ty của người, id: Mã NV, pb: phòng ban ở công ty u ('' = Ban Giám đốc), cd: vị trí kiêm nhiệm }]
      Thay u.bgd (Ban Giám đốc chọn người, 1.0.1 đợt 1). Không sửa hồ sơ gốc; lấp vị trí theo định biên nhưng không tính đầu người; đồng bộ 2 chiều với trường Kiêm nhiệm trong hồ sơ. */
@@ -6450,7 +6472,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     }).filter(Boolean);
   }
   function bgdPeople(u, R) { return knPeople(u, R, function (r) { return !r.pb; }); }
-  function knLabel(u, pb) { return (pb ? pb : 'Ban Giám đốc') + (isMulti() || maAllU().length > 1 ? ' · ' + shortUnit(u.name) : ''); }
+  function knLabel(u, pb) { var ksbOrg = ksbOrgDepartments(u); return (pb ? pb : ksbOrg ? ksbOrg.executive : 'Ban Giám đốc') + (isMulti() || maAllU().length > 1 ? ' · ' + shortUnit(u.name) : ''); }
   // Mọi vị trí kiêm nhiệm của 1 người (công ty pu, mã id) trên toàn hệ thống – dùng cho hồ sơ
   function knOfPerson(pu, id) { var L = []; maAllU().forEach(function (x) { knOf(x).forEach(function (r) { if (r.u === pu.id && r.id === id) L.push({ hu: x, r: r }); }); }); return L; }
   function knAdd(u, pb, pu, id, cd, quiet) {
@@ -6497,10 +6519,10 @@ if (typeof module !== 'undefined') module.exports = XW;
   }
   ACTS['kn-pick'] = function (a) {
     var k = a.getAttribute('data-k').split('|'), u = unitById(k[0]), pb = k.slice(1).join('|'); if (!u) return; var all = maAllU();
-    var o = orgOf(u, refDate()); if (o.root && pb === o.root.name) pb = ''; // Ban Giám đốc có trong danh mục: lưu '' cho thống nhất
+    var o = orgOf(u, refDate()), ksbOrg = ksbOrgDepartments(u); if (ksbOrg ? pb === ksbOrg.executive : o.root && pb === o.root.name) pb = ''; // Ban Giám đốc có trong danh mục: lưu '' cho thống nhất
     var cur = knOf(u).filter(function (r) { return (r.pb || '') === pb; }).map(function (r) { var uu = unitById(r.u), e = uu && nvIndex(uu)[r.id]; return e ? { uu: uu, e: e, r: r } : null; }).filter(Boolean);
     var m = pickPerson('Chọn người – ' + knLabel(u, pb), 'Chọn trong danh sách nhân sự ' + (all.length > 1 ? 'toàn bộ các công ty' : 'toàn công ty') + '. Người ở phòng hoặc công ty khác vào dưới dạng kiêm nhiệm: lấp vị trí, hồ sơ chính giữ nguyên.', all, function (pu, id) { knConfirm(u, pb, pu, id); },
-      function (r) { var inD = r.u === u && (pb ? (r.e['Phòng ban'] || '') === pb : ROOT_RE.test(r.e['Phòng ban'] || '')); return inD ? 'trong phòng' : r.u !== u ? 'kiêm nhiệm · ' + shortUnit(r.u.name) : 'kiêm nhiệm'; });
+      function (r) { var inD = r.u === u && (pb ? (r.e['Phòng ban'] || '') === pb : ksbOrg ? r.e['Phòng ban'] === ksbOrg.executive : ROOT_RE.test(r.e['Phòng ban'] || '')); return inD ? 'trong phòng' : r.u !== u ? 'kiêm nhiệm · ' + shortUnit(r.u.name) : 'kiêm nhiệm'; });
     if (cur.length) { var box = document.createElement('div'); box.className = 'pp-cur'; box.innerHTML = '<h4>Đang kiêm nhiệm ở ' + esc(knLabel(u, pb)) + '</h4>' + cur.map(function (c) { return '<div><span>' + esc(c.e['Họ và tên']) + (c.r.cd ? ' · ' + esc(c.r.cd) : '') + (c.uu !== u ? ' · ' + uTag(c.uu) : '') + '</span><button type="button" class="btn btn-sm btn-danger-ghost" data-bd="' + esc(c.r.u + '|' + c.r.id) + '">Bỏ</button></div>'; }).join(''); var l = $('.pp-l', m); l.parentNode.insertBefore(box, l);
       box.addEventListener('click', function (ev) { var b = ev.target.closest('[data-bd]'); if (!b) return; var p = b.getAttribute('data-bd').split('|'); m.close(); knDel(u, p[0], p.slice(1).join('|'), pb); }); }
   };
@@ -6514,7 +6536,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   ACTS['kn-del'] = function (a) { var p = a.getAttribute('data-k').split('|'), hu = unitById(p[0]); if (!hu) return; confirmBox('Bỏ vị trí kiêm nhiệm này?', 'Sơ đồ tổ chức cập nhật theo. Hồ sơ chính giữ nguyên.', 'Bỏ', function () { knDel(hu, p[1], p[2], p.slice(3).join('|')); }); };
   ACTS['kn-prof'] = function (a) {
     var pu = unitById(a.getAttribute('data-u')), id = a.getAttribute('data-id'), e = pu && nvIndex(pu)[id]; if (!e) return; var all = maAllU();
-    var opts = function (hu) { return ['<option value="">Ban Giám đốc</option>'].concat((hu.data.PB || []).filter(function (p) { return p['Tên phòng ban'] && !ROOT_RE.test(p['Tên phòng ban']) && !(hu === pu && p['Tên phòng ban'] === e['Phòng ban']); }).map(function (p) { return '<option>' + esc(p['Tên phòng ban']) + '</option>'; })).join(''); };
+    var opts = function (hu) { var ksbOrg = ksbOrgDepartments(hu); return ['<option value="">' + esc(ksbOrg ? ksbOrg.executive : 'Ban Giám đốc') + '</option>'].concat((hu.data.PB || []).filter(function (p) { return p['Tên phòng ban'] && (ksbOrg ? p['Tên phòng ban'] !== ksbOrg.executive : !ROOT_RE.test(p['Tên phòng ban'])) && !(hu === pu && p['Tên phòng ban'] === e['Phòng ban']); }).map(function (p) { return '<option>' + esc(p['Tên phòng ban']) + '</option>'; })).join(''); };
     var body = '<div class="form-grid">' + (all.length > 1 ? '<div class="field"><label for="kpU">Công ty</label><select class="input" id="kpU">' + all.map(function (x) { return '<option value="' + x.id + '"' + (x === pu ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div>' : '') +
       '<div class="field"><label for="kpPb">Bộ phận</label><select class="input" id="kpPb">' + opts(pu) + '</select></div>' + field('kpCd', 'Vị trí kiêm nhiệm', '', ' placeholder="VD: Kế toán trưởng"') + '</div>' +
       '<p class="muted" style="font-size:12.5px;margin:8px 0 0">Hiện trên sơ đồ tổ chức của bộ phận đó, lấp vị trí theo định biên; không tính vào số người đang làm, lương, bảo hiểm. Hồ sơ, phòng ban chính giữ nguyên.</p>' +
@@ -6567,6 +6589,11 @@ if (typeof module !== 'undefined') module.exports = XW;
     h += '</div>' + (x.notes.length ? '<div class="od-notes">' + x.notes.map(function (n) { return '<span class="on-' + n[0] + '">' + esc(n[1]) + '</span>'; }).join('') + '</div>' : '') + '</div>';
     return h;
   }
+  function orgChildren(o, children, f) {
+    return '<div class="org-kids" style="--n:' + children.length + '">' + children.map(function (x) {
+      return '<div class="org-kid' + (x.children && x.children.length ? ' org-branch' : '') + '">' + orgDept(o, x, f) + (x.children && x.children.length ? orgChildren(o, x.children, f) : '') + '</div>';
+    }).join('') + '</div>';
+  }
   function orgChart(o, f) {
     var rootHtml;
     if (o.root) {
@@ -6575,8 +6602,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       rootHtml = '<div class="oroot' + (isMulti() ? ' ub ub-' + o.u.id : '') + '"><div class="oroot-co' + (isMulti() ? ' ub ub-' + o.u.id : '') + '">' + (isMulti() ? '<i class="u-lg"></i>' : '') + esc(shortUnit(o.u.name)) + '</div><div class="od od-virtual od-root has-warn" data-od="' + esc(o.u.id + '|' + '\u0001bgd') + '"><button type="button" class="od-h" data-act="od-add" data-u="' + o.u.id + '" data-pre="bgd" title="Bấm để thêm Ban Giám đốc vào Danh mục phòng ban"><span class="od-n">Ban Giám đốc</span><span class="od-c"><b>' + o.leaders.length + '</b> người</span></button><div class="od-b"><div class="od-lead">' +
         (o.leaders.length || o.bgd.length ? o.leaders.map(function (p) { return orgPerson(o, p, { head: 1 }); }).join('') + o.bgd.map(function (p) { return orgPerson(o, p, { head: 1 }); }).join('') : '<span class="muted" style="font-size:13px">Chưa có người – bấm "Chọn người" hoặc kéo người vào ô này</span>') + '<button type="button" class="op op-empty op-add" data-act="bgd-pick" data-u="' + o.u.id + '"><span class="op-av">+</span><span class="op-tx"><b>Chọn người</b><small>Trong toàn hệ thống</small></span></button></div></div><div class="od-notes"><span class="on-warn">Chưa có trong Danh mục phòng ban – bấm tên để thêm</span></div></div></div>';
     }
-    return '<div class="org" data-org="' + o.u.id + '">' + rootHtml + '<div class="org-kids" style="--n:' + o.children.length + '">' + o.children.map(function (x) { return '<div class="org-kid">' + orgDept(o, x, f) + '</div>'; }).join('') +
-      '</div><div class="org-tools"><button type="button" class="od-addbtn" data-act="od-add" data-u="' + o.u.id + '">+ Thêm phòng ban</button></div></div>';
+    return '<div class="org" data-org="' + o.u.id + '">' + rootHtml + orgChildren(o, o.children, f) + '<div class="org-tools"><button type="button" class="od-addbtn" data-act="od-add" data-u="' + o.u.id + '">+ Thêm phòng ban</button></div></div>';
   }
   PAGES.tochuc = function () {
     if (!gather('NV').length) return pageHead('Sơ đồ tổ chức') + noData('hồ sơ nhân viên');
@@ -6627,7 +6653,8 @@ if (typeof module !== 'undefined') module.exports = XW;
       box.addEventListener('drop', function (ev) {
         ev.preventDefault(); box.classList.remove('drop'); if (!drag) return;
         var t = box.getAttribute('data-od').split('|'), p = drag.split('|'); drag = null;
-        if (box.classList.contains('od-root')) { knConfirm(unitById(t[0]), '', unitById(p[0]), p.slice(1).join('|')); return; } // 17/11: kéo vào Ban Giám đốc = thêm (kiêm nhiệm), không đổi phòng ban
+        var target = unitById(t[0]), ksbOrg = ksbOrgDepartments(target), dn = t.slice(1).join('|');
+        if (box.classList.contains('od-root') || (ksbOrg && dn === ksbOrg.executive)) { knConfirm(target, ksbOrg && dn !== ksbOrg.executive ? dn : '', unitById(p[0]), p.slice(1).join('|')); return; } // 17/11: kéo vào Ban Giám đốc = thêm (kiêm nhiệm), không đổi phòng ban
         if (t[0] !== p[0]) { knConfirm(unitById(t[0]), t.slice(1).join('|'), unitById(p[0]), p.slice(1).join('|')); return; } // 17/11 đợt 2: kéo sang công ty khác = kiêm nhiệm
         moveDept(unitById(p[0]), p[1], t.slice(1).join('|'));
       });
