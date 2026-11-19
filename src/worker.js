@@ -856,6 +856,17 @@ async function ksbNextCodes(db, count = 1) {
 async function api(req, env, url) {
   const db = env.DB; await ensureSchema(db);
   const p = url.pathname, now = Date.now(), ip = clientIP(req, env);
+  // A temporary password may only open status, password change and logout/login APIs.
+  // Enforce this on the server as well as the existing first-login screen.
+  if (req.method !== 'OPTIONS' && ![
+    '/api/trang-thai', '/api/dang-nhap', '/api/dang-xuat', '/api/doi-pin',
+    '/api/qt/toi', '/api/qt/dang-nhap', '/api/qt/dang-xuat', '/api/qt/doi-mk'
+  ].includes(p)) {
+    const employee = await session(db, req, 'nv'), manager = await qtUser(db, req);
+    if ((employee && employee.nv.mk_doi) || (manager && manager.doi_mk))
+      return bad('Cần đổi mật khẩu khởi tạo trước khi sử dụng chức năng này.', 403);
+  }
+
   /* ----- 17/11: CỔNG TUYỂN DỤNG CỦA CÔNG TY – ứng viên nộp (công khai), phần mềm đưa trang lên / lấy hồ sơ (cần đăng nhập Phần mềm quản lý nhân sự toàn diện trên máy chủ này) ----- */
   if (p === '/api/ung-tuyen' || p === '/api/cong' || p.startsWith('/api/cong/')) { // đọc thân yêu cầu riêng (multipart / JSON) nên đặt trước phần đọc body chung
     if (isDemo(env, url)) return json({ ok: false, msg: 'Bản thử dùng cổng thử recruit.quantritute.com.' }, 404);
@@ -1110,6 +1121,29 @@ async function api(req, env, url) {
     if (r === 'ma-nv-moi' && req.method === 'POST') {
       try { return json({ ok: true, codes: await ksbNextCodes(db, body.count === undefined ? 1 : body.count) }); }
       catch (e) { return bad(e.message); }
+    }
+    // Initialize NEW KSB employee accounts only. Never reset any existing account.
+    if (r === 'khoi-tao-mk-nv' && req.method === 'POST') {
+      if (!U.sys) return bad('Chỉ quản trị viên mới khởi tạo được tài khoản.', 403);
+      const ma = String(body.ma || '').trim().toUpperCase(), uid = String(body.unit || '');
+      if (!/^KSB[0-9]+$/.test(ma) || !/^[A-Za-z0-9._-]{1,80}$/.test(uid)) return bad('Mã nhân viên hoặc công ty không hợp lệ.');
+      const error = pwBad(body.mk); if (error) return bad(error);
+      const key = 'unit:' + uid, meta = await db.prepare('SELECT z,ver FROM qt_kv WHERE k=?').bind(key).first();
+      if (!meta) return bad('Không tìm thấy dữ liệu công ty.');
+      let text = (await db.prepare('SELECT v FROM qt_part WHERE k=? ORDER BY i').bind(key).all()).results.map(x => x.v).join('');
+      if (meta.z) text = await new Response(new Blob([b64ToBytes(text)]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+      let unit; try { unit = JSON.parse(text); } catch (e) { return bad('Dữ liệu công ty không hợp lệ.'); }
+      const matches = ((unit.data || {}).NV || []).filter(e => e['Mã NV'] === ma);
+      if (unit.id !== uid || matches.length !== 1) return bad('Cần đúng một hồ sơ nhân viên trong công ty đã chọn.');
+      const e = matches[0], today = isoVN(now), hire = String(e['Ngày vào làm'] || '').slice(0, 10), leave = String(e['Ngày nghỉ việc'] || '').slice(0, 10);
+      if ((hire && hire > today) || (leave && leave < today) || (!leave && e['Trạng thái'] === 'Đã nghỉ việc')) return bad('Không khởi tạo tài khoản cho nhân viên đã nghỉ hoặc chưa vào làm.', 409);
+      if (await db.prepare('SELECT ma FROM nv WHERE ma=?').bind(ma).first()) return bad('Tài khoản đã tồn tại; giữ nguyên mật khẩu và trạng thái.', 409);
+      const salt = randHex(16), hash = await hashPw(body.mk, salt);
+      const created = await db.prepare(`INSERT INTO nv(ma,ten,active,created,pb,nguon,cty,mk,mk_salt,mk_doi)
+        SELECT ?,?,1,?,?, 'phan-mem',?,?,?,1 WHERE EXISTS (SELECT 1 FROM qt_kv WHERE k=? AND ver=?)
+        ON CONFLICT(ma) DO NOTHING RETURNING ma`)
+        .bind(ma, String(e['Họ và tên'] || '').slice(0,120), now, String(e['Phòng ban'] || '').slice(0,120), String(unit.name || '').slice(0,120), hash, salt, key, meta.ver).first();
+      return created ? json({ ok: true, ma, doi_mk: 1 }) : bad('Tài khoản hoặc dữ liệu nhân viên vừa thay đổi; kiểm tra lại, không ghi đè.', 409);
     }
     if (r === 'doi-mk' && req.method === 'POST') {
       const cu = String(body.cu || ''), moi = String(body.moi || ''), e = pwBad(moi); if (e) return bad(e);

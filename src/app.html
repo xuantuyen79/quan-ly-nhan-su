@@ -1315,7 +1315,7 @@ function mkRule(pw) { if (pw.length < 8) return 'Mật khẩu cần ít nhất 8
 function mkDoiView(st) {
   DEMO = !!st.demo;
   app.innerHTML = '<div class="wrap" style="padding-top:max(24px,8vh)"><div class="card"><h2 style="font-size:20px">Đặt mật khẩu của bạn</h2>' +
-    '<p class="muted small">Xin chào <b>' + esc(st.me.ten) + '</b>. Tài khoản của bạn có quyền quản trị nên đăng nhập bằng mật khẩu. Mật khẩu vừa dùng là mật khẩu tạm, hãy đặt mật khẩu của riêng bạn. Mật khẩu mới dùng cho cả app này và trang quản trị.</p>' +
+    '<p class="muted small">Xin chào <b>' + esc(st.me.ten) + '</b>. Mật khẩu vừa dùng là mật khẩu khởi tạo. Bạn cần đặt mật khẩu riêng trước khi sử dụng ứng dụng. Mật khẩu mới không làm thay đổi quyền truy cập của tài khoản.</p>' +
     '<label class="lbl" for="mk-cu">Mật khẩu tạm</label><input id="mk-cu" type="password" autocomplete="current-password">' +
     '<label class="lbl" for="mk-moi">Mật khẩu mới (từ 8 ký tự, có chữ và số)</label><input id="mk-moi" type="password" autocomplete="new-password">' +
     '<label class="lbl" for="mk-lai">Nhập lại mật khẩu mới</label><input id="mk-lai" type="password" autocomplete="new-password">' +
