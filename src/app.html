@@ -326,10 +326,15 @@ td.ipbox,td.num{white-space:nowrap;word-break:normal}
 .nvx-note{font-size:12.5px;color:var(--mmut);margin:-4px 4px 0;line-height:1.45}
 /* chấm công */
 .nvx-today{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.nvx-today span{font-size:13px;border-radius:9px;padding:4px 9px;background:var(--mws);color:var(--mwt)}.nvx-today span b{margin-right:5px;font-variant-numeric:tabular-nums}.nvx-today span.ra{background:var(--minf);color:var(--minft)}.nvx-today .none{background:var(--moff);color:var(--mmut)}
-.nvx-pbtn{display:grid;grid-template-columns:1fr auto;gap:8px}
+.nvx-pbtn{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .nvx-big{width:100%;min-height:54px;border:0;border-radius:15px;background:var(--m);color:#fff;font:600 16.5px inherit;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 6px 14px -6px rgba(63,107,53,.6)}
 .nvx-big.ra{background:#8A5A1F;box-shadow:0 6px 14px -6px rgba(138,90,31,.6)}.nvx-big:disabled,.nvx-alt:disabled{opacity:.6}
 .nvx-alt{min-height:54px;padding:0 16px;border-radius:15px;border:1.5px solid var(--mline);background:var(--mcard);color:var(--mtx);font:600 14px inherit;font-family:inherit;cursor:pointer}
+/* Shared geometry for attendance actions only; preserve each button's existing colors. */
+.nvx-pbtn>button,.gps-actions>button{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:48px;width:100%;padding:10px 12px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;line-height:1.35}
+.nvx-pbtn>button>svg,.gps-actions>button>svg{width:20px;height:20px;flex:0 0 20px}
+.nvx-pbtn>button>span,.gps-actions>button>span{min-width:0;text-align:center}
+
 /* chỉ số */
 .nvx-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .nvx-kpi .k{background:var(--mcard);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:3px;text-align:left;border:0;font-family:inherit;color:var(--mtx)}
@@ -769,8 +774,7 @@ td.ipbox,td.num{white-space:nowrap;word-break:normal}
   /* khung Chấm công: vuông, nút lớn xếp dọc */
   .nvx-wrap.dk .hb-punch>.nvx-punch{flex:1;display:flex;flex-direction:column;gap:12px;padding:22px;border-radius:24px;margin:0}
   .nvx-wrap.dk .hb-punch .nvx-pbtn{grid-template-columns:1fr;gap:10px;margin-top:auto}
-  .nvx-wrap.dk .hb-punch .nvx-big{min-height:62px;font-size:17px;border-radius:16px}
-  .nvx-wrap.dk .hb-punch .nvx-pbtn>button:not(.nvx-big){min-height:48px;width:100%}
+  .nvx-wrap.dk .hb-punch .nvx-pbtn>button{min-height:48px;font-size:14px;border-radius:10px;width:100%}
   .nvx-wrap.dk .hb-punch .nvx-pfoot{margin-top:0}
   /* phần chào: cao hơn, cảnh nền nhiều lớp theo giờ trong ngày */
   .nvx-wrap.dk .nvx-hero{max-width:1016px;width:calc(100% - 64px);min-height:250px;display:flex;align-items:center;padding:40px 48px!important;border-radius:28px;background:linear-gradient(120deg,#244A22 0%,#3D6B33 42%,#6E9A4E 78%,#A9C27A 100%);box-shadow:0 24px 50px -30px rgba(36,74,34,.65)}
@@ -1366,7 +1370,7 @@ function nvView(st) {
     h += '<section class="nvx-card nvx-punch"><div class="nvx-row"><span class="nvx-lbl">Chấm công hôm nay</span></div>' +
       (hasPass() ? '<span class="pill inf" id="qrpill" style="margin-top:8px">Đã quét mã QR</span>' : '') +
       '<div class="nvx-today">' + (todayList.length ? todayList.map(function (r) { return '<span class="' + r.loai + '"><b>' + fTime(r.t) + '</b>' + (r.loai === 'vao' ? 'Vào' : 'Ra') + ' · ' + CACH[r.cach] + (r.gps_location_label ? ' · ' + esc(r.gps_location_label) : '') + '</span>'; }).join('') : '<span class="none">Chưa có lượt chấm hôm nay</span>') + '</div>' +
-      '<div class="nvx-pbtn"><button class="nvx-big ' + next + '" id="b-main" data-l="' + next + '">' + ni('clock', 20) + 'Chấm ' + (next === 'vao' ? 'vào ca' : 'ra ca') + '</button><button class="nvx-alt" id="b-alt" data-l="' + other + '">' + (other === 'vao' ? 'Vào ca' : 'Ra ca') + '</button></div><div id="res"></div>' +
+      '<div class="nvx-pbtn"><button class="nvx-big ' + next + '" id="b-main" data-l="' + next + '">' + ni('clock', 20) + '<span>' + (next === 'vao' ? 'Vào ca' : 'Ra ca') + '</span></button><button class="nvx-alt" id="b-alt" data-l="' + other + '">' + ni('clock', 20) + '<span>' + (other === 'vao' ? 'Vào ca' : 'Ra ca') + '</span></button></div><div id="res"></div>' +
       (st.me.ncc ? '<p class="hint">Bạn thuộc diện <b>không cần chấm công</b> – chấm hay không đều được tính đủ công.</p>' : '') +
       (!st.wifi ? '<div class="nvx-row" style="margin-top:8px">' + (!hasPass() && st.che_do !== 'chi_wifi' ? '<button class="btn sm pri" data-qr>' + ni('qr', 16) + 'Quét mã QR</button>' : '<span></span>') + '<button class="btn sm" id="recheck">Kiểm tra lại mạng</button></div>' : '') +
       '<div class="nvx-pfoot">' + (st.wifi ? '<span class="pill ok"><span class="dot"></span>Wi‑Fi văn phòng</span>' : '<span class="pill no"><span class="dot"></span>Ngoài mạng văn phòng</span>') + (st.ip ? '<span class="ip" title="IP lượt này (' + esc(st.ip_loai) + ')">IP ' + esc(st.ip) + '</span>' : '<span class="ip"></span>') + (DEMO ? '<button type="button" class="nvx-q" id="help" aria-label="Hướng dẫn thử chấm công" title="Hướng dẫn thử chấm công">?</button>' : '') + '</div></section>';
@@ -2332,10 +2336,10 @@ function gpsEmployeeMount(st, next) {
     host.innerHTML = '<button type="button" class="btn full" id="gps-open">Chấm công bằng GPS</button><div id="gps-pane"></div>';
     $('#gps-open').onclick = function () {
       var pane = $('#gps-pane'); pane._gpsTurn = (pane._gpsTurn || 0) + 1; var turn = pane._gpsTurn;
-      pane.innerHTML = '<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-punch" disabled></button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';
+      pane.innerHTML = '<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-in" disabled>' + ni('clock', 20) + '<span>Vào ca</span></button><button type="button" class="btn" id="gps-out" disabled>' + ni('clock', 20) + '<span>Ra ca</span></button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';
       var valid = false, busy = false;
       function live() { return pane._gpsTurn === turn && document.body.contains(pane) && $('#gps-state'); }
-      function draw() { if (live()) { $('#gps-punch').textContent = next === 'vao' ? 'CHẤM VÀO CA' : 'CHẤM RA CA'; $('#gps-punch').disabled = !valid || busy; } }
+      function draw() { if (live()) { $('#gps-in').disabled = !valid || busy || next !== 'vao'; $('#gps-out').disabled = !valid || busy || next !== 'ra'; } }
       function state(text, bad) { if (live()) { $('#gps-state').textContent = text; $('#gps-state').className = bad ? 'msg err' : 'msg inf'; } }
       $('#gps-close').onclick = function () { valid = false; pane._gpsTurn++; pane.innerHTML = ''; };
       function locate() {
@@ -2354,18 +2358,20 @@ function gpsEmployeeMount(st, next) {
         }).catch(function (e) { state(e.message, true); }).finally(function () { busy = false; if (live()) { $('#gps-locate').disabled = false; draw(); } });
       }
       $('#gps-locate').onclick = locate;
-      $('#gps-punch').onclick = function () {
-        if (!valid || busy) return;
+      function punchGps(loai) {
+        if (!valid || busy || loai !== next) return;
         busy = true; draw(); $('#gps-locate').disabled = true; state('Đang xác minh vị trí và ghi nhận…');
         gpsPosition().then(function (pos) {
           if (!live()) throw Error('Đã đóng GPS.');
-          return api('/api/cham', Object.assign({ cach: 'gps', loai: next }, pos));
+          return api('/api/cham', Object.assign({ cach: 'gps', loai: loai }, pos));
         }).then(function (r) {
           if (r._status === 409) return boot('<div class="msg inf">' + esc(r.loi) + ' Trạng thái đã được tải lại.</div>');
           if (!r.ok) throw Error(r.loi || 'Chưa ghi nhận được lượt chấm.');
           return boot('<div class="msg ok">' + (r.trung ? 'Đã có lượt ' : 'Đã chấm ') + (r.loai === 'vao' ? 'vào' : 'ra') + ' lúc ' + fTime(r.t) + ' (' + esc(CACH[r.cach] || r.cach) + ')' + (r.trung ? ' – không ghi trùng.' : '.') + '</div>');
         }).catch(function (e) { valid = false; state(e.message, true); }).finally(function () { busy = false; if (live()) { $('#gps-locate').disabled = false; draw(); } });
       };
+      $('#gps-in').onclick = function () { punchGps('vao'); };
+      $('#gps-out').onclick = function () { punchGps('ra'); };
       draw(); locate();
     };
   });
