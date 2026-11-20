@@ -6499,7 +6499,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   function ksbEducationText(u, e) { return ksbEducationPairs(u, e).map(function (p) { return p.join(' – '); }).join('; ') || 'Chưa cập nhật'; }
   function ksbEducationInfo(u, e) {
     var pairs = ksbEducationPairs(u, e);
-    return '<dt>Trình độ – Chuyên ngành đào tạo</dt><dd>' + (pairs.length ? '<ul class="ksb-education-pairs">' + pairs.map(function (p) { return '<li>' + esc(p[0]) + ' – ' + esc(p[1]) + '</li>'; }).join('') + '</ul>' : '<span class="faint">Chưa cập nhật văn bằng</span>') + '<small class="cell-sub">Theo danh sách Văn bằng · hiển thị đầy đủ, chưa chọn văn bằng chính.</small>' + (!pairs.length && e['Trình độ'] ? '<small class="cell-sub">Dữ liệu Trình độ cũ (chưa đối chiếu văn bằng): ' + esc(e['Trình độ']) + '</small>' : '') + '</dd>';
+    return '<dt>Trình độ – Chuyên ngành đào tạo</dt><dd>' + (pairs.length ? '<ul class="ksb-education-pairs">' + pairs.map(function (p) { return '<li>' + esc(p[0]) + ' – ' + esc(p[1]) + '</li>'; }).join('') + '</ul>' : '<span class="faint">Chưa cập nhật văn bằng</span>') + (!pairs.length && e['Trình độ'] ? '<small class="cell-sub">Dữ liệu Trình độ cũ (chưa đối chiếu văn bằng): ' + esc(e['Trình độ']) + '</small>' : '') + '</dd>';
   }
   function kvRows(e, keys) { return keys.map(function (k) { var v = e[k[0]]; if (k[2] && !S.showSens) v = HR.maskValue(v); var need = NEED.some(function (n) { return n[0] === k[0]; }); return '<dt>' + esc(k[1] || k[0]) + '</dt><dd>' + (v === null || v === undefined || v === '' ? (need ? '<span class="miss">Còn thiếu</span>' : '<span class="faint">—</span>') : esc(isIso(v) ? vn(v) : nfmt(v))) + '</dd>'; }).join(''); }
   // 17/11/2026 góp ý mục 3: hồ sơ có mục "Tài khoản app nhân viên" – tên đăng nhập, tình trạng, ngày cấp; chưa có thì nút Tạo tài khoản (popup cấp nhanh như trang Ứng dụng nhân viên)
@@ -7803,10 +7803,11 @@ if (typeof module !== 'undefined') module.exports = XW;
       field('fQq', 'Quê quán', e['Quê quán']) + '<div class="field span2"><label for="fDc">Địa chỉ thường trú</label><input class="input" id="fDc" value="' + esc(e['Địa chỉ thường trú'] || '') + '"></div>' +
       field('fSdt', 'Số điện thoại', e['Số điện thoại'], ' inputmode="tel" maxlength="13"') + field('fEm', 'Email công ty', e['Email công ty'], ' type="email"') +
       '<div class="field" style="grid-column:1/-1"><dl class="kv2">' + ksbEducationInfo(u, e) + '</dl><p class="faint">Cập nhật tại Hồ sơ nhân sự → Kinh nghiệm &amp; Học vấn → Văn bằng.</p></div>' +
-      sel('fHn', 'Tình trạng hôn nhân', ['Độc thân', 'Đã kết hôn', 'Ly hôn'], e['Tình trạng hôn nhân']) + '</div></div>' +
-      '<div class="dr-sec"><h4>Gia đình, liên hệ khi cần thiết</h4><div class="form-grid g3">' +
+      sel('fHn', 'Tình trạng hôn nhân', ['Độc thân', 'Đã kết hôn', 'Ly hôn'], e['Tình trạng hôn nhân']) +
       field('fNpt', 'Số người phụ thuộc (giảm trừ thuế)', e['Số người phụ thuộc'] == null ? (isNew ? 0 : '') : e['Số người phụ thuộc'], ' inputmode="numeric" maxlength="2"') +
-      field('fCon6', 'Số con từ 6 tuổi trở xuống', e['Số con từ 6 tuổi trở xuống'] == null ? (isNew ? 0 : '') : e['Số con từ 6 tuổi trở xuống'], ' inputmode="numeric" maxlength="2"') + '<span></span>' +
+      field('fCon6', 'Số con từ 6 tuổi trở xuống', e['Số con từ 6 tuổi trở xuống'] == null ? (isNew ? 0 : '') : e['Số con từ 6 tuổi trở xuống'], ' inputmode="numeric" maxlength="2"') +
+      '</div></div>' +
+      '<div class="dr-sec"><h4>Gia đình, liên hệ khi cần thiết</h4><div class="form-grid g3">' +
       field('fNt', 'Họ tên người thân liên hệ', e['Người thân liên hệ']) + sel('fNtQh', 'Quan hệ', ['Vợ', 'Chồng', 'Bố', 'Mẹ', 'Con', 'Anh', 'Chị', 'Em', 'Khác'], e['Quan hệ với người thân'], 1) +
       field('fNtSdt', 'SĐT người thân liên hệ', e['SĐT người thân liên hệ'], ' inputmode="tel" maxlength="13"') + '</div></div>' +
       '<div class="dr-sec"><h4>Bảo hiểm, ngân hàng</h4><div class="form-grid g3">' +
@@ -8339,12 +8340,20 @@ if (typeof module !== 'undefined') module.exports = XW;
     return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === v ? t / 86400000 : null;
   }
   function ksbRange(row) {
-    var f = row['Từ ngày'], t = row['Đến ngày'];
+    var f = row['Từ ngày'], t = row['Đến nay'] ? HR.isoToday() : row['Đến ngày'];
     // Legacy QT records have month precision; retain their full calendar months.
     if (!f && row['Từ tháng']) { var m = ymKey(row['Từ tháng']); if (/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) f = m + '-01'; }
-    if (!t && row['Đến tháng']) { var n = ymKey(row['Đến tháng']); if (/^\d{4}-(0[1-9]|1[0-2])$/.test(n)) t = n + '-' + new Date(Date.UTC(+n.slice(0, 4), +n.slice(5, 7), 0)).getUTCDate(); }
+    if (!row['Đến nay'] && !t && row['Đến tháng']) { var n = ymKey(row['Đến tháng']); if (/^\d{4}-(0[1-9]|1[0-2])$/.test(n)) t = n + '-' + new Date(Date.UTC(+n.slice(0, 4), +n.slice(5, 7), 0)).getUTCDate(); }
     var a = ksbDay(f), b = ksbDay(t);
     return a === null || b === null || b < a ? null : [a, b];
+  }
+  function ksbJobTime(row) {
+    return (row['Từ ngày'] ? vn(row['Từ ngày']) : ymTxt(row['Từ tháng'])) + ' – ' + (row['Đến nay'] ? 'Đến nay' : row['Đến ngày'] ? vn(row['Đến ngày']) : ymTxt(row['Đến tháng']));
+  }
+  function ksbMilestones(u, id) {
+    return (u.data.QT || []).filter(function (r) { return r['Mã NV'] === id && ['Khen thưởng', 'Khiển trách', 'Kỷ luật'].indexOf(r['Loại quá trình']) >= 0; }).map(function (r) {
+      return { k: r['Ngày'] || ymKey(r['Từ tháng']) || '', t: r['Ngày'] ? vn(r['Ngày']) : ymTxt(r['Từ tháng']) || 'Chưa ghi ngày', ty: r['Loại quá trình'], b: r['Nội dung'], s: r['Ghi chú'] || '', row: r };
+    }).sort(function (a, b) { return cmp(b.k, a.k); });
   }
   function ksbUnionDays(rows) {
     if (!rows.length) return null;
@@ -8374,15 +8383,15 @@ if (typeof module !== 'undefined') module.exports = XW;
     return '<div class="dr-sec"><h4>THÔNG TIN KHÁC</h4><div class="form-grid g3">' +
       '<div><label class="radio"><input type="checkbox" id="fDang"' + (e['Đảng viên'] ? ' checked' : '') + '> Đảng viên</label><div id="fDangDate">' + dbox('fDangNgay', e['Ngày vào Đảng chính thức'], 'Ngày vào Đảng chính thức') + '</div></div>' +
       '<div><label class="radio"><input type="checkbox" id="fCdv"' + (e['Đoàn viên Công đoàn'] ? ' checked' : '') + '> Đoàn viên Công đoàn</label><div id="fCdvDate">' + dbox('fCdvNgay', e['Ngày gia nhập Công đoàn'], 'Ngày gia nhập chính thức') + '</div></div>' +
-      '<label class="radio"><input type="checkbox" id="fTn"' + (e['Đoàn viên Đoàn TNCS Hồ Chí Minh'] ? ' checked' : '') + '> Đoàn viên Đoàn TNCS Hồ Chí Minh</label></div></div>';
+      '<div><label class="radio"><input type="checkbox" id="fTn"' + (e['Đoàn viên Đoàn TNCS Hồ Chí Minh'] ? ' checked' : '') + '> Đoàn viên Đoàn TNCS Hồ Chí Minh</label><div id="fTnDate">' + dbox('fTnNgay', e['Ngày gia nhập Đoàn TNCS Hồ Chí Minh'], 'Ngày gia nhập chính thức') + '</div></div></div></div>';
   }
   function ksbBindOther(m) {
-    [['fDang', 'fDangDate'], ['fCdv', 'fCdvDate']].forEach(function (pair) { var c = $('#' + pair[0], m), box = $('#' + pair[1], m); if (!c) return; var draw = function () { box.hidden = !c.checked; }; c.addEventListener('change', draw); draw(); });
+    [['fDang', 'fDangDate'], ['fCdv', 'fCdvDate'], ['fTn', 'fTnDate']].forEach(function (pair) { var c = $('#' + pair[0], m), box = $('#' + pair[1], m); if (!c) return; var draw = function () { box.hidden = !c.checked; }; c.addEventListener('change', draw); draw(); });
   }
   function ksbReadOther(m) {
     var out = { 'Đảng viên': $('#fDang', m).checked, 'Đoàn viên Công đoàn': $('#fCdv', m).checked, 'Đoàn viên Đoàn TNCS Hồ Chí Minh': $('#fTn', m).checked };
     var ok = true;
-    [['Đảng viên', 'fDangNgay', 'Ngày vào Đảng chính thức'], ['Đoàn viên Công đoàn', 'fCdvNgay', 'Ngày gia nhập Công đoàn']].forEach(function (x) {
+    [['Đảng viên', 'fDangNgay', 'Ngày vào Đảng chính thức'], ['Đoàn viên Công đoàn', 'fCdvNgay', 'Ngày gia nhập Công đoàn'], ['Đoàn viên Đoàn TNCS Hồ Chí Minh', 'fTnNgay', 'Ngày gia nhập Đoàn TNCS Hồ Chí Minh']].forEach(function (x) {
       var d = $('#' + x[1], m)._get(); if (out[x[0]] && d === null) { toast(x[2] + ' chưa đúng', 'err'); ok = false; }
       // Retain a previously recorded date when the checkbox is temporarily cleared.
       out[x[2]] = d === null ? '' : d || '';
@@ -8390,7 +8399,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     return ok ? out : null;
   }
   function ksbOtherPairs(e) {
-    return [['Đảng viên', e['Đảng viên'] ? 'Có' : 'Không'], ['Ngày vào Đảng chính thức', e['Đảng viên'] && e['Ngày vào Đảng chính thức'] ? vn(e['Ngày vào Đảng chính thức']) : '—'], ['Đoàn viên Công đoàn', e['Đoàn viên Công đoàn'] ? 'Có' : 'Không'], ['Ngày gia nhập chính thức', e['Đoàn viên Công đoàn'] && e['Ngày gia nhập Công đoàn'] ? vn(e['Ngày gia nhập Công đoàn']) : '—'], ['Đoàn viên Đoàn TNCS Hồ Chí Minh', e['Đoàn viên Đoàn TNCS Hồ Chí Minh'] ? 'Có' : 'Không']];
+    return [['Đảng viên', e['Đảng viên'] ? 'Có' : 'Không'], ['Ngày vào Đảng chính thức', e['Đảng viên'] && e['Ngày vào Đảng chính thức'] ? vn(e['Ngày vào Đảng chính thức']) : '—'], ['Đoàn viên Công đoàn', e['Đoàn viên Công đoàn'] ? 'Có' : 'Không'], ['Ngày gia nhập chính thức', e['Đoàn viên Công đoàn'] && e['Ngày gia nhập Công đoàn'] ? vn(e['Ngày gia nhập Công đoàn']) : '—'], ['Đoàn viên Đoàn TNCS Hồ Chí Minh', e['Đoàn viên Đoàn TNCS Hồ Chí Minh'] ? 'Có' : 'Không'], ['Ngày gia nhập Đoàn TNCS Hồ Chí Minh', e['Đoàn viên Đoàn TNCS Hồ Chí Minh'] && e['Ngày gia nhập Đoàn TNCS Hồ Chí Minh'] ? vn(e['Ngày gia nhập Đoàn TNCS Hồ Chí Minh']) : '—']];
   }
   function ksbOtherHtml(e) { return '<div class="dr-sec"><h4>THÔNG TIN KHÁC</h4><dl class="kv2">' + ksbOtherPairs(e).map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></div>'; }
   function ksbPrintButton(u, id) { return '<button class="btn btn-sm" data-act="ksb-print" data-u="' + esc(u.id) + '" data-id="' + esc(id) + '">In hồ sơ / Xuất PDF</button>'; }
@@ -8404,10 +8413,10 @@ if (typeof module !== 'undefined') module.exports = XW;
     var id = e['Mã NV'], degrees = ksbQtRows(u, id, 'Học vấn'), certs = ksbQtRows(u, id, 'Chứng chỉ'), jobs = ksbQtRows(u, id, 'Công tác trước');
     var stats = [['Thâm niên tại KSB', ksbTenure(e, HR.isoToday())], ['Kinh nghiệm ghi nhận', ksbDuration(ksbUnionDays(jobs))], ['Văn bằng', degrees.length], ['Chứng chỉ chuyên môn', certs.length], ['Quá trình công tác', jobs.length]];
     var h = '<div class="card card-pad"><div class="card-head"><div><h3>Kinh nghiệm &amp; Học vấn</h3><p>Văn bằng, chứng chỉ và kinh nghiệm đã ghi nhận trong hồ sơ.</p></div><button class="btn btn-sm" data-act="ksb-catalog-edit" data-u="' + esc(u.id) + '">Danh mục</button></div><div class="mini-kpis">' + stats.map(function (x) { return '<div><span>' + x[0] + '</span><b style="font-size:16px">' + esc(x[1]) + '</b></div>'; }).join('') + '</div>';
-    [['Văn bằng', degrees, 'Học vấn'], ['Chứng chỉ chuyên môn', certs, 'Chứng chỉ'], ['Kinh nghiệm công tác', jobs, 'Công tác trước']].forEach(function (group) {
+    [['Văn bằng', degrees, 'Học vấn'], ['Chứng chỉ chuyên môn', certs, 'Chứng chỉ'], ['Quá trình công tác', jobs, 'Công tác trước']].forEach(function (group) {
       var rows = group[1].slice().sort(function (a, b) { return cmp(b['Đến ngày'] || ymKey(b['Đến tháng']) || b['Ngày cấp'] || b['Năm tốt nghiệp'] || '', a['Đến ngày'] || ymKey(a['Đến tháng']) || a['Ngày cấp'] || a['Năm tốt nghiệp'] || ''); });
-      h += '<div class="dr-sec"><div class="card-head"><h4>' + group[0] + '</h4><button class="btn btn-sm" data-act="qt-edit" data-u="' + esc(u.id) + '" data-id="' + esc(id) + '" data-type="' + esc(group[2]) + '">+ Thêm ' + (group[2] === 'Học vấn' ? 'văn bằng' : group[2] === 'Chứng chỉ' ? 'chứng chỉ' : 'kinh nghiệm') + '</button></div>';
-      h += rows.length ? '<ol class="qt ksb-profile-qt">' + rows.map(function (row) { var time = row['Từ ngày'] ? vn(row['Từ ngày']) + ' – ' + vn(row['Đến ngày']) : ([ymTxt(row['Từ tháng']), ymTxt(row['Đến tháng'])].filter(Boolean).join(' – ') || row['Năm tốt nghiệp'] || (row['Ngày cấp'] ? vn(row['Ngày cấp']) : '')); return '<li><span class="qt-d">' + esc(time) + '</span><b>' + esc(ksbQtContent(row)) + '</b>' + (row['Ghi chú'] ? '<small>' + esc(row['Ghi chú']) + '</small>' : '') + '<button class="lnk qt-ed" data-act="qt-edit" data-u="' + esc(u.id) + '" data-id="' + esc(id) + '" data-row="' + esc(row['Mã dòng']) + '">Sửa</button></li>'; }).join('') + '</ol>' : '<p class="muted">Chưa có dữ liệu.</p>';
+      h += '<div class="dr-sec"><div class="card-head"><h4>' + group[0] + '</h4><button class="btn btn-sm" data-act="qt-edit" data-u="' + esc(u.id) + '" data-id="' + esc(id) + '" data-type="' + esc(group[2]) + '">+ Thêm ' + (group[2] === 'Học vấn' ? 'văn bằng' : group[2] === 'Chứng chỉ' ? 'chứng chỉ' : 'quá trình công tác') + '</button></div>';
+      h += rows.length ? '<ol class="qt ksb-profile-qt">' + rows.map(function (row) { var time = row['Loại quá trình'] === 'Công tác trước' ? ksbJobTime(row) : row['Từ ngày'] ? vn(row['Từ ngày']) + ' – ' + vn(row['Đến ngày']) : ([ymTxt(row['Từ tháng']), ymTxt(row['Đến tháng'])].filter(Boolean).join(' – ') || row['Năm tốt nghiệp'] || (row['Ngày cấp'] ? vn(row['Ngày cấp']) : '')); return '<li><span class="qt-d">' + esc(time) + '</span><b>' + esc(ksbQtContent(row)) + '</b>' + (row['Ghi chú'] ? '<small>' + esc(row['Ghi chú']) + '</small>' : '') + '<button class="lnk qt-ed" data-act="qt-edit" data-u="' + esc(u.id) + '" data-id="' + esc(id) + '" data-row="' + esc(row['Mã dòng']) + '">Sửa</button></li>'; }).join('') + '</ol>' : '<p class="muted">Chưa có dữ liệu.</p>';
       h += '</div>';
     }); return h + '</div>';
   }
@@ -8430,14 +8439,15 @@ if (typeof module !== 'undefined') module.exports = XW;
       var h = '';
       if (t === 'Học vấn') h = sel('kLevel', 'Trình độ *', catalog.levels, r['Trình độ'] || r['Nội dung']) + ksbMajorField(catalog, r['Chuyên ngành đào tạo']) + field('kSchool', 'Đơn vị đào tạo *', r['Đơn vị đào tạo'] || r['Nơi']) + field('kYear', 'Năm tốt nghiệp *', r['Năm tốt nghiệp'], ' inputmode="numeric" maxlength="4"');
       else if (t === 'Chứng chỉ') h = field('kCert', 'Tên chứng chỉ *', r['Tên chứng chỉ'] || r['Nội dung']) + field('kSchool', 'Đơn vị đào tạo *', r['Đơn vị đào tạo'] || r['Nơi']) + dbox('kIssued', r['Ngày cấp'], 'Ngày cấp *') + dbox('kExpiry', r['Ngày hết hạn'], 'Ngày hết hạn') + '<div class="field"><label>Trạng thái</label><p id="kStatus">' + esc(ksbCertStatus(r, HR.isoToday())) + '</p></div>';
-      else h = dbox('kFrom', r['Từ ngày'], 'Từ ngày *') + dbox('kTo', r['Đến ngày'], 'Đến ngày *') + field('kEmployer', 'Đơn vị công tác *', r['Đơn vị công tác'] || r['Nơi']) + field('kPosition', 'Vị trí việc làm *', r['Vị trí việc làm'] || r['Nội dung']);
+      else h = dbox('kFrom', r['Từ ngày'], 'Từ ngày *') + '<div>' + dbox('kTo', r['Đến ngày'], 'Đến ngày') + '<label class="radio"><input type="checkbox" id="kCurrent"' + (r['Đến nay'] ? ' checked' : '') + '> Đến nay</label></div>' + field('kEmployer', 'Đơn vị công tác *', r['Đơn vị công tác'] || r['Nơi']) + field('kPosition', 'Vị trí việc làm *', r['Vị trí việc làm'] || r['Nội dung']);
       return '<div class="form-grid">' + h + (t === 'Học vấn' ? field('kNote', 'Ghi chú', r['Ghi chú']) : '') + '</div>';
     }
-    m = modal((rk ? 'Sửa ' : 'Thêm ') + (type === 'Học vấn' ? 'văn bằng' : type === 'Chứng chỉ' ? 'chứng chỉ' : 'kinh nghiệm'), e['Họ và tên'], sel('kType', 'Loại', ['Học vấn', 'Chứng chỉ', 'Công tác trước'], type) + (rk && !row['Trình độ'] && !row['Tên chứng chỉ'] && !row['Vị trí việc làm'] ? '<p class="faint">Dữ liệu cũ vẫn giữ nguyên. Bổ sung các trường còn thiếu khi lưu theo biểu mẫu mới.</p>' : '') + '<div id="kFields">' + fields(type, row) + '</div><div class="link-row" style="justify-content:space-between">' + (rk ? '<button class="btn btn-danger-ghost" id="kDelete">Xóa mục này</button>' : '<span></span>') + '<span class="link-row"><button class="btn" data-close>Hủy</button><button class="btn btn-primary" id="kSave">Lưu</button></span></div>');
+    m = modal((rk ? 'Sửa ' : 'Thêm ') + (type === 'Học vấn' ? 'văn bằng' : type === 'Chứng chỉ' ? 'chứng chỉ' : 'quá trình công tác'), e['Họ và tên'], sel('kType', 'Loại', ['Học vấn', 'Chứng chỉ', 'Công tác trước'], type).replace('>Công tác trước<', '>Quá trình công tác<') + (rk && !row['Trình độ'] && !row['Tên chứng chỉ'] && !row['Vị trí việc làm'] ? '<p class="faint">Dữ liệu cũ vẫn giữ nguyên. Bổ sung các trường còn thiếu khi lưu theo biểu mẫu mới.</p>' : '') + '<div id="kFields">' + fields(type, row) + '</div><div class="link-row" style="justify-content:space-between">' + (rk ? '<button class="btn btn-danger-ghost" id="kDelete">Xóa mục này</button>' : '<span></span>') + '<span class="link-row"><button type="button" class="btn" data-close>Đóng</button><button type="button" class="btn btn-primary" id="kSave">Lưu</button></span></div>');
     if (rk) $('#kType', m).disabled = true;
     function bind() {
       $$('.dbox', m).forEach(bindDbox);
       $('#kFields', m).oninput = function () { var status = $('#kStatus', m); if (status) status.textContent = ksbCertStatus({ 'Ngày hết hạn': $('#kExpiry', m)._get() }, HR.isoToday()); };
+      var current = $('#kCurrent', m); if (current) { var toggle = function () { $$('#kTo input', m).forEach(function (el) { el.disabled = current.checked; }); }; current.onchange = toggle; toggle(); }
       var add = $('#kMajorAdd', m); if (!add) return;
       var box = $('#kMajorQuick', m), name = $('#kMajorName', m), save = $('#kMajorSave', m), select = $('#kMajor', m);
       add.onclick = function () { if (pqRoNow()) return; box.hidden = false; name.focus(); };
@@ -8462,30 +8472,40 @@ if (typeof module !== 'undefined') module.exports = XW;
     bind();
     function val(id) { var el = $('#' + id, m); return el ? el.value.trim() : ''; }
     function date(id) { var el = $('#' + id, m); return el ? el._get() : ''; }
-    $('#kType', m).onchange = function () { drafts[type] = {}; $$('input, select', $('#kFields', m)).forEach(function (el) { if (el.id) drafts[type][el.id] = el.value; }); type = this.value; $('#kFields', m).innerHTML = fields(type, {}); bind(); Object.keys(drafts[type] || {}).forEach(function (id) { var el = $('#' + id, m); if (el) el.value = drafts[type][id]; }); };
-    $('#kSave', m).onclick = function () {
+    $('#kType', m).onchange = function () { drafts[type] = {}; $$('input, select', $('#kFields', m)).forEach(function (el) { if (el.id) drafts[type][el.id] = el.type === 'checkbox' ? el.checked : el.value; }); type = this.value; $('#kFields', m).innerHTML = fields(type, {}); bind(); Object.keys(drafts[type] || {}).forEach(function (id) { var el = $('#' + id, m); if (el) { if (el.type === 'checkbox') { el.checked = drafts[type][id]; if (el.onchange) el.onchange(); } else el.value = drafts[type][id]; } }); };
+    var saving = false;
+    $('#kSave', m).onclick = async function () {
+      if (saving || pqRoNow()) return;
       var out = { 'Mã NV': e['Mã NV'], 'Họ và tên': e['Họ và tên'], 'Loại quá trình': type }, error = '';
       if (type === 'Học vấn') { Object.assign(out, { 'Trình độ': val('kLevel'), 'Chuyên ngành đào tạo': val('kMajor'), 'Đơn vị đào tạo': val('kSchool'), 'Năm tốt nghiệp': val('kYear'), 'Ghi chú': val('kNote'), 'Nội dung': val('kLevel'), 'Nơi': val('kSchool') }); if (!out['Trình độ'] || !out['Chuyên ngành đào tạo'] || !out['Đơn vị đào tạo']) error = 'Chọn trình độ, chuyên ngành và nhập đơn vị đào tạo.'; else if (!/^\d{4}$/.test(out['Năm tốt nghiệp']) || +out['Năm tốt nghiệp'] < 1900 || +out['Năm tốt nghiệp'] > +HR.isoToday().slice(0, 4)) error = 'Năm tốt nghiệp chưa hợp lệ.'; }
       else if (type === 'Chứng chỉ') { Object.assign(out, { 'Tên chứng chỉ': val('kCert'), 'Đơn vị đào tạo': val('kSchool'), 'Ngày cấp': date('kIssued'), 'Ngày hết hạn': date('kExpiry'), 'Nội dung': val('kCert'), 'Nơi': val('kSchool') }); if (!out['Tên chứng chỉ'] || !out['Đơn vị đào tạo'] || !out['Ngày cấp'] || out['Ngày hết hạn'] === null) error = 'Nhập tên chứng chỉ, đơn vị đào tạo và ngày cấp hợp lệ.'; else if (out['Ngày hết hạn'] && out['Ngày hết hạn'] < out['Ngày cấp']) error = 'Ngày hết hạn trước ngày cấp.'; }
-      else { Object.assign(out, { 'Từ ngày': date('kFrom'), 'Đến ngày': date('kTo'), 'Đơn vị công tác': val('kEmployer'), 'Vị trí việc làm': val('kPosition'), 'Nội dung': val('kPosition'), 'Nơi': val('kEmployer') }); if (!out['Đơn vị công tác'] || !out['Vị trí việc làm'] || !ksbRange(out)) error = 'Nhập đơn vị, vị trí và khoảng ngày công tác hợp lệ.'; }
+      else { Object.assign(out, { 'Từ ngày': date('kFrom'), 'Đến ngày': $('#kCurrent', m).checked ? '' : date('kTo'), 'Đến nay': $('#kCurrent', m).checked, 'Đơn vị công tác': val('kEmployer'), 'Vị trí việc làm': val('kPosition'), 'Nội dung': val('kPosition'), 'Nơi': val('kEmployer') }); if (!out['Đơn vị công tác'] || !out['Vị trí việc làm'] || out['Từ ngày'] === null || out['Đến ngày'] === null || !ksbRange(Object.assign({}, row, out))) error = 'Nhập đơn vị, vị trí và khoảng ngày công tác hợp lệ.'; }
       if (error) { toast(error, 'err'); return; }
       var key = rk || 'QT' + crypto.randomUUID().replace(/-/g, ''); out['Mã dòng'] = key;
-      editRow(u, 'QT', key, out, e['Họ và tên'] + ' – ' + (rk ? 'sửa' : 'thêm') + ' ' + type); m.close(); commitEdits();
+      saving = true; var button = $('#kSave', m); button.disabled = true; $('#kType', m).disabled = true; $('#kFields', m).inert = true;
+      try {
+        editRow(u, 'QT', key, out, e['Họ và tên'] + ' – ' + (rk ? 'sửa' : 'thêm') + ' ' + type);
+        await saveUnits(); ACACHE.key = null; render();
+        toast(type === 'Học vấn' ? 'Đã lưu văn bằng' : type === 'Chứng chỉ' ? 'Đã lưu chứng chỉ' : 'Đã lưu quá trình công tác', 'ok');
+        if (!rk) { drafts = {}; $('#kFields', m).innerHTML = fields(type, {}); bind(); var first = $('#kFields input, #kFields select', m); if (first) first.focus(); }
+      } catch (error) { toast('Chưa lưu được hồ sơ', 'err', error.message); }
+      finally { saving = false; button.disabled = false; $('#kType', m).disabled = !!rk; $('#kFields', m).inert = false; }
     };
+    m.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' || ev.isComposing || ev.defaultPrevented || ev.target.closest('#kMajorQuick') || /^(BUTTON|TEXTAREA)$/.test(ev.target.tagName)) return; ev.preventDefault(); if (!ev.repeat && !saving) $('#kSave', m).click(); });
     if (rk) $('#kDelete', m).onclick = function () { confirmBox('Xóa mục này?', row['Nội dung'] || '', 'Xóa', function () { delRow(u, 'QT', rk, e['Họ và tên'] + ' – xóa ' + type); m.close(); commitEdits(); }); };
   }
   function ksbPrintHtml(u, e, today) {
     var id = e['Mã NV'], degrees = ksbQtRows(u, id, 'Học vấn'), certs = ksbQtRows(u, id, 'Chứng chỉ'), jobs = ksbQtRows(u, id, 'Công tác trước').slice().sort(function (a, b) { return cmp(b['Đến ngày'] || ymKey(b['Đến tháng']) || '', a['Đến ngày'] || ymKey(a['Đến tháng']) || ''); });
     var html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Hồ sơ ' + esc(id) + '</title><style>' +
-      '@page{size:A4;margin:14mm 15mm}*{box-sizing:border-box}body{margin:0;color:#182c43;font:10pt/1.35 Arial,sans-serif;background:#fff}header{border-bottom:2px solid #195ba4;padding-bottom:9px;display:flex;align-items:center;gap:18px}.logo{font-size:26pt;font-weight:800;color:#195ba4;letter-spacing:-1px}.company{font-weight:700;font-size:10pt}.internal{font-size:8pt;letter-spacing:1px;color:#5e7186;margin-top:3px}.title{text-align:center;margin:10px 0}.title h1{font-size:17pt;color:#174e80;margin:4px 0 8px}.title p{margin:0;color:#526b84;font-size:9pt}h2{font-size:11pt;color:#174e80;border-bottom:1px solid #9bb8d5;padding-bottom:5px;margin:10px 0 5px;break-after:avoid-page}h3{font-size:10pt;margin:9px 0 5px;break-after:avoid-page}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:9pt;margin-bottom:7px}th,td{border:1px solid #cedae5;padding:4px 6px;vertical-align:top;overflow-wrap:anywhere;white-space:pre-wrap}th{background:#edf3f8;color:#355674;font-weight:700;text-align:left}thead{display:table-header-group}tr{break-inside:avoid-page;page-break-inside:avoid}tbody tr{orphans:2;widows:2}.qualifications{break-inside:avoid-page}.kv th{width:19%}.kv td{width:31%;font-weight:600}.empty{color:#65778a;margin:6px 0 9px;font-size:9pt}p{orphans:3;widows:3}.sign{display:flex;gap:24px;margin-top:14px;break-inside:avoid-page;min-height:65px;text-align:center}.sign div{flex:1}.sign b{font-size:9pt}.sign p{font-size:9pt;margin:5px 0}footer{border-top:1px solid #d2dce6;padding-top:6px;color:#64778c;font-size:8pt;margin-top:10px}@media screen{body{max-width:210mm;padding:14mm 15mm;margin:auto;box-shadow:0 1px 15px #ccd4df}}@media print{body{padding:0;box-shadow:none}}</style></head><body>' +
-      '<header><div class="logo">KSB</div><div><div class="company">CÔNG TY CỔ PHẦN KHOÁNG SẢN VÀ XÂY DỰNG BÌNH DƯƠNG</div><div class="internal">TÀI LIỆU NỘI BỘ · HỒ SƠ CÁN BỘ, NHÂN VIÊN</div></div></header><div class="title"><h1>HỒ SƠ NHÂN SỰ TỔNG HỢP</h1><p>Đơn vị: ' + esc(u.name) + ' · Lập ngày: ' + esc(vn(today)) + '</p></div>';
+      '@page{size:A4;margin:14mm 15mm}*{box-sizing:border-box}body{margin:0;color:#182c43;font:10pt/1.35 Arial,sans-serif;background:#fff}header{border-bottom:2px solid #195ba4;padding-bottom:9px;display:flex;align-items:center;gap:18px}.logo{max-width:52mm;min-width:25mm;font-size:11pt;font-weight:700;color:#195ba4}.logo img{display:block;width:38mm;height:18mm;object-fit:contain;object-position:left center}.company{font-weight:700;font-size:10pt}.internal{font-size:8pt;letter-spacing:1px;color:#5e7186;margin-top:3px}.title{text-align:center;margin:10px 0}.title h1{font-size:17pt;color:#174e80;margin:4px 0 8px}.title p{margin:0;color:#526b84;font-size:9pt}h2{font-size:11pt;color:#174e80;border-bottom:1px solid #9bb8d5;padding-bottom:5px;margin:10px 0 5px;break-after:avoid-page}h3{font-size:10pt;margin:9px 0 5px;break-after:avoid-page}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:9pt;margin-bottom:7px}th,td{border:1px solid #cedae5;padding:4px 6px;vertical-align:top;overflow-wrap:anywhere;white-space:pre-wrap}th{background:#edf3f8;color:#355674;font-weight:700;text-align:left}thead{display:table-header-group}tr{break-inside:avoid-page;page-break-inside:avoid}tbody tr{orphans:2;widows:2}.kv th{width:19%}.kv td{width:31%;font-weight:600}.empty{color:#65778a;margin:6px 0 9px;font-size:9pt}p{orphans:3;widows:3}.sign{display:flex;gap:24px;margin-top:14px;break-inside:avoid-page;min-height:65px;text-align:center}.sign div{flex:1}.sign b{font-size:9pt}.sign p{font-size:9pt;margin:5px 0}footer{border-top:1px solid #d2dce6;padding-top:6px;color:#64778c;font-size:8pt;margin-top:10px}@media screen{body{max-width:210mm;padding:14mm 15mm;margin:auto;box-shadow:0 1px 15px #ccd4df}}@media print{body{padding:0;box-shadow:none}}</style></head><body>' +
+      '<header><div class="logo">' + (uLogoOf(u) ? '<img src="' + esc(uLogoOf(u)) + '" alt="Logo công ty">' : esc(u.name)) + '</div><div><div class="company">' + esc(u.name) + '</div><div class="internal">TÀI LIỆU NỘI BỘ · HỒ SƠ CÁN BỘ, NHÂN VIÊN</div></div></header><div class="title"><h1>HỒ SƠ NHÂN SỰ TỔNG HỢP</h1><p>Đơn vị: ' + esc(u.name) + ' · Lập ngày: ' + esc(vn(today)) + '</p></div>';
     function table(headers, rows) { if (!rows.length) return '<p class="empty">Chưa có dữ liệu.</p>'; return '<table><thead><tr>' + headers.map(function (x) { return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (row) { return '<tr>' + row.map(function (x) { return '<td>' + esc(x == null || x === '' ? '—' : x) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>'; }
-    function kv(pairs) { var rows = []; for (var i = 0; i < pairs.length; i += 2) { var a = pairs[i], b = pairs[i + 1] || ['', '']; rows.push('<tr><th>' + esc(a[0]) + '</th><td>' + esc(a[1] || '—') + '</td><th>' + esc(b[0]) + '</th><td>' + esc(b[1] || '—') + '</td></tr>'); } return '<table class="kv"><tbody>' + rows.join('') + '</tbody></table>'; }
+    function kv(pairs) { var rows = []; for (var i = 0; i < pairs.length; i += 2) { var a = pairs[i], b = pairs[i + 1] || ['', '']; rows.push('<tr><th>' + esc(a[0]) + '</th><td>' + esc(a[1] == null || a[1] === '' ? '—' : a[1]) + '</td><th>' + esc(b[0]) + '</th><td>' + esc(b[1] == null || b[1] === '' ? '—' : b[1]) + '</td></tr>'); } return '<table class="kv"><tbody>' + rows.join('') + '</tbody></table>'; }
     var st = HR.staffState(e, today, HR.maternitySet(u.data, today));
-    html += '<h2>I. Thông tin nhân viên</h2>' + kv([['Mã nhân viên', id], ['Họ và tên', e['Họ và tên']], ['Công ty', u.name], ['Phòng ban', e['Phòng ban']], ['Chức vụ', e['Chức vụ']], ['Chức danh', e['Chức danh công việc']], ['Ngày vào làm', vn(e['Ngày vào làm'])], ['Thâm niên', ksbTenure(e, today)], ['Trạng thái làm việc', ST_TXT[st] || e['Trạng thái']], ['Ngày nghỉ việc', vn(e['Ngày nghỉ việc'])], ['Ngày sinh', vn(e['Ngày sinh'])], ['Giới tính', e['Giới tính']], ['Điện thoại', e['Số điện thoại']], ['Email', e['Email công ty']], ['Địa chỉ thường trú', e['Địa chỉ thường trú']], ['Quê quán', e['Quê quán']], ['Dân tộc', e['Dân tộc']], ['Tình trạng hôn nhân', e['Tình trạng hôn nhân']]].filter(function (x) { return ['Địa chỉ thường trú', 'Quê quán', 'Dân tộc', 'Tình trạng hôn nhân'].indexOf(x[0]) < 0 || x[1]; })) + '<h3>Thông tin khác</h3>' + kv(ksbOtherPairs(e));
+    html += '<h2>I. Thông tin chung</h2>' + kv([['Mã nhân viên', id], ['Họ và tên', e['Họ và tên']], ['Công ty', u.name], ['Phòng ban', e['Phòng ban']], ['Chức vụ', e['Chức vụ']], ['Chức danh', e['Chức danh công việc']], ['Ngày vào làm', vn(e['Ngày vào làm'])], ['Thâm niên', ksbTenure(e, today)], ['Trạng thái làm việc', ST_TXT[st] || e['Trạng thái']], ['Ngày nghỉ việc', vn(e['Ngày nghỉ việc'])], ['Ngày sinh', vn(e['Ngày sinh'])], ['Giới tính', e['Giới tính']], ['Điện thoại', e['Số điện thoại']], ['Email', e['Email công ty']], ['Địa chỉ thường trú', e['Địa chỉ thường trú']], ['Quê quán', e['Quê quán']], ['Dân tộc', e['Dân tộc']], ['Tình trạng hôn nhân', e['Tình trạng hôn nhân']], ['Số người phụ thuộc', e['Số người phụ thuộc']], ['Số con ≤ 6 tuổi', e['Số con từ 6 tuổi trở xuống']]].filter(function (x) { return ['Địa chỉ thường trú', 'Quê quán', 'Dân tộc', 'Tình trạng hôn nhân'].indexOf(x[0]) < 0 || x[1]; })) + '<h3>Thông tin khác</h3>' + kv(ksbOtherPairs(e));
     var contracts = (u.data.HD || []).filter(function (x) { return x['Mã NV'] === id; });
     html += '<h2>II. Hợp đồng lao động</h2>' + table(['Số hợp đồng', 'Loại hợp đồng', 'Ngày hiệu lực', 'Ngày hết hạn', 'Trạng thái'], contracts.map(function (x) { return [x['Số hợp đồng'], x['Loại hợp đồng'], vn(x['Ngày hiệu lực']), vn(x['Ngày hết hạn']), HRR.contractState(x, HR.dnum(today))]; }));
-    html += '<section class="qualifications"><h2>III. Quá trình công tác</h2><p class="empty">Tổng kinh nghiệm ghi nhận (đã gộp khoảng trùng): ' + esc(ksbDuration(ksbUnionDays(jobs))) + '</p>' + table(['Thời gian', 'Đơn vị công tác', 'Vị trí việc làm'], jobs.map(function (x) { return [x['Từ ngày'] ? vn(x['Từ ngày']) + ' – ' + vn(x['Đến ngày']) : [ymTxt(x['Từ tháng']), ymTxt(x['Đến tháng'])].filter(Boolean).join(' – '), x['Đơn vị công tác'] || x['Nơi'], x['Vị trí việc làm'] || x['Nội dung']]; }));
+    html += '<section class="qualifications"><h2>III. Quá trình công tác</h2><p class="empty">Tổng kinh nghiệm ghi nhận (đã gộp khoảng trùng): ' + esc(ksbDuration(ksbUnionDays(jobs))) + '</p>' + table(['Thời gian', 'Đơn vị công tác', 'Vị trí việc làm'], jobs.map(function (x) { return [ksbJobTime(x), x['Đơn vị công tác'] || x['Nơi'], x['Vị trí việc làm'] || x['Nội dung']]; }));
     var moves = dcList(u, id);
     if (moves.length) html += '<h3>Điều chuyển, bổ nhiệm tại công ty</h3>' + table(['Ngày hiệu lực', 'Phòng ban', 'Chức danh'], moves.map(function (x) { return [vn(x.ngay), x.pbMoi, x.cdMoi]; }));
     html += '<h2>IV. Trình độ chuyên môn</h2>' + table(['Trình độ', 'Chuyên ngành', 'Đơn vị đào tạo', 'Năm tốt nghiệp'], degrees.map(function (x) { return [x['Trình độ'] || x['Nội dung'], x['Chuyên ngành đào tạo'], x['Đơn vị đào tạo'] || x['Nơi'], x['Năm tốt nghiệp']]; }));
@@ -8499,12 +8519,12 @@ if (typeof module !== 'undefined') module.exports = XW;
     var u = unitById(a.getAttribute('data-u')), e = nvIndex(u)[id]; if (!e) return;
     var m = modal('Xem trước hồ sơ nhân sự', 'Khổ A4. Chọn “Lưu dưới dạng PDF” trong hộp thoại in; tắt đầu trang/chân trang của trình duyệt để bỏ URL và ngày giờ.', '<div class="link-row" style="justify-content:flex-end"><button class="btn" data-close>Đóng</button><button class="btn btn-primary" id="ksbPrintNow">In / Lưu PDF</button></div><iframe id="ksbPrintPreview" title="Bản in hồ sơ nhân sự" style="width:100%;height:70vh;border:1px solid var(--line);background:#eef2f6"></iframe>');
     m.querySelector('.modal').classList.add('lg'); var frame = $('#ksbPrintPreview', m); frame.srcdoc = ksbPrintHtml(u, e, HR.isoToday());
-    $('#ksbPrintNow', m).onclick = function () { frame.contentWindow.focus(); frame.contentWindow.print(); };
+    $('#ksbPrintNow', m).onclick = async function () { var doc = frame.contentDocument; if (!doc || doc.readyState !== 'complete') { toast('Bản xem trước đang tải, vui lòng thử lại.', 'err'); return; } var button = this; button.disabled = true; try { await Promise.all(Array.from(doc.images).map(function (img) { return img.decode ? img.decode().catch(function () {}) : Promise.resolve(); })); if (doc.fonts) await doc.fonts.ready; frame.contentWindow.focus(); frame.contentWindow.print(); } finally { button.disabled = false; } };
   };
   /* End KSB personnel profile. */
 
   // ---------- Hồ sơ từng người ----------
-  var QT_T = ['Học vấn', 'Chứng chỉ', 'Công tác trước', 'Khen thưởng', 'Kỷ luật'];
+  var QT_T = ['Khen thưởng', 'Khiển trách', 'Kỷ luật'];
   function ymTxt(v) { v = String(v || ''); var m = /^(\d{1,2})\/(\d{4})$/.exec(v); if (m) return (m[1].length < 2 ? '0' : '') + m[1] + '/' + m[2]; m = /^(\d{4})-(\d{2})/.exec(v); return m ? m[2] + '/' + m[1] : v; }
   function ymKey(v) { var t = ymTxt(v), m = /^(\d{2})\/(\d{4})$/.exec(t); return m ? m[2] + '-' + m[1] : ''; }
   function hsPerson(people, f) {
@@ -8598,22 +8618,15 @@ if (typeof module !== 'undefined') module.exports = XW;
     h += '<div class="card card-pad"><div class="card-head"><div><h3>Thông tin cơ bản</h3><p>' + (g.info.length ? 'Còn trống ' + g.info.length + '/' + NEED.length : 'Đủ ' + NEED.length + ' thông tin cần cho hợp đồng, BHXH, trả lương') + '</p></div><button class="btn btn-sm" data-sens-hs>' + (S.showSens ? 'Ẩn số' : 'Hiện số') + '</button></div><dl class="kv2">' +
       kvRows(e, [['Giới tính'], ['Ngày sinh'], ['Số CCCD/Mã số thuế', 'Số CCCD / MST', 1], ['Ngày cấp CCCD'], ['Dân tộc'], ['Quê quán'], ['Địa chỉ thường trú'], ['Tình trạng hôn nhân'], ['Số người phụ thuộc'], ['Số sổ BHXH', 'Số sổ BHXH', 1], ['Ngân hàng'], ['Số tài khoản', 'Số tài khoản', 1], ['Chức vụ'], ['Tổ/Ca'], ['Mã chấm công']]) + ksbEducationInfo(u, e) + '</dl></div></div>';
     h += ksbOtherHtml(e);
-    // quá trình
-    var ev = (d.QT || []).filter(function (x) { return x['Mã NV'] === id; }).map(function (x) { return { k: ymKey(x['Từ tháng']) || '0000', t: ymTxt(x['Từ tháng']) + (x['Đến tháng'] && x['Đến tháng'] !== x['Từ tháng'] ? ' – ' + ymTxt(x['Đến tháng']) : ''), ty: x['Loại quá trình'], b: x['Nội dung'], s: x['Nơi'] || '', row: x }; });
-    if (e['Ngày vào làm']) ev.push({ k: e['Ngày vào làm'], t: vn(e['Ngày vào làm']), ty: 'Tại công ty', b: 'Vào làm – ' + (e['Phòng ban'] || ''), s: '' });
-    hds.forEach(function (x) { ev.push({ k: x['Ngày hiệu lực'] || x['Ngày ký'], t: vn(x['Ngày hiệu lực'] || x['Ngày ký']), ty: 'Tại công ty', b: x['Loại hợp đồng'] + ' số ' + (x['Số hợp đồng'] || ''), s: (x['Ngày hết hạn'] ? 'đến ' + vn(x['Ngày hết hạn']) : 'không thời hạn') + (x['Mức lương theo HĐ'] ? ' · lương ' + money(x['Mức lương theo HĐ']) : '') }); });
-    (HRR.lsOf(d)[id] || []).forEach(function (x) { if (x['Lương cũ']) ev.push({ k: x['Ngày hiệu lực'], t: vn(x['Ngày hiệu lực']), ty: 'Tại công ty', b: 'Điều chỉnh lương ' + money(x['Lương cũ']) + ' → ' + money(x['Lương mới']), s: x['Lý do'] || '' }); });
-    if (e['Ngày nghỉ việc']) ev.push({ k: e['Ngày nghỉ việc'], t: vn(e['Ngày nghỉ việc']), ty: 'Tại công ty', b: 'Nghỉ việc', s: e['Lý do nghỉ việc'] || '' });
-    ev.sort(function (a, b) { return cmp(b.k, a.k); });
+    var ev = ksbMilestones(u, id);
     var nH = khoCount(u, id, 'hoso'), nD = khoCount(u, id, 'hd');
     h += '<div class="card card-pad"><div class="card-head"><div><h3>Kho lưu trữ</h3><p>Bản scan, ảnh chụp giấy tờ và hợp đồng đã ký của ' + esc(shortName(e['Họ và tên'])) + ' – bấm để mở thư mục</p></div></div><div class="kho-tiles">' +
       '<button type="button" class="kho-tile" data-act="kho" data-k="hoso" data-u="' + u.id + '" data-id="' + esc(id) + '">' + ic('folder', 28) + '<span><b>Hồ sơ</b><small>' + (nH ? nH + ' file' : 'Chưa có file') + '</small></span></button>' +
       '<button type="button" class="kho-tile" data-act="kho" data-k="hd" data-u="' + u.id + '" data-id="' + esc(id) + '">' + ic('folder', 28) + '<span><b>Hợp đồng đã ký</b><small>' + (nD ? nD + ' file' : 'Chưa có file') + '</small></span></button></div></div>';
     if (typeof tsProfileCard === 'function') h += tsProfileCard(u, id); // 16/11: thiết bị, tài sản đang giữ
     h += ksbExperienceHtml(u, e);
-    ev = ev.filter(function (x) { return !x.row || ['Học vấn', 'Chứng chỉ', 'Công tác trước'].indexOf(x.ty) < 0; });
     var QC = { 'Học vấn': 'info', 'Chứng chỉ': 'info', 'Công tác trước': 'mute', 'Khen thưởng': 'ok', 'Kỷ luật': 'bad', 'Tại công ty': 'pri' };
-    h += '<div class="card card-pad"><div class="card-head"><div><h3>Các mốc tại công ty</h3><p>Các mốc từ hồ sơ, hợp đồng, quyết định lương; giữ nguyên khen thưởng và kỷ luật đã ghi nhận.</p></div><button class="btn btn-sm" data-act="qt-edit" data-u="' + u.id + '" data-id="' + esc(id) + '">+ Thêm mục</button></div>' +
+    h += '<div class="card card-pad"><div class="card-head"><div><h3>Các mốc tại công ty</h3><p>Khen thưởng, khiển trách và kỷ luật · mới nhất ở trên.</p></div><button class="btn btn-sm" data-act="qt-edit" data-u="' + u.id + '" data-id="' + esc(id) + '">+ Thêm mục</button></div>' +
       (ev.length ? '<ol class="qt">' + ev.map(function (x) { return '<li class="qt-' + (QC[x.ty] || 'mute') + '"><span class="qt-d">' + esc(x.t) + '</span><span class="qt-ty">' + esc(x.ty) + '</span><b>' + esc(x.b) + '</b>' + (x.s ? '<small>' + esc(x.s) + '</small>' : '') + (x.row ? '<button class="lnk qt-ed" data-act="qt-edit" data-u="' + u.id + '" data-id="' + esc(id) + '" data-row="' + esc(x.row['Mã dòng']) + '">Sửa</button>' : '') + '</li>'; }).join('') + '</ol>' : '<p class="muted">Chưa có mục nào.</p>') + '</div>';
     // hợp đồng & lương tóm tắt
     h += '<div class="card card-pad"><div class="card-head"><div><h3>Hợp đồng, lương</h3></div><span class="link-row" style="margin:0"><button class="btn btn-sm" data-act="kho" data-k="hd" data-u="' + u.id + '" data-id="' + esc(id) + '">' + ic('folder', 15) + 'Bản đã ký (' + nD + ')</button><button class="btn btn-sm" data-act="hd-of" data-u="' + u.id + '" data-id="' + esc(id) + '">Xem ở trang Hợp đồng</button></span></div><dl class="kv2"><dt>Hợp đồng hiện tại</dt><dd>' + (cur ? esc(cur['Loại hợp đồng'] + ' số ' + cur['Số hợp đồng'] + ' · ' + HRR.contractState(cur, r) + (cur['Ngày hết hạn'] ? ' · hết hạn ' + vn(cur['Ngày hết hạn']) : '')) : '<span class="miss">Chưa có</span>') + '</dd>' +
@@ -8629,23 +8642,25 @@ if (typeof module !== 'undefined') module.exports = XW;
   ACTS['qt-edit'] = function (a, id) {
     var u = unitById(a.getAttribute('data-u')), e = nvIndex(u)[id], rk = a.getAttribute('data-row'), row = rk ? (u.data.QT || []).filter(function (x) { return x['Mã dòng'] === rk; })[0] : null; row = row || {};
     if (a.getAttribute('data-type') || ['Học vấn', 'Chứng chỉ', 'Công tác trước'].indexOf(row['Loại quá trình']) >= 0) return ksbQtEditor(u, e, rk, row, a.getAttribute('data-type'));
-    var body = '<div class="form-grid">' + sel('qtT', 'Loại', QT_T.filter(function (t) { return ['Học vấn', 'Chứng chỉ', 'Công tác trước'].indexOf(t) < 0; }), row['Loại quá trình'] || 'Khen thưởng') + field('qtF', 'Từ tháng (mm/yyyy)', ymTxt(row['Từ tháng']), ' inputmode="numeric" maxlength="7"') + field('qtTo', 'Đến tháng (mm/yyyy)', ymTxt(row['Đến tháng']), ' inputmode="numeric" maxlength="7"') +
-      field('qtN', 'Nơi', row['Nơi']) + '<div class="field span2"><label for="qtC">Nội dung <i class="req">*</i></label><input class="input" id="qtC" value="' + esc(row['Nội dung'] || '') + '"></div>' + field('qtG', 'Ghi chú', row['Ghi chú']) + '</div>' +
-      '<div class="link-row" style="justify-content:space-between">' + (rk ? '<button class="btn btn-danger-ghost" id="qtDel">Xóa mục này</button>' : '<span></span>') + '<span class="link-row" style="margin:0"><button class="btn" data-close>Hủy</button><button class="btn btn-primary" id="qtOk">Lưu</button></span></div>';
-    var m = modal(rk ? 'Sửa mục quá trình' : 'Thêm mục quá trình', e['Họ và tên'], body);
-    ['qtF', 'qtTo'].forEach(function (k) { var el = $('#' + k, m); el.addEventListener('input', function () { var v = el.value.replace(/\D/g, '').slice(0, 6); el.value = v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v; el.classList.remove('bad'); }); });
-    $('#qtOk', m).addEventListener('click', function () {
-      var F = $('#qtF', m).value, T = $('#qtTo', m).value, c = $('#qtC', m).value.trim();
-      var okYm = function (v) { return !v || /^(0[1-9]|1[0-2])\/(19|20)\d{2}$/.test(v); };
-      if (!okYm(F)) { $('#qtF', m).classList.add('bad'); toast('Từ tháng chưa đúng', 'err', 'Dạng mm/yyyy, ví dụ 09/2018.'); return; }
-      if (!okYm(T)) { $('#qtTo', m).classList.add('bad'); toast('Đến tháng chưa đúng', 'err', 'Dạng mm/yyyy.'); return; }
-      if (F && T && ymKey(T) < ymKey(F)) { $('#qtTo', m).classList.add('bad'); toast('Đến tháng trước Từ tháng', 'err'); return; }
-      if (!c) { $('#qtC', m).classList.add('bad'); toast('Chưa có nội dung', 'err'); return; }
-      var key = rk; if (!key) { var mx = 0; (u.data.QT || []).forEach(function (x) { var mm = /(\d+)$/.exec(x['Mã dòng'] || ''); if (mm) mx = Math.max(mx, +mm[1]); }); key = 'QT' + ('00' + (mx + 1)).slice(-3); }
-      var t = $('#qtT', m).value || 'Học vấn';
-      editRow(u, 'QT', key, { 'Mã dòng': key, 'Mã NV': id, 'Họ và tên': e['Họ và tên'], 'Loại quá trình': t, 'Từ tháng': F, 'Đến tháng': T, 'Nội dung': c, 'Nơi': $('#qtN', m).value.trim(), 'Ghi chú': $('#qtG', m).value.trim() }, e['Họ và tên'] + ' – ' + (rk ? 'sửa' : 'thêm') + ' quá trình: ' + t + ' – ' + c);
+    if (pqRoNow()) return;
+    var legacyMonth = rk && !row['Ngày'] && row['Từ tháng'];
+    var body = '<div class="form-grid">' + sel('qtT', 'Loại mốc', QT_T, row['Loại quá trình'] || 'Khen thưởng') + dbox('qtDate', row['Ngày'], 'Ngày tháng năm *') +
+      (legacyMonth ? '<p class="faint">Dữ liệu cũ chỉ ghi tháng/năm: ' + esc(ymTxt(row['Từ tháng'])) + '. Có thể giữ nguyên độ chính xác này khi sửa; không tự gán ngày.</p>' : '') +
+      field('qtC', 'Nội dung *', row['Nội dung']) + field('qtG', 'Ghi chú', row['Ghi chú']) + '</div><div class="link-row" style="justify-content:space-between">' + (rk ? '<button class="btn btn-danger-ghost" id="qtDel">Xóa mục này</button>' : '<span></span>') + '<span class="link-row"><button class="btn" data-close>Đóng</button><button class="btn btn-primary" id="qtOk">Lưu</button></span></div>';
+    var m = modal(rk ? 'Sửa mốc tại công ty' : 'Thêm mốc tại công ty', e['Họ và tên'], body);
+    $$('.dbox', m).forEach(bindDbox);
+    $('#qtOk', m).onclick = function () {
+      if (pqRoNow()) return;
+      var date = $('#qtDate', m)._get(), content = $('#qtC', m).value.trim(), type = $('#qtT', m).value;
+      if (date === null || (!date && !legacyMonth)) { toast('Nhập ngày tháng năm hợp lệ', 'err'); $('#qtDate-d', m).focus(); return; }
+      if (!content) { toast('Nội dung là trường bắt buộc', 'err'); $('#qtC', m).focus(); return; }
+      if (QT_T.indexOf(type) < 0) return;
+      var key = rk || 'QT' + crypto.randomUUID().replace(/-/g, '');
+      var out = { 'Mã dòng': key, 'Mã NV': id, 'Họ và tên': e['Họ và tên'], 'Loại quá trình': type, 'Nội dung': content, 'Ghi chú': $('#qtG', m).value.trim() };
+      if (date) out['Ngày'] = date;
+      editRow(u, 'QT', key, out, e['Họ và tên'] + ' – ' + (rk ? 'sửa' : 'thêm') + ' mốc: ' + type);
       m.close(); commitEdits();
-    });
+    };
     var dl = $('#qtDel', m); if (dl) dl.addEventListener('click', function () { confirmBox('Xóa mục này?', row['Loại quá trình'] + ': ' + row['Nội dung'], 'Xóa', function () { delRow(u, 'QT', rk, e['Họ và tên'] + ' – xóa quá trình: ' + row['Nội dung']); m.close(); commitEdits(); }); });
   };
 
