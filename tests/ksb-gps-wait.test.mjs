@@ -1,0 +1,55 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+const app=await readFile(new URL('../src/app.html',import.meta.url),'utf8');
+const geo=app.slice(app.indexOf('function gpsPosition()'),app.indexOf('function gpsEmployeeMount('));
+const wait=app.slice(app.indexOf('function gpsAwait('),app.indexOf('function gpsEmployeeMount('));
+const mount=app.slice(app.indexOf('function gpsEmployeeMount('),app.indexOf('function gpsPost('));
+const shared=app.slice(app.indexOf('function nvPunchNext('),app.indexOf('function nvView('));
+const tick=()=>new Promise(r=>setImmediate(r));
+function clock(){let id=0;const timers=new Map();return {timers,setTimeout(fn,ms){timers.set(++id,{fn,ms});return id;},clearTimeout(id){timers.delete(id);},fire(ms){const entry=[...timers].find(([,t])=>t.ms===ms);assert.ok(entry,'expected timeout '+ms);timers.delete(entry[0]);entry[1].fn();}};}
+function harness(mode){
+ const time=clock(),nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',disabled:false});return nodes.get(id);};let positions=0,posts=0,latePosition,lateResponse,boots=0;
+ const now=Date.now(),state={ok:true,setup:true,me:{ma:'A'},now,thang:[{t:now-600000,loai:'vao',cach:'wifi'}]};
+ const c=vm.createContext({VN:7*3600000,setTimeout:time.setTimeout,clearTimeout:time.clearTimeout,$:get,document:{body:{contains:()=>true}},ni:()=>'<svg></svg>',esc:x=>x,CACH:{wifi:'Wi-Fi',gps:'GPS'},fTime:()=> '18:06',navigator:{geolocation:{getCurrentPosition(ok){positions++;if(mode==='position'&&positions===2){latePosition=ok;return;}ok({coords:{latitude:10,longitude:106,accuracy:25}});}}},api:async(path)=>{
+  if(path.endsWith('allowed'))return {ok:true,enabled:true};if(path.endsWith('check'))return {ok:true,label:'LOCAL'};if(path==='/api/trang-thai')return state;
+  posts++;if(mode==='post')return new Promise(resolve=>lateResponse=resolve);return mode==='conflict'?{ok:false,_status:409,loi:'Không ghi nhận: lượt hợp lệ gần nhất là Ra ca.'}:{ok:true,loai:'ra',cach:'gps',t:now};
+ },boot:async()=>{boots++;if(mode==='reload'||mode==='conflict')try{await c.gpsAwait(new Promise(()=>{}),15000,'history timeout');}catch{return false;}return true;}});
+ vm.runInContext(geo+shared+mount,c);return {c,time,get,state,counts:()=>({positions,posts,boots}),latePosition:()=>latePosition,lateResponse:()=>lateResponse};
+}
+test('GPS position callback missing is bounded at 20s and late coordinates cannot submit a punch',async()=>{
+ const h=harness('position');h.c.gpsEmployeeMount(h.state);await tick();h.get('#gps-open').onclick();await tick();h.get('#gps-out').onclick();await tick();assert.match(h.get('#gps-state').textContent,/Đang lấy vị trí GPS/);h.time.fire(20000);await tick();assert.match(h.get('#gps-state').textContent,/Không lấy được vị trí GPS sau 20 giây/);assert.equal(h.get('#gps-locate').disabled,false);assert.equal(h.counts().posts,0);h.latePosition()({coords:{latitude:10,longitude:106,accuracy:25}});await tick();assert.equal(h.counts().posts,0);
+});
+test('POST with no response is bounded, marked uncertain and never automatically retried or falsely confirmed',async()=>{
+ const h=harness('post');h.c.gpsEmployeeMount(h.state);await tick();h.get('#gps-open').onclick();await tick();h.get('#gps-out').onclick();await tick();assert.match(h.get('#gps-state').textContent,/Đang gửi lượt Ra ca/);assert.equal(h.counts().posts,1);h.time.fire(15000);await tick();assert.match(h.get('#gps-state').textContent,/Chưa xác nhận được kết quả ghi công/);assert.match(h.get('#gps-state').textContent,/kiểm tra lịch sử trước khi chấm lại/);assert.equal(h.get('#gps-locate').disabled,false);h.lateResponse()({ok:true,loai:'ra',cach:'gps',t:Date.now()});await tick();assert.equal(h.counts().posts,1);assert.equal(h.counts().boots,0);assert.doesNotMatch(h.get('#gps-state').textContent,/Đã chấm/);
+});
+test('confirmed result and rejection reason are visible before history refresh, and survive its timeout',async()=>{
+ for(const mode of ['reload','conflict']){
+  const h=harness(mode);h.c.gpsEmployeeMount(h.state);await tick();h.get('#gps-open').onclick();await tick();h.get('#gps-out').onclick();await tick();assert.match(h.get('#gps-state').textContent,mode==='reload'?/Đã chấm ra/:/lượt hợp lệ gần nhất là Ra ca/);h.time.fire(15000);await tick();assert.match(h.get('#gps-state').textContent,/Chưa tải lại được lịch sử/);assert.match(h.get('#gps-state').textContent,mode==='reload'?/Đã chấm ra/:/lượt hợp lệ gần nhất là Ra ca/);assert.equal(h.get('#gps-locate').disabled,false);assert.equal(h.counts().posts,1);
+ }
+});
+test('actual boot timeout keeps the GPS result view instead of destroying it',async()=>{
+ const time=clock(),c=vm.createContext({setTimeout:time.setTimeout,clearTimeout:time.clearTimeout,location:{search:'',pathname:'/'},URLSearchParams,history:{replaceState(){}},qrToken:null,qrErr:'',app:{innerHTML:'GPS result view'},api:()=>new Promise(()=>{})});
+ const boot=app.slice(app.indexOf("var pendingMsg = '';"),app.indexOf("document.addEventListener('visibilitychange'",app.indexOf("var pendingMsg = '';")));vm.runInContext(wait+boot,c);const p=c.boot('Confirmed result',{gpsTimeout:true,keepView:true});time.fire(15000);assert.equal(await p,false);assert.equal(c.app.innerHTML,'GPS result view');
+});
+test('bounded helper clears successful timers and propagates errors without waiting',async()=>{
+ const time=clock(),c=vm.createContext({setTimeout:time.setTimeout,clearTimeout:time.clearTimeout});vm.runInContext(wait,c);assert.equal(await c.gpsAwait(Promise.resolve('ok'),15000,'late'),'ok');assert.equal(time.timers.size,0);await assert.rejects(c.gpsAwait(Promise.reject(Error('explicit error')),15000,'late'),/explicit error/);assert.equal(time.timers.size,0);
+});
+
+test('full mobile UI recovers from missing geolocation, stalled punch response and stalled history after success/rejection',{skip:!process.env.KSB_PLAYWRIGHT_MODULE},async t=>{
+ const {createRequire}=await import('node:module'),{createHash}=await import('node:crypto');const req=createRequire(import.meta.url),runtime=createRequire(req.resolve('wrangler/package.json')),{build}=runtime('esbuild'),{Miniflare,convertV4MiniflareOptions}=runtime('miniflare'),{chromium}=createRequire(process.env.KSB_PLAYWRIGHT_MODULE)('playwright');
+ const b=await build({entryPoints:[new URL('../src/worker.js',import.meta.url).pathname],bundle:true,write:false,format:'esm',platform:'browser',loader:{'.html':'text'}}),mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:b.outputFiles[0].text,compatibilityDate:'2025-09-01',d1Databases:{DB:'gps-wait-synthetic-only'}}));t.after(()=>mf.dispose());await mf.dispatchFetch('https://ksb.local/api/qt/toi');const db=await mf.getD1Database('DB'),now=Date.now(),token=createHash('sha256').update('gps-wait-session').digest('hex');await db.batch([db.prepare("INSERT INTO nv(ma,ten,pin,salt,active) VALUES ('KSB9995','Nhân viên kiểm thử chờ GPS','fake-hash','fake-salt',1)"),db.prepare("INSERT INTO phien(tok,vai,ma,created,last) VALUES (?,'nv','KSB9995',?,?)").bind(token,now,now),...Object.entries({ql_pin:'synthetic-setup',gps_on:'1',che_do:'wifi_hoac_qr'}).map(([k,v])=>db.prepare('INSERT INTO cfg(k,v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v').bind(k,v))]);const migration=await readFile(new URL('../migrations/20261120_gps_attendance.sql',import.meta.url),'utf8');await db.batch(migration.replace(/^--.*$/gm,'').split(';').map(s=>s.trim()).filter(Boolean).map(s=>db.prepare(s)));await db.prepare("INSERT INTO gps_locations(id,code,name,company,latitude,longitude,radius,active,created,updated) VALUES ('LOCAL','LOCAL','Địa điểm kiểm thử','KSB LOCAL',10,106,200,1,?,?)").bind(now,now).run();
+ const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});t.after(()=>browser.close());
+ for(const mode of ['position','post','history','conflict-history'])await t.test(mode,async()=>{
+  await db.prepare('DELETE FROM cham').run();await db.prepare("INSERT INTO cham(ma,t,loai,cach) VALUES ('KSB9995',?,?,'wifi')").bind(Date.now()-600000,mode==='conflict-history'?'ra':'vao').run();const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),page=await context.newPage();await page.clock.install();const errors=[];page.on('pageerror',e=>errors.push(e.message));let posts=0;
+  await page.addInitScript(()=>{window.__gpsPositionCalls=0;Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok){window.__gpsPositionCalls++;if(window.__hangSecondPosition&&window.__gpsPositionCalls>1)return;ok({coords:{latitude:10,longitude:106,accuracy:25}});}}});});
+  await page.route('https://ksb.local/**',async route=>{const q=route.request(),path=new URL(q.url()).pathname;if(path==='/api/cham'){posts++;if(mode==='post')return;}if(path==='/api/trang-thai'&&posts>0&&(mode==='history'||mode==='conflict-history'))return;const r=await mf.dispatchFetch(q.url(),{method:q.method(),headers:{...q.headers(),cookie:'qtt_nv=gps-wait-session','cf-connecting-ip':'198.51.100.20'},...(q.postData()?{body:q.postData()}:{} )}),headers=Object.fromEntries(r.headers);delete headers['content-encoding'];await route.fulfill({status:r.status,headers,body:Buffer.from(await r.arrayBuffer())});});
+  try{await page.goto('https://ksb.local/');await page.click('#gps-open');await page.waitForFunction(()=>!document.querySelector('#gps-out').disabled);if(mode==='position')await page.evaluate(()=>window.__hangSecondPosition=true);await page.click('#gps-out');
+   if(mode==='position'){await page.waitForFunction(()=>document.querySelector('#gps-state').textContent.includes('Đang lấy vị trí'));await page.clock.fastForward(21000);await page.waitForFunction(()=>document.querySelector('#gps-state').textContent.includes('Không lấy được vị trí GPS sau 20 giây'));assert.equal(posts,0);}
+   else if(mode==='post'){await page.waitForFunction(()=>document.querySelector('#gps-state').textContent.includes('Đang gửi lượt'));await page.clock.fastForward(16000);await page.waitForFunction(()=>document.querySelector('#gps-state').textContent.includes('Chưa xác nhận được kết quả ghi công'));assert.equal(posts,1);}
+   else{const text=mode==='history'?'Đã chấm ra':'lượt hợp lệ gần nhất là Ra ca';await page.waitForFunction(text=>document.querySelector('#gps-state').textContent.includes(text),text);await page.clock.fastForward(16000);await page.waitForFunction(()=>document.querySelector('#gps-state').textContent.includes('Chưa tải lại được lịch sử'));assert.ok((await page.innerText('#gps-state')).includes(text));assert.equal(posts,1);}
+   assert.equal(await page.locator('#gps-locate').isEnabled(),true);assert.equal((await db.prepare('SELECT count(*) n FROM cham').first()).n,mode==='history'?2:1);assert.deepEqual(errors,[]);if(mode==='conflict-history')await page.screenshot({path:new URL('../../../outputs/ksb-gps-wait-explicit-result.png',import.meta.url).pathname,fullPage:true});
+  }finally{await context.close();}
+ });
+});

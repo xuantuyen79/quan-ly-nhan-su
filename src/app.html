@@ -2225,7 +2225,7 @@ function nvDoc(title, html) {
 }
 function confirmBox(msg) { return window.confirm(msg); }
 var pendingMsg = '';
-function boot(msg) {
+function boot(msg, options) {
   if (msg) pendingMsg = msg;
   try { var qtb = new URLSearchParams(location.search).get('tb'); if (qtb && /^tb[\w-]{4,40}$/.test(qtb)) { TB_OPEN = qtb; history.replaceState(null, '', location.pathname); } } catch (e) { }
   try { var qtab = new URLSearchParams(location.search).get('tab'); if (qtab && /^[a-z]{2,6}$/.test(qtab)) { NVT.tab = qtab; NVT.sub = ''; sessionStorage.setItem('nv-tab', qtab); history.replaceState(null, '', location.pathname); } } catch (e) { } // 16/11: bấm vào thông báo → mở đúng mục
@@ -2239,7 +2239,10 @@ function boot(msg) {
     });
     return;
   }
-  api('/api/trang-thai').then(function (st) {
+  var statusRequest = api('/api/trang-thai');
+  if (options && options.gpsTimeout) statusRequest = gpsAwait(statusRequest, 15000, 'Chưa tải lại được lịch sử chấm công sau 15 giây.');
+  return statusRequest.then(function (st) {
+    if (!st.ok && options && options.keepView) return false;
     if (!st.ok) { app.innerHTML = '<div class="wrap">' + hdr('') + '<div class="card"><div class="msg err">' + esc(st.loi) + '</div><button class="btn" style="margin-top:12px" onclick="boot()">Thử lại</button></div></div>'; return; }
     if (!st.setup) { app.innerHTML = '<div class="wrap">' + hdr('') + '<div class="card"><h2 style="font-size:19px">Chưa cài đặt</h2><p class="muted">Người quản lý mở <b>/quan-ly</b> để cài đặt lần đầu.</p><a class="btn pri" href="/quan-ly">Mở trang quản lý</a></div></div>'; return; }
     document.title = 'KSB | CTCP Khoáng sản và Xây dựng Bình Dương';
@@ -2248,7 +2251,8 @@ function boot(msg) {
     nvView(st);
     if (pendingMsg) { var pm = $('#res') || $('#gmsg'); if (pm) pm.innerHTML = pendingMsg; pendingMsg = ''; }
     if (qrErr) { $('#res').innerHTML = '<div class="msg err">' + esc(qrErr) + '</div>'; qrErr = ''; }
-  });
+    return true;
+  }).catch(function (error) { if (options && options.keepView) return false; throw error; });
 }
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && (ROUTE === 'nv' || ROUTE === 'q') && $('#b-main') && !$('#b-main').disabled && !$('#gps-pane .gps-panel')) boot(); });
 
@@ -2342,7 +2346,13 @@ function qlLogin() {
   $('#go').onclick = go; $('#pin').onkeydown = function (e) { if (e.key === 'Enter') go(); }; $('#pin').focus();
 }
 /* GPS is requested only from explicit user actions. Coordinates stay in memory/request bodies. */
-function gpsPosition(){return new Promise(function(resolve,reject){if(!navigator.geolocation)return reject(Error('Không thể xác định vị trí. Vui lòng thử lại.'));navigator.geolocation.getCurrentPosition(function(p){resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});},function(e){reject(Error(e.code===1?'Vui lòng bật định vị và cấp quyền vị trí cho ứng dụng.':'Không thể xác định vị trí. Vui lòng thử lại.'));},{enableHighAccuracy:true,maximumAge:0,timeout:20000});});}
+function gpsPosition(){return gpsAwait(new Promise(function(resolve,reject){if(!navigator.geolocation)return reject(Error('Không thể xác định vị trí. Vui lòng thử lại.'));navigator.geolocation.getCurrentPosition(function(p){resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});},function(e){reject(Error(e.code===1?'Vui lòng bật định vị và cấp quyền vị trí cho ứng dụng.':'Không thể xác định vị trí. Vui lòng thử lại.'));},{enableHighAccuracy:true,maximumAge:0,timeout:20000});}),20000,'Không lấy được vị trí GPS sau 20 giây. Vui lòng kiểm tra quyền vị trí và thử lại.');}
+function gpsAwait(promise, milliseconds, message) {
+  return new Promise(function (resolve, reject) {
+    var done = false, timer = setTimeout(function () { if (!done) { done = true; var error = Error(message); error.gpsTimeout = true; reject(error); } }, milliseconds);
+    Promise.resolve(promise).then(function (value) { if (!done) { done = true; clearTimeout(timer); resolve(value); } }, function (error) { if (!done) { done = true; clearTimeout(timer); reject(error); } });
+  });
+}
 function gpsEmployeeMount(st, next) {
   var host = $('#gps-employee'); if (!host) return;
   next = next || nvPunchNext(st);
@@ -2367,7 +2377,8 @@ function gpsEmployeeMount(st, next) {
         busy = true; valid = false; draw(); $('#gps-locate').disabled = true; state('Đang xác định vị trí…');
         gpsPosition().then(function (pos) {
           if (!live()) throw Error('Đã đóng GPS.');
-          return Promise.all([api('/api/gps/check', pos), api('/api/trang-thai')]).then(function (results) {
+          state('Đang kiểm tra vị trí và trạng thái chấm công…');
+          return Promise.all([gpsAwait(api('/api/gps/check', pos), 15000, 'Máy chủ chưa phản hồi kiểm tra vị trí sau 15 giây. Vui lòng thử lại.'), gpsAwait(api('/api/trang-thai'), 15000, 'Chưa tải được trạng thái chấm công sau 15 giây. Vui lòng thử lại.')]).then(function (results) {
             if (!live()) return;
             var r = results[0], current = results[1];
             if (!r.ok) throw Error(r.loi || 'Không thể xác minh vị trí.');
@@ -2382,14 +2393,16 @@ function gpsEmployeeMount(st, next) {
         if (busy) return;
         if (!valid) { state('Vui lòng xác định vị trí GPS hợp lệ trước khi chấm công.', true); return; }
         // The backend checks the current shared history atomically; a cached next must not block a valid action.
-        busy = true; draw(); $('#gps-locate').disabled = true; state('Đang xác minh vị trí và ghi nhận…');
+        busy = true; draw(); $('#gps-locate').disabled = true; state('Đang lấy vị trí GPS để chấm ' + (loai === 'vao' ? 'Vào ca' : 'Ra ca') + '…');
         gpsPosition().then(function (pos) {
           if (!live()) throw Error('Đã đóng GPS.');
-          return api('/api/cham', Object.assign({ cach: 'gps', loai: loai }, pos));
+          state('Đang gửi lượt ' + (loai === 'vao' ? 'Vào ca' : 'Ra ca') + ' đến máy chủ…');
+          return gpsAwait(api('/api/cham', Object.assign({ cach: 'gps', loai: loai }, pos)), 15000, 'Chưa xác nhận được kết quả ghi công sau 15 giây. Hãy kiểm tra lịch sử trước khi chấm lại.');
         }).then(function (r) {
-          if (r._status === 409) return boot('<div class="msg inf">' + esc(r.loi) + ' Trạng thái đã được tải lại.</div>');
-          if (!r.ok) throw Error(r.loi || 'Chưa ghi nhận được lượt chấm.');
-          return boot('<div class="msg ok">' + (r.trung ? 'Đã có lượt ' : 'Đã chấm ') + (r.loai === 'vao' ? 'vào' : 'ra') + ' lúc ' + fTime(r.t) + ' (' + esc(CACH[r.cach] || r.cach) + ')' + (r.trung ? ' – không ghi trùng.' : '.') + '</div>');
+          if (!r.ok && r._status !== 409) throw Error(r.loi || 'Chưa nhận được kết quả ghi công. Vui lòng kiểm tra lịch sử.');
+          var note = r.ok ? (r.trung ? 'Đã có lượt ' : 'Đã chấm ') + (r.loai === 'vao' ? 'vào' : 'ra') + ' lúc ' + fTime(r.t) + ' (' + (CACH[r.cach] || r.cach) + ')' + (r.trung ? ' – không ghi trùng.' : '.') : r.loi;
+          valid = false; state(note, !r.ok);
+          return Promise.resolve(boot('<div class="msg ' + (r.ok ? 'ok' : 'err') + '">' + esc(note) + '</div>', { gpsTimeout: true, keepView: true })).then(function (refreshed) { if (refreshed === false) state(note + ' Chưa tải lại được lịch sử; hãy kiểm tra lại kết nối.', !r.ok); });
         }).catch(function (e) { valid = false; state(e.message, true); }).finally(function () { busy = false; if (live()) { $('#gps-locate').disabled = false; draw(); } });
       };
       $('#gps-in').onclick = function () { punchGps('vao'); };
