@@ -17,7 +17,7 @@ test('shared next uses all methods, ignores yesterday/cancelled/future entries a
  assert.equal(c.nvPunchNext({now,thang:[{t:t('07:30')-86400000,loai:'ra'},{t:t('18:00'),loai:'vao'},{t:t('12:00'),loai:'vao',huy:1}]}),'vao');
  assert.equal(c.nvPunchNext({now,thang:[rows[2],rows[0],rows[1]]}),'ra');
 });
-test('GPS renders two named actions with only the next action enabled, refreshes stale state before enabling, posts that kind and boots after success/conflict',async()=>{
+test('GPS renders two actions, shows shared state, submits requested kind and refreshes after success/conflict',async()=>{
  const now=Date.parse('2026-11-20T17:00:00+07:00'),inRow={t:now-3600000,loai:'vao',cach:'wifi'};
  for(const conflict of [false,true]){
   const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',disabled:false});return nodes.get(id);};let rows=[inRow],posted=[],boots=[];
@@ -30,8 +30,8 @@ test('GPS renders two named actions with only the next action enabled, refreshes
   },boot:async msg=>{boots.push(msg);c.gpsEmployeeMount({now,thang:rows});}});
   const code=app.slice(app.indexOf('function gpsEmployeeMount('),app.indexOf('function gpsPost('));vm.runInContext(nextCode+code,c);
   c.gpsEmployeeMount({now,thang:[]});await new Promise(r=>setImmediate(r));get('#gps-open').onclick();await new Promise(r=>setImmediate(r));
-  assert.match(get('#gps-pane').innerHTML,/id="gps-in"/);assert.match(get('#gps-pane').innerHTML,/id="gps-out"/);assert.match(get('#gps-pane').innerHTML,/<span>Vào ca<\/span>/);assert.match(get('#gps-pane').innerHTML,/<span>Ra ca<\/span>/);assert.equal(get('#gps-in').disabled,true);assert.equal(get('#gps-out').disabled,false);
-  get('#gps-in').onclick();assert.equal(posted.length,0);get('#gps-out').onclick();get('#gps-out').onclick();await new Promise(r=>setImmediate(r));assert.equal(posted.length,1);assert.equal(posted[0].loai,'ra');assert.equal(boots.length,1);assert.match(boots[0],conflict?/tải lại/:/Đã chấm ra/);
-  get('#gps-open').onclick();await new Promise(r=>setImmediate(r));assert.equal(get('#gps-in').disabled,false);assert.equal(get('#gps-out').disabled,true);
+  assert.match(get('#gps-pane').innerHTML,/id="gps-in"/);assert.match(get('#gps-pane').innerHTML,/id="gps-out"/);assert.match(get('#gps-pane').innerHTML,/<span>Vào ca<\/span>/);assert.match(get('#gps-pane').innerHTML,/<span>Ra ca<\/span>/);assert.equal(get('#gps-in').disabled,false);assert.equal(get('#gps-out').disabled,false);assert.match(get('#gps-sequence').textContent,/Lượt kế tiếp: Ra ca/);
+  get('#gps-out').onclick();get('#gps-out').onclick();await new Promise(r=>setImmediate(r));assert.equal(posted.length,1);assert.equal(posted[0].loai,'ra');assert.equal(boots.length,1);assert.match(boots[0],conflict?/tải lại/:/Đã chấm ra/);
+  get('#gps-open').onclick();await new Promise(r=>setImmediate(r));assert.equal(get('#gps-in').disabled,false);assert.equal(get('#gps-out').disabled,false);assert.match(get('#gps-sequence').textContent,/Lượt kế tiếp: Vào ca/);
  }
 });

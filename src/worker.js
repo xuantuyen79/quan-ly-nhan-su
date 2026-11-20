@@ -1533,7 +1533,8 @@ async function api(req, env, url) {
       const last = await db.prepare('SELECT t,loai,cach FROM cham WHERE ma=? AND huy=0 AND t<=?' + dayFilter + ' ORDER BY t DESC,id DESC LIMIT 1').bind(...lastArgs).first();
       if (gps && (!last || last.loai !== loai || last.t <= now-DUP_MS)) {
         const next = last?.loai === 'vao' ? 'ra' : 'vao';
-        return json({ok:false,loi:'Trạng thái chấm công đã thay đổi. Lượt kế tiếp là ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.'),next},409);
+        const reason = !last && loai === 'ra' ? 'Bạn chưa có lượt Vào ca hợp lệ trong ngày. Vui lòng chấm Vào ca trước.' : 'Không ghi nhận: lượt hợp lệ gần nhất là ' + (last?.loai === 'vao' ? 'Vào ca' : 'Ra ca') + '. Lượt kế tiếp là ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.');
+        return json({ok:false,loi:reason,next},409);
       }
       return json({ok:true,trung:true,t:last.t,loai:last.loai,cach:last.cach});
     }

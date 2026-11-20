@@ -1341,10 +1341,11 @@ function nvWifiStatusHtml(st) {
   return '<div class="nvx-wifi-state' + (ok ? '' : ' invalid') + '" role="status"><div class="wifi-title"><span class="wifi-symbol" aria-hidden="true">' + ni(ok ? 'check' : 'warn', 20) + '</span><div>' + (ok ? '<b>' + esc(w.name || 'WiFi Văn phòng KSB') + '</b><p>Kết nối hợp lệ – Bạn có thể chấm công</p>' : '<b>Bạn chưa kết nối mạng WiFi KSB</b>') + '</div></div><p class="wifi-ip">Địa chỉ IP: ' + esc(w.ip || 'Chưa xác định') + '</p>' + (ok ? '' : '<p>Vui lòng kết nối WiFi Công ty hoặc sử dụng phương thức chấm công GPS.</p>') + '</div>';
 }
 // Shared daily state for the main buttons and GPS; all valid methods participate.
-function nvPunchNext(st) {
+function nvPunchNext(st) { return nvPunchState(st).next; }
+function nvPunchState(st) {
   var start = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, last = null;
   (st.thang || []).forEach(function (r) { if (!r.huy && r.t >= start && r.t <= st.now && (!last || r.t >= last.t)) last = r; });
-  return last && last.loai === 'vao' ? 'ra' : 'vao';
+  return { last: last, next: last && last.loai === 'vao' ? 'ra' : 'vao' };
 }
 function nvView(st) {
   LAST_ST = st; var DK = dkOn();
@@ -2249,7 +2250,7 @@ function boot(msg) {
     if (qrErr) { $('#res').innerHTML = '<div class="msg err">' + esc(qrErr) + '</div>'; qrErr = ''; }
   });
 }
-document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && (ROUTE === 'nv' || ROUTE === 'q') && $('#b-main') && !$('#b-main').disabled) boot(); });
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && (ROUTE === 'nv' || ROUTE === 'q') && $('#b-main') && !$('#b-main').disabled && !$('#gps-pane .gps-panel')) boot(); });
 
 /* ================= MÀN HÌNH CHUNG (/tram) ================= */
 var tramTimer = null, wakeLock = null, tramData = null;
@@ -2350,10 +2351,15 @@ function gpsEmployeeMount(st, next) {
     host.innerHTML = '<button type="button" class="btn full" id="gps-open">Chấm công bằng GPS</button><div id="gps-pane"></div>';
     $('#gps-open').onclick = function () {
       var pane = $('#gps-pane'); pane._gpsTurn = (pane._gpsTurn || 0) + 1; var turn = pane._gpsTurn;
-      pane.innerHTML = '<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-in" disabled>' + ni('clock', 20) + '<span>Vào ca</span></button><button type="button" class="btn" id="gps-out" disabled>' + ni('clock', 20) + '<span>Ra ca</span></button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';
+      pane.innerHTML = '<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><p id="gps-sequence" class="small muted" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-in" disabled>' + ni('clock', 20) + '<span>Vào ca</span></button><button type="button" class="btn" id="gps-out" disabled>' + ni('clock', 20) + '<span>Ra ca</span></button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';
       var valid = false, busy = false;
       function live() { return pane._gpsTurn === turn && document.body.contains(pane) && $('#gps-state'); }
-      function draw() { if (live()) { $('#gps-in').disabled = !valid || busy || next !== 'vao'; $('#gps-out').disabled = !valid || busy || next !== 'ra'; } }
+      function draw() { if (live()) { $('#gps-in').disabled = $('#gps-out').disabled = !valid || busy; } }
+      function sequence(current) {
+        if (!live()) return;
+        var shared = nvPunchState(current); next = shared.next;
+        $('#gps-sequence').textContent = (shared.last ? 'Lượt gần nhất: ' + (shared.last.loai === 'vao' ? 'Vào ca' : 'Ra ca') + ' lúc ' + fTime(shared.last.t) + ' (' + (CACH[shared.last.cach] || shared.last.cach) + '). ' : 'Chưa có lượt chấm hợp lệ hôm nay. ') + 'Lượt kế tiếp: ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.');
+      }
       function state(text, bad) { if (live()) { $('#gps-state').textContent = text; $('#gps-state').className = bad ? 'msg err' : 'msg inf'; } }
       $('#gps-close').onclick = function () { valid = false; pane._gpsTurn++; pane.innerHTML = ''; };
       function locate() {
@@ -2366,14 +2372,16 @@ function gpsEmployeeMount(st, next) {
             var r = results[0], current = results[1];
             if (!r.ok) throw Error(r.loi || 'Không thể xác minh vị trí.');
             if (!current.ok || !current.me) throw Error('Chưa tải được trạng thái chấm công. Vui lòng thử lại.');
-            next = nvPunchNext(current); valid = true;
+            sequence(current); valid = true;
             state('Địa điểm: ' + r.label + ' · Độ chính xác: ±' + Math.round(pos.accuracy) + ' mét. Bạn đang ở trong khu vực được phép chấm công.');
           });
         }).catch(function (e) { state(e.message, true); }).finally(function () { busy = false; if (live()) { $('#gps-locate').disabled = false; draw(); } });
       }
       $('#gps-locate').onclick = locate;
       function punchGps(loai) {
-        if (!valid || busy || loai !== next) return;
+        if (busy) return;
+        if (!valid) { state('Vui lòng xác định vị trí GPS hợp lệ trước khi chấm công.', true); return; }
+        // The backend checks the current shared history atomically; a cached next must not block a valid action.
         busy = true; draw(); $('#gps-locate').disabled = true; state('Đang xác minh vị trí và ghi nhận…');
         gpsPosition().then(function (pos) {
           if (!live()) throw Error('Đã đóng GPS.');
@@ -2386,7 +2394,7 @@ function gpsEmployeeMount(st, next) {
       };
       $('#gps-in').onclick = function () { punchGps('vao'); };
       $('#gps-out').onclick = function () { punchGps('ra'); };
-      draw(); locate();
+      sequence(st); draw(); locate();
     };
   });
 }
