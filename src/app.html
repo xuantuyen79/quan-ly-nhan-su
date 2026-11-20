@@ -2081,7 +2081,7 @@ function nvBind(st, X) {
       $('#b-main').disabled = $('#b-alt').disabled = false; $('#res').innerHTML = '<div class="msg err">' + esc(j.loi) + (j.ip ? '<div class="ipbox" style="margin-top:6px">IP: ' + esc(j.ip) + '</div>' : '') + '</div>';
     });
   }
-  if ($('#b-main')) { $('#b-main').onclick = punch; $('#b-alt').onclick = punch; gpsEmployeeMount(st, next); }
+  if ($('#b-main')) { $('#b-main').onclick = punch; $('#b-alt').onclick = punch; gpsEmployeeMount(st, X.next); }
   if ($('#recheck')) $('#recheck').onclick = function () { boot(); };
   // lịch tháng
   app.querySelectorAll('[data-lm]').forEach(function (b) { b.onclick = function () { NVT.lm += +b.getAttribute('data-lm'); var y = scrY(); nvView(st); scrTop(y); }; });
