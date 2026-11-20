@@ -23,3 +23,42 @@ test('nearest qualifying active location wins; client location and company canno
 test('grant UI/API is retired; legacy assignment data is untouched and ignored; employee credentials stay unchanged',async t=>{const f=await fixture(t),id=await f.location('B'),before=(await f.db.prepare('SELECT * FROM nv ORDER BY ma').all()).results;assert.equal((await f.db.prepare("SELECT count(*) n FROM sqlite_master WHERE name='gps_grants'").first()).n,0);await f.db.prepare('CREATE TABLE gps_grants(ma TEXT,active INTEGER,date_to TEXT)').run();await f.db.prepare("INSERT INTO gps_grants VALUES ('A',0,'2020-01-01')").run();await f.enable();assert.equal((await f.gps(id)).status,200);assert.equal((await f.call('/api/gps/grant',{revoke:true},'admin')).status,404);for(const who of ['a','b',''])assert.equal((await f.call('/api/gps/location',{},who)).status,403);const admin=await(await f.call('/api/gps/admin',undefined,'admin')).json();assert.equal('grants' in admin,false);assert.equal('employees' in admin,false);assert.equal((await f.db.prepare('SELECT count(*) n FROM gps_grants').first()).n,1);assert.deepEqual((await f.db.prepare('SELECT * FROM nv ORDER BY ma').all()).results,before);});
 test('recorded labels survive location changes and invalid location values do not write',async t=>{const f=await fixture(t),id=await f.location('B');await f.enable();await f.gps(id);const location={id,code:'B2',name:'Renamed',company:'Other',latitude:10,longitude:106,radius:200,active:false};assert.equal((await f.call('/api/gps/location',location,'admin')).status,200);assert.equal((await f.db.prepare('SELECT gps_location_label FROM cham').first()).gps_location_label,'B · Synthetic B');assert.equal((await f.gps(id,'ra')).status,403);for(const extra of [{radius:0},{latitude:91},{longitude:181},{active:'yes'}])assert.equal((await f.call('/api/gps/location',{...location,...extra},'admin')).status,400);});
 test('all configured locations are examined without a 500-location cap',async t=>{const f=await fixture(t);await f.db.prepare("WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<600) INSERT INTO gps_locations(id,code,name,company,latitude,longitude,radius,active,created,updated) SELECT 'L'||x,'L'||x,'Synthetic','Other company',20,106,200,1,0,0 FROM n").run();const id=await f.location('ZZ-LAST');await f.enable();assert.equal((await gpsVerify(f.db,{gps_on:'1'},'B',{latitude:10,longitude:106,accuracy:25})).location_id,id);assert.equal((await(await f.call('/api/gps/admin',undefined,'admin')).json()).locations.length,601);});
+
+test('GPS rejects forged out as first daily punch and repeated in beyond duplicate window across Wi-Fi/QR/manual history',async t=>{
+ for(const method of ['wifi','qr','tay']){await t.test(method,async t=>{
+  const f=await fixture(t),id=await f.location('B');await f.enable();
+  assert.equal((await f.gps(id,'ra')).status,409);assert.equal((await f.db.prepare('SELECT count(*) n FROM cham').first()).n,0);
+  await f.db.prepare('INSERT INTO cham(ma,t,loai,cach) VALUES (?,?,?,?)').bind('A',f.now-600000,'vao',method).run();
+  const forged=await f.gps(id,'vao');assert.equal(forged.status,409);assert.equal((await forged.json()).next,'ra');assert.equal((await f.db.prepare('SELECT count(*) n FROM cham').first()).n,1);
+  const accepted=await f.gps(id,'ra');assert.equal(accepted.status,200);assert.equal((await accepted.json()).trung,undefined);assert.deepEqual((await f.db.prepare('SELECT loai FROM cham ORDER BY id').all()).results.map(x=>x.loai),['vao','ra']);
+ });}
+});
+test('GPS daily reset ignores yesterday including open overnight in, cancelled and future entries',async t=>{
+ for(const previousKind of ['vao','ra']){await t.test(previousKind,async t=>{
+  const f=await fixture(t),id=await f.location('B');await f.enable();const start=Date.parse(f.today+'T00:00:00+07:00');
+  await f.db.batch([f.db.prepare('INSERT INTO cham(ma,t,loai,cach) VALUES (?,?,?,?)').bind('A',start-30000,previousKind,'wifi'),f.db.prepare("INSERT INTO cham(ma,t,loai,cach,huy) VALUES (?,?,'vao','tay',1)").bind('A',f.now-600000),f.db.prepare("INSERT INTO cham(ma,t,loai,cach) VALUES (?,?,'vao','tay')").bind('A',f.now+3600000)]);
+  assert.equal((await f.gps(id,'ra')).status,409);const valid=await f.gps(id,'vao');assert.equal(valid.status,200);assert.equal((await valid.json()).trung,undefined);
+  assert.equal((await f.db.prepare('SELECT count(*) n FROM cham').first()).n,4);
+ });}
+});
+test('GPS uses latest valid adjusted punch; manager cancellation/restoration and unrestricted manual entries remain intact',async t=>{
+ const f=await fixture(t),id=await f.location('B');await f.enable();
+ const t0=f.now-600000,date=new Date(t0+7*3600000).toISOString(),ngay=date.slice(8,10)+'/'+date.slice(5,7)+'/'+date.slice(0,4),gio=date.slice(11,16);
+ // The existing management API can still enter an out without an in, and another out.
+ for(let i=0;i<2;i++)assert.equal((await f.call('/api/ql/cham',{ma:'A',ngay,gio,loai:'ra',ghi:'Synthetic correction'},'ql')).status,200);
+ assert.equal((await f.gps(id,'ra')).status,409);assert.equal((await f.gps(id,'vao')).status,200);
+ const last=await f.db.prepare('SELECT id FROM cham ORDER BY id DESC LIMIT 1').first();
+ assert.equal((await f.call('/api/ql/cham',{huy:last.id},'ql')).status,200);
+ assert.equal((await f.gps(id,'ra')).status,409); // valid history ends in manual out after cancellation
+ assert.equal((await f.call('/api/ql/cham',{huy:last.id,khoi_phuc:true},'ql')).status,200);
+ assert.equal((await f.gps(id,'ra')).status,200); // restored in participates immediately
+ assert.equal((await f.db.prepare("SELECT count(*) n FROM cham WHERE cach='tay'").first()).n,2);
+});
+test('Wi-Fi keeps existing unrestricted kind and duplicate behavior; GPS never inserts wrong-sequence replay',async t=>{
+ const f=await fixture(t),id=await f.location('B');await f.enable();
+ await f.db.prepare("INSERT INTO cham(ma,t,loai,cach) VALUES ('A',?,'vao','wifi')").bind(f.now-600000).run();
+ assert.equal((await f.gps(id,'vao')).status,409);
+ const wifi=await f.call('/api/cham',{loai:'vao'},'a','203.0.113.42');assert.equal(wifi.status,200);assert.equal((await wifi.json()).trung,undefined);
+ const replay=await f.gps(id,'vao');assert.equal((await replay.json()).trung,true);assert.equal((await f.db.prepare('SELECT count(*) n FROM cham').first()).n,2);
+ assert.equal((await f.gps(id,'ra')).status,200);
+});

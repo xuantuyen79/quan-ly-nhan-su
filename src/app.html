@@ -1328,12 +1328,18 @@ function mkDoiView(st) {
   };
   $('#mk-out').onclick = function (e) { e.preventDefault(); api('/api/dang-xuat', { vai: 'nv' }).then(function () { boot(); }); };
 }
+// Shared daily state for the main buttons and GPS; all valid methods participate.
+function nvPunchNext(st) {
+  var start = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, last = null;
+  (st.thang || []).forEach(function (r) { if (!r.huy && r.t >= start && r.t <= st.now && (!last || r.t >= last.t)) last = r; });
+  return last && last.loai === 'vao' ? 'ra' : 'vao';
+}
 function nvView(st) {
   LAST_ST = st; var DK = dkOn();
   DEMO = !!st.demo;
   var today0 = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, q = vp(st.now), tIso = q.y + '-' + q.m + '-' + q.d;
-  var mine = st.thang || [], todayList = mine.filter(function (r) { return r.t >= today0; }), pastToday = todayList.filter(function (r) { return r.t <= st.now; });
-  var last = pastToday[pastToday.length - 1], next = last && last.loai === 'vao' ? 'ra' : 'vao', other = next === 'vao' ? 'ra' : 'vao';
+  var mine = st.thang || [], todayList = mine.filter(function (r) { return r.t >= today0; });
+  var next = nvPunchNext(st), other = next === 'vao' ? 'ra' : 'vao';
   var C = st.cong || [], need = C.filter(function (c) { return !c.du_lieu.tam && c.xn === 0; })[0];
   var HSo = st.ho_so || {}, HS = st.hs || null, ten = (HS && HS.ten) || st.me.ten, cty = st.cty || (HS && HS.cty) || HSo.cty || st.ten_cty || '', phNew = (st.phieu || []).filter(function (p) { return !p.xem_at; });
   var L = st.lich, DU = st.duyet || [], K = khMap(HS), MS = monthStats(st, HS, HSo), LE = leMap(HS), av = myAv(st);
@@ -2071,7 +2077,7 @@ function nvBind(st, X) {
       $('#b-main').disabled = $('#b-alt').disabled = false; $('#res').innerHTML = '<div class="msg err">' + esc(j.loi) + (j.ip ? '<div class="ipbox" style="margin-top:6px">IP: ' + esc(j.ip) + '</div>' : '') + '</div>';
     });
   }
-  if ($('#b-main')) { $('#b-main').onclick = punch; $('#b-alt').onclick = punch; gpsEmployeeMount(st); }
+  if ($('#b-main')) { $('#b-main').onclick = punch; $('#b-alt').onclick = punch; gpsEmployeeMount(st, next); }
   if ($('#recheck')) $('#recheck').onclick = function () { boot(); };
   // lịch tháng
   app.querySelectorAll('[data-lm]').forEach(function (b) { b.onclick = function () { NVT.lm += +b.getAttribute('data-lm'); var y = scrY(); nvView(st); scrTop(y); }; });
@@ -2318,7 +2324,52 @@ function qlLogin() {
 }
 /* GPS is requested only from explicit user actions. Coordinates stay in memory/request bodies. */
 function gpsPosition(){return new Promise(function(resolve,reject){if(!navigator.geolocation)return reject(Error('Không thể xác định vị trí. Vui lòng thử lại.'));navigator.geolocation.getCurrentPosition(function(p){resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});},function(e){reject(Error(e.code===1?'Vui lòng bật định vị và cấp quyền vị trí cho ứng dụng.':'Không thể xác định vị trí. Vui lòng thử lại.'));},{enableHighAccuracy:true,maximumAge:0,timeout:20000});});}
-function gpsEmployeeMount(st){var host=$('#gps-employee');if(!host)return;api('/api/gps/allowed').then(function(j){if(!document.body.contains(host)||!j.ok||!j.enabled)return;host.innerHTML='<button type="button" class="btn full" id="gps-open">Chấm công bằng GPS</button><div id="gps-pane"></div>';$('#gps-open').onclick=function(){var pane=$('#gps-pane');pane._gpsTurn=(pane._gpsTurn||0)+1;var turn=pane._gpsTurn;pane.innerHTML='<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-in" disabled>CHẤM VÀO CA</button><button type="button" class="btn" id="gps-out" disabled>CHẤM RA CA</button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';var valid=false;function live(){return pane._gpsTurn===turn&&document.body.contains(pane)&&$('#gps-state');}function state(text,bad){if(!live())return;$('#gps-state').textContent=text;$('#gps-state').className=bad?'msg err':'msg inf';}function enable(on){if(!live())return;$('#gps-in').disabled=$('#gps-out').disabled=!on;}$('#gps-close').onclick=function(){valid=false;pane._gpsTurn++;pane.innerHTML='';};function locate(){var b=$('#gps-locate');b.disabled=true;valid=false;enable(false);state('Đang xác định vị trí…');gpsPosition().then(function(pos){if(!live())throw Error('Đã đóng GPS.');return api('/api/gps/check',pos).then(function(r){if(!live())return;if(!r.ok)throw Error(r.loi||'Không thể xác minh vị trí.');valid=true;enable(true);state('Địa điểm: '+r.label+' · Độ chính xác: ±'+Math.round(pos.accuracy)+' mét. Bạn đang ở trong khu vực được phép chấm công.');});}).catch(function(e){state(e.message,true);}).finally(function(){if(document.body.contains(b))b.disabled=false;});}$('#gps-locate').onclick=locate;function punchGps(loai){if(!valid)return;enable(false);$('#gps-locate').disabled=true;state('Đang xác minh vị trí và ghi nhận…');gpsPosition().then(function(pos){if(!live())throw Error('Đã đóng GPS.');return api('/api/cham',Object.assign({cach:'gps',loai:loai},pos));}).then(function(r){if(!r.ok)throw Error(r.loi||'Chưa ghi nhận được lượt chấm.');return boot('<div class="msg ok">'+(r.trung?'Đã có lượt ':'Đã chấm ')+(r.loai==='vao'?'vào':'ra')+' lúc '+fTime(r.t)+' ('+esc(CACH[r.cach]||r.cach)+')'+(r.trung?' – không ghi trùng.':'.')+'</div>');}).catch(function(e){valid=false;state(e.message,true);if(live())$('#gps-locate').disabled=false;});}$('#gps-in').onclick=function(){punchGps('vao');};$('#gps-out').onclick=function(){punchGps('ra');};locate();};});}
+function gpsEmployeeMount(st, next) {
+  var host = $('#gps-employee'); if (!host) return;
+  next = next || nvPunchNext(st);
+  api('/api/gps/allowed').then(function (j) {
+    if (!document.body.contains(host) || !j.ok || !j.enabled) return;
+    host.innerHTML = '<button type="button" class="btn full" id="gps-open">Chấm công bằng GPS</button><div id="gps-pane"></div>';
+    $('#gps-open').onclick = function () {
+      var pane = $('#gps-pane'); pane._gpsTurn = (pane._gpsTurn || 0) + 1; var turn = pane._gpsTurn;
+      pane.innerHTML = '<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-punch" disabled></button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';
+      var valid = false, busy = false;
+      function live() { return pane._gpsTurn === turn && document.body.contains(pane) && $('#gps-state'); }
+      function draw() { if (live()) { $('#gps-punch').textContent = next === 'vao' ? 'CHẤM VÀO CA' : 'CHẤM RA CA'; $('#gps-punch').disabled = !valid || busy; } }
+      function state(text, bad) { if (live()) { $('#gps-state').textContent = text; $('#gps-state').className = bad ? 'msg err' : 'msg inf'; } }
+      $('#gps-close').onclick = function () { valid = false; pane._gpsTurn++; pane.innerHTML = ''; };
+      function locate() {
+        if (busy) return;
+        busy = true; valid = false; draw(); $('#gps-locate').disabled = true; state('Đang xác định vị trí…');
+        gpsPosition().then(function (pos) {
+          if (!live()) throw Error('Đã đóng GPS.');
+          return Promise.all([api('/api/gps/check', pos), api('/api/trang-thai')]).then(function (results) {
+            if (!live()) return;
+            var r = results[0], current = results[1];
+            if (!r.ok) throw Error(r.loi || 'Không thể xác minh vị trí.');
+            if (!current.ok || !current.me) throw Error('Chưa tải được trạng thái chấm công. Vui lòng thử lại.');
+            next = nvPunchNext(current); valid = true;
+            state('Địa điểm: ' + r.label + ' · Độ chính xác: ±' + Math.round(pos.accuracy) + ' mét. Bạn đang ở trong khu vực được phép chấm công.');
+          });
+        }).catch(function (e) { state(e.message, true); }).finally(function () { busy = false; if (live()) { $('#gps-locate').disabled = false; draw(); } });
+      }
+      $('#gps-locate').onclick = locate;
+      $('#gps-punch').onclick = function () {
+        if (!valid || busy) return;
+        busy = true; draw(); $('#gps-locate').disabled = true; state('Đang xác minh vị trí và ghi nhận…');
+        gpsPosition().then(function (pos) {
+          if (!live()) throw Error('Đã đóng GPS.');
+          return api('/api/cham', Object.assign({ cach: 'gps', loai: next }, pos));
+        }).then(function (r) {
+          if (r._status === 409) return boot('<div class="msg inf">' + esc(r.loi) + ' Trạng thái đã được tải lại.</div>');
+          if (!r.ok) throw Error(r.loi || 'Chưa ghi nhận được lượt chấm.');
+          return boot('<div class="msg ok">' + (r.trung ? 'Đã có lượt ' : 'Đã chấm ') + (r.loai === 'vao' ? 'vào' : 'ra') + ' lúc ' + fTime(r.t) + ' (' + esc(CACH[r.cach] || r.cach) + ')' + (r.trung ? ' – không ghi trùng.' : '.') + '</div>');
+        }).catch(function (e) { valid = false; state(e.message, true); }).finally(function () { busy = false; if (live()) { $('#gps-locate').disabled = false; draw(); } });
+      };
+      draw(); locate();
+    };
+  });
+}
 function gpsPost(path,body){return api('/api/gps/'+path,body).then(function(j){if(!j.ok)throw Error(j.loi||'Chưa lưu được GPS.');return j;});}
 function tabGps(){if(QL.tab!=='gps')return;var host=$('#body');host.innerHTML='<div class="card">Đang tải cấu hình GPS…</div>';api('/api/gps/admin').then(function(d){if(QL.tab!=='gps'||!document.body.contains(host))return;if(!d.ok){host.innerHTML='<div class="msg err">'+esc(d.loi)+'</div>';return;}
  host.innerHTML='<div class="card"><h2>Địa điểm chấm công GPS</h2><p class="small muted">Tất cả tài khoản nhân viên đang hoạt động được chấm tại mọi địa điểm GPS đang hoạt động. GPS mặc định tắt, độc lập với Wi-Fi/QR. Giới hạn độ chính xác: ±200 mét. Không theo dõi hành trình, không gửi vị trí tới dịch vụ bản đồ bên ngoài.</p>'+(!d.ready?'<p class="msg inf">Chưa áp dụng migration GPS. Quản trị viên cần được phê duyệt migration trước khi sử dụng.</p>':'')+'<label><input type="checkbox" id="gps-enabled" '+(d.enabled?'checked ':'')+(!d.ready?'disabled':'')+'> Bật chấm công GPS</label><p id="gps-admin-msg" role="status"></p></div>'+

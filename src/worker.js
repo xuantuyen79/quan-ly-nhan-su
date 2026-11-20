@@ -799,7 +799,7 @@ function qrSvg(text) { const q = qrcode(0, 'M'); q.addData(text); q.make(); retu
 async function punchesBetween(db, from, to, ma) {
   const gps = await gpsReady(db);
   const gpsFields = gps ? 'c.gps_location_id,c.gps_location_label,c.gps_distance,c.gps_accuracy' : 'NULL AS gps_location_id,NULL AS gps_location_label,NULL AS gps_distance,NULL AS gps_accuracy';
-  const sql = 'SELECT ' + gpsFields + ', c.id, c.ma, n.ten, c.t, c.loai, c.cach, c.ip, c.wifi, c.tb, c.may, c.ghi, c.huy, c.nguoi FROM cham c LEFT JOIN nv n ON n.ma = c.ma WHERE c.t >= ? AND c.t < ?' + (ma ? ' AND c.ma = ?' : '') + ' ORDER BY c.t';
+  const sql = 'SELECT ' + gpsFields + ', c.id, c.ma, n.ten, c.t, c.loai, c.cach, c.ip, c.wifi, c.tb, c.may, c.ghi, c.huy, c.nguoi FROM cham c LEFT JOIN nv n ON n.ma = c.ma WHERE c.t >= ? AND c.t < ?' + (ma ? ' AND c.ma = ?' : '') + ' ORDER BY c.t,c.id';
   const st = ma ? db.prepare(sql).bind(from, to, ma) : db.prepare(sql).bind(from, to);
   return (await st.all()).results;
 }
@@ -1513,9 +1513,26 @@ async function api(req, env, url) {
     const columns = hasGpsSchema ? ',gps_location_id,gps_location_label,gps_distance,gps_accuracy' : '';
     const values = [s.nv.ma, now, loai, cach, ip, wifi ? 1 : 0, shortUA(req.headers.get('user-agent')), req.may || null];
     if (hasGpsSchema) values.push(gps?.location_id || null, gps?.label || null, gps?.distance ?? null, gps?.accuracy ?? null);
-    const result = await db.prepare('INSERT INTO cham (ma,t,loai,cach,ip,wifi,tb,may' + columns + ') SELECT ' + values.map(() => '?').join(',') + ' WHERE COALESCE((SELECT CASE WHEN loai=? AND t>? THEN 1 ELSE 0 END FROM cham WHERE ma=? AND huy=0 AND t<=? ORDER BY t DESC,id DESC LIMIT 1),0)=0').bind(...values, loai, now-DUP_MS, s.nv.ma, now).run();
+    // GPS follows the existing daily next-punch rule across every method and location.
+    // Wi-Fi/QR keep their existing duplicate-only behavior, including overnight punches.
+    const dayFilter = gps ? ' AND t>=?' : '';
+    const duplicateArgs = [loai, now-DUP_MS, s.nv.ma, now];
+    if (gps) duplicateArgs.push(vnDayStart(now));
+    let condition = 'COALESCE((SELECT CASE WHEN loai=? AND t>? THEN 1 ELSE 0 END FROM cham WHERE ma=? AND huy=0 AND t<=?' + dayFilter + ' ORDER BY t DESC,id DESC LIMIT 1),0)=0';
+    const args = [...values, ...duplicateArgs];
+    if (gps) {
+      // Evaluate sequence in the same INSERT as duplicate prevention, not a read-then-write check.
+      condition += " AND ?=COALESCE((SELECT CASE WHEN loai='vao' THEN 'ra' ELSE 'vao' END FROM cham WHERE ma=? AND huy=0 AND t>=? AND t<=? ORDER BY t DESC,id DESC LIMIT 1),'vao')";
+      args.push(loai, s.nv.ma, vnDayStart(now), now);
+    }
+    const result = await db.prepare('INSERT INTO cham (ma,t,loai,cach,ip,wifi,tb,may' + columns + ') SELECT ' + values.map(() => '?').join(',') + ' WHERE ' + condition).bind(...args).run();
     if (!result.meta.changes) {
-      const last = await db.prepare('SELECT t,loai,cach FROM cham WHERE ma=? AND huy=0 AND t<=? ORDER BY t DESC,id DESC LIMIT 1').bind(s.nv.ma,now).first();
+      const lastArgs = [s.nv.ma, now]; if (gps) lastArgs.push(vnDayStart(now));
+      const last = await db.prepare('SELECT t,loai,cach FROM cham WHERE ma=? AND huy=0 AND t<=?' + dayFilter + ' ORDER BY t DESC,id DESC LIMIT 1').bind(...lastArgs).first();
+      if (gps && (!last || last.loai !== loai || last.t <= now-DUP_MS)) {
+        const next = last?.loai === 'vao' ? 'ra' : 'vao';
+        return json({ok:false,loi:'Trạng thái chấm công đã thay đổi. Lượt kế tiếp là ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.'),next},409);
+      }
       return json({ok:true,trung:true,t:last.t,loai:last.loai,cach:last.cach});
     }
     await noteDevice(db, req, s.nv.ma, 'cham');
