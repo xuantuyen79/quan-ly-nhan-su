@@ -11670,12 +11670,12 @@ if (typeof module !== 'undefined') module.exports = XW;
   function wfMap(u, ym) {
     var list = (u.wf && u.wf.punches && u.wf.punches[ym]) || [], o = {};
     list.slice().sort(function (a, b) { return a.t - b.t; }).forEach(function (x) {
-      var k = x.ma + '|' + wfIso(x.t), r = o[k] || (o[k] = { tin: '', tout: '', n: 0, cach: {}, iso: wfIso(x.t) }); r.n++; r.cach[x.cach] = 1;
+      var k = x.ma + '|' + wfIso(x.t), r = o[k] || (o[k] = { tin: '', tout: '', n: 0, cach: {}, iso: wfIso(x.t) }); r.n++; r.cach[x.cach] = 1; if (x.gps_location_label) { r.gpsLocations = r.gpsLocations || []; if (r.gpsLocations.indexOf(x.gps_location_label) < 0) r.gpsLocations.push(x.gps_location_label); }
       if (x.loai === 'vao') { if (!r.tin) r.tin = wfHM(x.t); } else r.tout = wfHM(x.t);
     });
     return o;
   }
-  var WF_CACH = { wifi: 'Wi‑Fi', qr: 'QR', tay: 'chấm bổ sung' };
+  var WF_CACH = { wifi: 'Wi‑Fi', qr: 'QR', gps: 'GPS', tay: 'chấm bổ sung' };
   function wfPeople(u) {
     var R = HR.isoToday(), mat = HR.maternitySet(u.data, R), s = ccOf(u), out = [];
     (u.data.NV || []).forEach(function (e) {
@@ -11881,7 +11881,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var today = HR.isoToday(), rows = [];
     us.forEach(function (u) { var mp = wfMap(u, today.slice(0, 7)), nv = nvIndex(u); Object.keys(mp).forEach(function (k) { if (mp[k].iso === today) rows.push({ u: u, ma: k.split('|')[0], e: nv[k.split('|')[0]] || {}, r: mp[k] }); }); });
     if (!rows.length) return '<p class="muted">Chưa có lượt chấm hôm nay' + (us.some(wfDemoOn) ? ' trên bản thử. Làm theo kịch bản thử ở trên rồi bấm <b>Lấy dữ liệu thử về</b>.' : ' (theo lần đồng bộ cuối).') + '</p>';
-    return '<div class="tbl-wrap"><table class="tbl wf-t"><thead><tr><th>Nhân sự</th>' + (us.length > 1 ? '<th>Công ty</th>' : '') + '<th>Vào</th><th>Ra</th><th>Cách chấm</th></tr></thead><tbody>' + rows.sort(function (a, b) { return a.r.tin < b.r.tin ? -1 : 1; }).map(function (x) { return '<tr><td>' + esc(x.e['Họ và tên'] || x.ma) + ' <span class="faint mono">' + esc(x.ma) + '</span></td>' + (us.length > 1 ? '<td>' + esc(shortUnit(x.u.name)) + '</td>' : '') + '<td class="mono">' + esc(x.r.tin || '–') + '</td><td class="mono">' + esc(x.r.tout || '–') + '</td><td>' + Object.keys(x.r.cach).map(function (c) { return WF_CACH[c] || c; }).join(', ') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    return '<div class="tbl-wrap"><table class="tbl wf-t"><thead><tr><th>Nhân sự</th>' + (us.length > 1 ? '<th>Công ty</th>' : '') + '<th>Vào</th><th>Ra</th><th>Cách chấm</th></tr></thead><tbody>' + rows.sort(function (a, b) { return a.r.tin < b.r.tin ? -1 : 1; }).map(function (x) { return '<tr><td>' + esc(x.e['Họ và tên'] || x.ma) + ' <span class="faint mono">' + esc(x.ma) + '</span></td>' + (us.length > 1 ? '<td>' + esc(shortUnit(x.u.name)) + '</td>' : '') + '<td class="mono">' + esc(x.r.tin || '–') + '</td><td class="mono">' + esc(x.r.tout || '–') + '</td><td>' + Object.keys(x.r.cach).map(function (c) { return WF_CACH[c] || c; }).join(', ') + (x.r.gpsLocations && x.r.gpsLocations.length ? '<small class="cell-sub">' + esc(x.r.gpsLocations.join('; ')) + '</small>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }
   // Chi phí máy chủ dự kiến theo quy mô (gói Free Cloudflare: Workers + D1 + R2) – giới hạn lấy từ trang giá Cloudflare, kiểm tra 07–08/11/2026
   // 08/11 anh: thêm dung lượng file scan, ảnh nhân viên; mức dưới 20 · 20–49 · 50–200 · trên 200; trên 200 người cân nhắc ERP trả phí

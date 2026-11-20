@@ -5,6 +5,7 @@
    - Quản lý (/quan-ly): nhân viên, lượt chấm, IP văn phòng, lượt bị từ chối, cài đặt, tải CSV.
    Giờ chấm lấy theo đồng hồ máy chủ (không tin giờ điện thoại). Hiển thị theo giờ Việt Nam (UTC+7). */
 import qrcode from './qrcode.mjs';
+import { gpsReady, gpsAllowed, gpsVerify, gpsAdmin } from './ksb-gps.js';
 import { sendKsbFeedback } from './ksb-feedback.js';
 import { reportsAPI } from './ksb-reports.js';
 import APP_HTML from './app.html';
@@ -796,7 +797,9 @@ function qrSvg(text) { const q = qrcode(0, 'M'); q.addData(text); q.make(); retu
 
 /* ---------- dữ liệu chấm ---------- */
 async function punchesBetween(db, from, to, ma) {
-  const sql = 'SELECT c.id, c.ma, n.ten, c.t, c.loai, c.cach, c.ip, c.wifi, c.tb, c.may, c.ghi, c.huy, c.nguoi FROM cham c LEFT JOIN nv n ON n.ma = c.ma WHERE c.t >= ? AND c.t < ?' + (ma ? ' AND c.ma = ?' : '') + ' ORDER BY c.t';
+  const gps = await gpsReady(db);
+  const gpsFields = gps ? 'c.gps_location_id,c.gps_location_label,c.gps_distance,c.gps_accuracy' : 'NULL AS gps_location_id,NULL AS gps_location_label,NULL AS gps_distance,NULL AS gps_accuracy';
+  const sql = 'SELECT ' + gpsFields + ', c.id, c.ma, n.ten, c.t, c.loai, c.cach, c.ip, c.wifi, c.tb, c.may, c.ghi, c.huy, c.nguoi FROM cham c LEFT JOIN nv n ON n.ma = c.ma WHERE c.t >= ? AND c.t < ?' + (ma ? ' AND c.ma = ?' : '') + ' ORDER BY c.t';
   const st = ma ? db.prepare(sql).bind(from, to, ma) : db.prepare(sql).bind(from, to);
   return (await st.all()).results;
 }
@@ -891,6 +894,21 @@ async function api(req, env, url) {
   const isSetup = !!cfg.ql_pin;
   const sess = vai => demo && (vai === 'ql' || vai === 'tram') ? Promise.resolve({ vai, demo: true }) : session(db, req, vai); // bản thử: không cần mật khẩu quản lý / kích hoạt màn hình chung
 
+  // GPS is opt-in, and its manual migration is never applied by ensureSchema.
+  if (p.startsWith('/api/gps/')) {
+    try {
+      const action = p.slice(9);
+      if ((action === 'allowed' && req.method === 'GET') || (action === 'check' && req.method === 'POST')) {
+        const employee = await session(db, req, 'nv');
+        if (!employee) return bad('Phiên đăng nhập đã hết. Đăng nhập lại.', 401);
+        return action === 'allowed' ? json({ ok: true, ...await gpsAllowed(db, cfg, employee.nv.ma, now) }) : json({ok:true,...await gpsVerify(db,cfg,employee.nv.ma,body,now)});
+      }
+      const manager = await qtUser(db, req), legacyManager = await session(db, req, 'ql');
+      if (!legacyManager && !manager?.sys) return bad('Chỉ quản trị viên có thẩm quyền mới được quản lý địa điểm GPS.', 403);
+      return json(await gpsAdmin(db, cfg, action, req.method, body, now));
+    } catch (error) { return bad(error.status ? error.message : 'Chưa xử lý được cấu hình GPS.', error.status || 500); }
+  }
+
   /* ----- BẢN THỬ: API công khai cho Phần mềm quản lý nhân sự toàn diện (bản thử, chạy file trên máy người dùng) ----- */
   if (p.startsWith('/api/demo/')) {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -901,7 +919,7 @@ async function api(req, env, url) {
       const tu = String(url.searchParams.get('tu') || isoVN(now - 13 * 864e5)), den = String(url.searchParams.get('den') || isoVN(now));
       if (!/^\d{4}-\d{2}-\d{2}$/.test(tu) || !/^\d{4}-\d{2}-\d{2}$/.test(den)) return jc({ ok: false, loi: 'tu, den dạng YYYY-MM-DD' }, 400);
       const from = Date.UTC(+tu.slice(0, 4), +tu.slice(5, 7) - 1, +tu.slice(8, 10)) - VN, to = Date.UTC(+den.slice(0, 4), +den.slice(5, 7) - 1, +den.slice(8, 10)) - VN + 864e5;
-      return jc({ ok: true, now, list: (await punchesBetween(db, from, to)).filter(x => !x.huy).map(x => ({ id: x.id, ma: x.ma, t: x.t, loai: x.loai, cach: x.cach, ghi: x.ghi || '' })) });
+      return jc({ ok: true, now, list: (await punchesBetween(db, from, to)).filter(x => !x.huy).map(x => ({ id: x.id, ma: x.ma, t: x.t, loai: x.loai, cach: x.cach, gps_location_id: x.gps_location_id, gps_location_label: x.gps_location_label, gps_distance: x.gps_distance, gps_accuracy: x.gps_accuracy, ghi: x.ghi || '' })) });
     }
     if (r === 'don') return jc({ ok: true, now, list: (await db.prepare("SELECT * FROM don WHERE nguon = 'Điện thoại' AND trang_thai != 'Đã hủy' ORDER BY tao DESC LIMIT 200").all()).results });
     if (r === 'don-cap-nhat' && req.method === 'POST') {
@@ -1007,7 +1025,7 @@ async function api(req, env, url) {
       const tu = String(url.searchParams.get('tu') || ''), den = String(url.searchParams.get('den') || '');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(tu) || !/^\d{4}-\d{2}-\d{2}$/.test(den)) return jc({ ok: false, loi: 'tu, den dạng YYYY-MM-DD' }, 400);
       const from = Date.UTC(+tu.slice(0, 4), +tu.slice(5, 7) - 1, +tu.slice(8, 10)) - VN, to = Date.UTC(+den.slice(0, 4), +den.slice(5, 7) - 1, +den.slice(8, 10)) - VN + 864e5;
-      const rows = (await punchesBetween(db, from, to)).filter(x => !x.huy).map(x => ({ id: x.id, ma: x.ma, t: x.t, loai: x.loai, cach: x.cach, ghi: x.ghi || '' }));
+      const rows = (await punchesBetween(db, from, to)).filter(x => !x.huy).map(x => ({ id: x.id, ma: x.ma, t: x.t, loai: x.loai, cach: x.cach, gps_location_id: x.gps_location_id, gps_location_label: x.gps_location_label, gps_distance: x.gps_distance, gps_accuracy: x.gps_accuracy, ghi: x.ghi || '' }));
       return jc({ ok: true, list: rows });
     }
     if (r === 'don') {
@@ -1366,7 +1384,7 @@ async function api(req, env, url) {
       { const q = demo ? demoQtOf(s.nv.ma) : (s.nv.co_mk ? qtOf(s.nv) : null); if (q) o.me.qt = { r: q.r, t: q.t }; if (s.nv.co_mk) o.me.mk = 1; if (s.nv.mk_doi) o.me.doi_mk = 1; } // 13/11: một tài khoản – quyền quản trị, mật khẩu
       const d0 = vnDayStart(now), m = vnParts(now);
       const mStart = Date.UTC(m.y, Number(m.m) - 1, 1) - VN;
-      o.thang = (await punchesBetween(db, mStart, d0 + 864e5, s.nv.ma)).filter(r => !r.huy).map(r => ({ t: r.t, loai: r.loai, cach: r.cach }));
+      o.thang = (await punchesBetween(db, mStart, d0 + 864e5, s.nv.ma)).filter(r => !r.huy).map(r => ({ t: r.t, loai: r.loai, cach: r.cach, gps_location_label: r.gps_location_label, gps_distance: r.gps_distance, gps_accuracy: r.gps_accuracy }));
       o.me.ncc = !!s.nv.ncc; o.ket_noi = !!cfg.sync_key;
       o.don = (await db.prepare('SELECT so, loai, tu, den, so_ngay, ly_do, trang_thai, ly_do_tc, nguoi_duyet, ngay_duyet, ban_giao FROM don WHERE ma = ? ORDER BY tu DESC LIMIT 15').bind(s.nv.ma).all()).results;
       o.bao_sai = (await db.prepare('SELECT ngay, noi_dung, tao FROM bao_sai WHERE ma = ? AND ngay >= ?').bind(s.nv.ma, isoVN(now - 100 * 864e5)).all()).results;
@@ -1467,27 +1485,41 @@ async function api(req, env, url) {
     const s = await session(db, req, 'nv');
     if (!s) return bad('Phiên đăng nhập đã hết. Đăng nhập lại.', 401);
     const loai = body.loai === 'ra' ? 'ra' : 'vao';
-    const offices = await officeIPs(db, cfg, now);
-    const wifi = matchOffice(ip, offices);
-    const hasQR = !!(body.pass || body.t), qrOk = hasQR && (body.pass ? await verifyPass(cfg.qr_secret, body.pass, now) : await verifyQR(cfg.qr_secret, String(body.t), now));
-    let ok, lyDo = '';
-    if (cfg.che_do === 'chi_wifi') ok = wifi;
-    else if (cfg.che_do === 'chi_qr') ok = qrOk;
-    else ok = wifi || qrOk;
-    if (!ok) {
-      if (hasQR && !qrOk) lyDo = 'Lượt quét QR không còn hiệu lực (quá 2 phút hoặc mã không đúng). Hãy quét lại mã đang hiện ở trang Mã QR chấm công.';
-      else if (cfg.che_do === 'chi_qr') lyDo = 'Đơn vị đang dùng chế độ chỉ chấm bằng QR. Hãy quét mã ở trang Mã QR chấm công.';
-      else if (!offices.some(r => r.hieu_luc)) lyDo = 'Chưa có IP văn phòng. Hãy mở trang Mã QR chấm công (hoặc nhờ kế toán thêm IP văn phòng) rồi thử lại.';
-      else lyDo = 'Không nhận ra mạng Wi-Fi văn phòng (' + ipKind(ip) + '). Hãy bắt Wi-Fi văn phòng' + (cfg.che_do === 'chi_wifi' ? '' : ' hoặc quét Mã QR chấm công đặt ở văn phòng') + '.';
-      await logReject(db, s.nv.ma, ip, (hasQR ? (qrOk ? 'QR hợp lệ' : 'QR quá 2 phút') : 'Không có QR') + ' · ' + (wifi ? 'IP khớp' : 'IP không khớp') + ' · chế độ ' + cfg.che_do, req);
-      return json({ ok: false, loi: lyDo, ip: cfg.hien_ip === '1' ? ip : null }, 403);
+    let gps = null, cach, wifi = false;
+    if (body.cach === 'gps') {
+      if (!['vao','ra'].includes(body.loai)) return bad('Loại chấm GPS phải là Vào hoặc Ra.');
+      try { gps = await gpsVerify(db, cfg, s.nv.ma, body, now); cach = 'gps'; }
+      catch (error) { return bad(error.status ? error.message : 'Chưa xác minh được GPS. Vui lòng thử lại.', error.status || 500); }
+    } else {
+      const offices = await officeIPs(db, cfg, now);
+      wifi = matchOffice(ip, offices);
+      const hasQR = !!(body.pass || body.t), qrOk = hasQR && (body.pass ? await verifyPass(cfg.qr_secret, body.pass, now) : await verifyQR(cfg.qr_secret, String(body.t), now));
+      let ok, lyDo = '';
+      if (cfg.che_do === 'chi_wifi') ok = wifi;
+      else if (cfg.che_do === 'chi_qr') ok = qrOk;
+      else ok = wifi || qrOk;
+      if (!ok) {
+        if (hasQR && !qrOk) lyDo = 'Lượt quét QR không còn hiệu lực (quá 2 phút hoặc mã không đúng). Hãy quét lại mã đang hiện ở trang Mã QR chấm công.';
+        else if (cfg.che_do === 'chi_qr') lyDo = 'Đơn vị đang dùng chế độ chỉ chấm bằng QR. Hãy quét mã ở trang Mã QR chấm công.';
+        else if (!offices.some(r => r.hieu_luc)) lyDo = 'Chưa có IP văn phòng. Hãy mở trang Mã QR chấm công (hoặc nhờ kế toán thêm IP văn phòng) rồi thử lại.';
+        else lyDo = 'Không nhận ra mạng Wi-Fi văn phòng (' + ipKind(ip) + '). Hãy bắt Wi-Fi văn phòng' + (cfg.che_do === 'chi_wifi' ? '' : ' hoặc quét Mã QR chấm công đặt ở văn phòng') + '.';
+        await logReject(db, s.nv.ma, ip, (hasQR ? (qrOk ? 'QR hợp lệ' : 'QR quá 2 phút') : 'Không có QR') + ' · ' + (wifi ? 'IP khớp' : 'IP không khớp') + ' · chế độ ' + cfg.che_do, req);
+        return json({ ok: false, loi: lyDo, ip: cfg.hien_ip === '1' ? ip : null }, 403);
+      }
+      cach = wifi ? 'wifi' : 'qr';
     }
-    const last = await db.prepare('SELECT t, loai FROM cham WHERE ma = ? AND huy = 0 AND t <= ? ORDER BY t DESC LIMIT 1').bind(s.nv.ma, now).first();
-    if (last && last.loai === loai && now - last.t < DUP_MS) return json({ ok: true, trung: true, t: last.t, loai, cach: qrOk ? 'qr' : 'wifi' });
-    const cach = wifi ? 'wifi' : 'qr';
-    await db.prepare('INSERT INTO cham (ma, t, loai, cach, ip, wifi, tb, may) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(s.nv.ma, now, loai, cach, ip, wifi ? 1 : 0, shortUA(req.headers.get('user-agent')), req.may || null).run();
+    // Same existing 2-minute duplicate rule, evaluated atomically for mixed methods too.
+    const hasGpsSchema = await gpsReady(db);
+    const columns = hasGpsSchema ? ',gps_location_id,gps_location_label,gps_distance,gps_accuracy' : '';
+    const values = [s.nv.ma, now, loai, cach, ip, wifi ? 1 : 0, shortUA(req.headers.get('user-agent')), req.may || null];
+    if (hasGpsSchema) values.push(gps?.location_id || null, gps?.label || null, gps?.distance ?? null, gps?.accuracy ?? null);
+    const result = await db.prepare('INSERT INTO cham (ma,t,loai,cach,ip,wifi,tb,may' + columns + ') SELECT ' + values.map(() => '?').join(',') + ' WHERE COALESCE((SELECT CASE WHEN loai=? AND t>? THEN 1 ELSE 0 END FROM cham WHERE ma=? AND huy=0 AND t<=? ORDER BY t DESC,id DESC LIMIT 1),0)=0').bind(...values, loai, now-DUP_MS, s.nv.ma, now).run();
+    if (!result.meta.changes) {
+      const last = await db.prepare('SELECT t,loai,cach FROM cham WHERE ma=? AND huy=0 AND t<=? ORDER BY t DESC,id DESC LIMIT 1').bind(s.nv.ma,now).first();
+      return json({ok:true,trung:true,t:last.t,loai:last.loai,cach:last.cach});
+    }
     await noteDevice(db, req, s.nv.ma, 'cham');
-    return json({ ok: true, t: now, loai, cach });
+    return json({ ok: true, t: now, loai, cach, ...(gps ? { gps_location: gps.label, distance: gps.distance, accuracy: gps.accuracy } : {}) });
   }
 
   /* ----- 0.3.1: nhân viên gửi / hủy đơn nghỉ, xác nhận công tháng ----- */
@@ -1785,12 +1817,12 @@ async function api(req, env, url) {
       const from = Date.UTC(+th[2], +th[1] - 1, 1) - VN, to = Date.UTC(+th[2], +th[1], 1) - VN;
       const rows = await punchesBetween(db, from, to);
       const esc = v => { v = v === null || v === undefined ? '' : String(v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-      const CACH = { wifi: 'Wi-Fi', qr: 'QR', tay: 'Nhập tay' };
+      const CACH = { wifi: 'Wi-Fi', qr: 'QR', gps: 'GPS', tay: 'Nhập tay' };
       const shared = {}; (await sharedDevices(db)).forEach(d => { if (!d.bo_qua) shared[d.may] = d.nv; });
-      const lines = [['Mã NV', 'Họ tên', 'Ngày', 'Giờ', 'Loại', 'Cách chấm', 'IP', 'Thiết bị', 'Mã máy', 'Cảnh báo', 'Ghi chú', 'Trạng thái'].join(',')];
+      const lines = [['Mã NV', 'Họ tên', 'Ngày', 'Giờ', 'Loại', 'Cách chấm', 'IP', 'Thiết bị', 'Mã máy', 'Cảnh báo', 'Ghi chú', 'Trạng thái', 'Địa điểm GPS', 'Khoảng cách GPS (m)', 'Độ chính xác GPS (m)'].join(',')];
       rows.forEach(x => {
         const q = vnParts(x.t), sh = x.may && shared[x.may] ? shared[x.may].filter(o => o.ma !== x.ma) : [];
-        lines.push([x.ma, x.ten || '', q.d + '/' + q.m + '/' + q.y, q.h + ':' + q.mi + ':' + q.s, x.loai === 'ra' ? 'Ra' : 'Vào', CACH[x.cach] || x.cach, x.ip, x.tb, x.may ? x.may.slice(0, 6) : '', sh.length ? 'Máy dùng chung với ' + sh.map(o => o.ma).join(', ') : '', x.ghi, x.huy ? 'Đã hủy' : 'Hợp lệ'].map(esc).join(','));
+        lines.push([x.ma, x.ten || '', q.d + '/' + q.m + '/' + q.y, q.h + ':' + q.mi + ':' + q.s, x.loai === 'ra' ? 'Ra' : 'Vào', CACH[x.cach] || x.cach, x.ip, x.tb, x.may ? x.may.slice(0, 6) : '', sh.length ? 'Máy dùng chung với ' + sh.map(o => o.ma).join(', ') : '', x.ghi, x.huy ? 'Đã hủy' : 'Hợp lệ', x.gps_location_label, x.gps_distance, x.gps_accuracy].map(esc).join(','));
       });
       return new Response('﻿' + lines.join('\r\n'), { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="Cham_cong_' + th[2] + '_' + th[1] + '.csv"', 'cache-control': 'no-store' } });
     }
