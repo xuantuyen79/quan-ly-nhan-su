@@ -3071,9 +3071,9 @@ body.nav-hide .nav-hide-btn{background:var(--pri-soft);border-color:var(--pri);c
     <div class="sb-tools"><span id="sbCount"></span><button type="button" class="sb-all" data-act="nav-all" id="sbAll">Thu gọn tất cả</button></div>
     <nav class="nav" id="nav"></nav>
     <div class="panel-foot">
-      <div class="sb-foot-row"><a href="https://quantritute.com/cong-cu" id="bback">← Bộ công cụ</a><span class="sb-ic"><button class="sb-mini" data-act="cmd" title="Tìm nhanh (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button><button class="sb-mini" data-act="palette" title="Đổi màu giao diện"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2Z"/><circle cx="7.5" cy="11.5" r="1.1"/><circle cx="10.5" cy="7.5" r="1.1"/><circle cx="15" cy="7.8" r="1.1"/></svg></button></span></div>
+      <div class="sb-foot-row"><a href="https://ksb.vn" id="bback" target="_blank" rel="noopener noreferrer">← Trang chủ KSB</a><span class="sb-ic"><button class="sb-mini" data-act="cmd" title="Tìm nhanh (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button><button class="sb-mini" data-act="palette" title="Đổi màu giao diện"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2Z"/><circle cx="7.5" cy="11.5" r="1.1"/><circle cx="10.5" cy="7.5" r="1.1"/><circle cx="15" cy="7.8" r="1.1"/></svg></button></span></div>
       <span class="sb-note" id="sbNote">Dữ liệu xử lý ngay trên máy anh/chị, không gửi đi đâu.</span>
-      <span class="sb-author">Tác giả: <a href="https://quantritute.com" target="_blank" rel="noopener" title="Quản trị tử tế – quantritute.com">Quản trị tử tế</a></span>
+      <span class="sb-author">QLNS-KSB | KSB System</span>
     </div>
   </aside>
   <div class="main">
@@ -5709,7 +5709,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     // 12/11 góp ý: nhật ký, sao lưu, xóa dữ liệu thu gọn thành nút nhỏ ở cuối trang
     h += '<div class="set-foot"><div class="set-meta"><span>Phiên bản <b>' + APP_VER + '</b></span><span>Lưu trên trình duyệt: <b>' + (DB_OK ? 'Có' : 'Không dùng được') + '</b></span><span>Ghi nhớ thư mục: <b>' + (CAN_PICK ? 'Có' : 'Không (dùng Chrome hoặc Edge)') + '</b></span></div>' +
       '<div class="set-btns"><button class="btn btn-sm" data-act="set-log">' + ic('xuat', 14) + 'Nhật ký <span class="faint">' + LOG.length + '</span></button><button class="btn btn-sm" data-act="set-backup">Sao lưu dữ liệu</button><button class="btn btn-sm" data-act="set-restore">Khôi phục từ bản sao lưu</button><button class="btn btn-sm btn-danger-soft" data-act="reset-all">Xóa toàn bộ dữ liệu…</button></div></div>';
-    h += '<p class="faint" style="text-align:center;font-size:12px;margin:14px 0 0">Phần mềm quản lý nhân sự toàn diện do <a href="https://quantritute.com" target="_blank" rel="noopener">Quản trị tử tế</a> phát triển · quantritute.com</p>';
+    h += '<p class="faint" style="text-align:center;font-size:12px;margin:14px 0 0">QLNS-KSB | KSB System</p>';
     return h;
   }
   function navSetHtml() {
@@ -23181,7 +23181,6 @@ function reportPrintOverlay(){if(!state.reportPrint)return'';const d=reportData(
   function boot() { if (svOn()) return svBoot(boot0); boot0(); } // 0.8.1: mở từ máy chủ của đơn vị (/quan-tri) → đăng nhập + tải dữ liệu máy chủ trước (maychu.js)
   function boot0() {
     $$('img.dom-img').forEach(function (i) { i.src = DOM_SRC; });
-    var b = $('#bback'); if (b && /quantritute\.com$/.test(location.hostname)) b.href = '/cong-cu';
     XR.setSheetJS(['xlsx.full.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js']);
     Promise.all([dbGet('settings'), dbGet('units'), dbGet('log'), dbGet('done')]).then(function (r) {
       if (r[0]) { S.settings = Object.assign({}, DEF, r[0]); if (S.settings.colorV !== 2) { S.settings.color = 'reu'; S.settings.colorV = 2; } /* 08/11 15:10 anh: màu mặc định Xanh rêu (đổi 1 lần cho máy đã lưu màu cũ) */ S.settings.refMode = 'today'; /* 08/11 anh: mỗi lần mở phần mềm 'Tính đến' về hôm nay; chọn ngày cố định chỉ dùng trong lần mở đó */ S.settings.cfg = Object.assign({}, HRR.DEF, r[0].cfg || {}, r[0].contractDays ? { contractDays: r[0].contractDays } : {}); }
