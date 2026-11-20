@@ -5,6 +5,7 @@
    - Quản lý (/quan-ly): nhân viên, lượt chấm, IP văn phòng, lượt bị từ chối, cài đặt, tải CSV.
    Giờ chấm lấy theo đồng hồ máy chủ (không tin giờ điện thoại). Hiển thị theo giờ Việt Nam (UTC+7). */
 import qrcode from './qrcode.mjs';
+import { reportsAPI } from './ksb-reports.js';
 import APP_HTML from './app.html';
 import { ICON_PNG_B64, ICON_SVG } from './icon.js';
 import { DEMO, DEMO_PIN } from './demo-data.js';
@@ -1204,6 +1205,10 @@ async function api(req, env, url) {
       catch (e) { return bad('Không kết nối được Resend. Thử lại sau ít phút.', 502); }
       if (!rs.ok) return bad('Resend chưa gửi được: ' + String(j.message || j.name || ('mã ' + rs.status)).slice(0, 300), 502);
       return json({ ok: true, id: j.id || '' });
+    }
+    if (r === 'bao-cao' && req.method === 'GET') {
+      try { return json(await reportsAPI(db, U, url.searchParams, isoVN(now))); }
+      catch (error) { return bad(error.status ? error.message : 'Chưa đọc được dữ liệu báo cáo.', error.status || 500); }
     }
     if (r === 'du-lieu') return json({ ok: true, now, list: (await db.prepare('SELECT k, ver, at, nguoi, z, meta, size FROM qt_kv ORDER BY k').all()).results.map(x => ({ ...x, meta: x.meta ? JSON.parse(x.meta) : null })) });
     if (r === 'kv' && req.method === 'GET') {

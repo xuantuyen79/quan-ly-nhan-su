@@ -2377,6 +2377,688 @@ body.nav-hide .nav-hide-btn{background:var(--pri-soft);border-color:var(--pri);c
 .ml-red{display:block;color:#c0392b;font-size:12px;line-height:1.45;margin:-2px 0 6px}.ml-red b{color:inherit}
 .tbl-card{margin-bottom:12px;display:flex;flex-direction:column;gap:6px;font-size:13px}.tbl-r{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}.tbl-sel{width:auto;display:inline-block;padding:4px 8px;margin-left:6px}.tbl-bar{height:6px;border-radius:4px;background:var(--line,#e5e5e5);overflow:hidden}.tbl-bar i{display:block;height:100%;background:var(--pri,#2e7d32)}.tbl-bar.warn i{background:#c0392b}
 </style>
+<style id="ksbReportStyle">
+.ksb-reports{--brand:#104f9b;--brand2:#2369bb;--navy:#122943;--ink:#17324a;--muted:#708195;--border:#e3eaf2;--bg:#f3f6fa;--panel:#fff;--green:#16835f;--gold:#ae761d;--danger:#ce4751;--ring:rgba(16,79,155,.16);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-synthesis:none}
+.ksb-reports *{box-sizing:border-box}
+.ksb-reports{margin:0}
+.ksb-reports button,.ksb-reports input,.ksb-reports select{font:inherit}
+.ksb-reports button{cursor:pointer}
+.ksb-reports button:disabled{cursor:not-allowed;opacity:.5}
+.ksb-reports a{color:inherit}
+.ksb-reports input,.ksb-reports select{min-height:37px;background:#fff;border:1px solid #dce5ed;border-radius:9px;padding:8px 11px;color:var(--ink);outline:none;max-width:100%}
+.ksb-reports input:focus,.ksb-reports select:focus{border-color:#74a7e4;box-shadow:0 0 0 3px var(--ring)}
+.ksb-reports button:focus-visible{outline:3px solid #82b5f7;outline-offset:2px}
+.ksb-reports .app{display:flex;min-height:100vh}
+.ksb-reports .sidebar{width:254px;flex:0 0 254px;background:var(--navy);color:#d5e0f0;min-height:100vh;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;z-index:11}
+.ksb-reports .sidebar-header{display:flex;align-items:center;gap:11px;padding:23px 19px 19px;border-bottom:1px solid rgba(255,255,255,.09)}
+.ksb-reports .brand-logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#2769b8,#104f9b);display:grid;place-items:center;font-size:18px;color:#fff;font-weight:900;letter-spacing:-1px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.ksb-reports .brand-title{color:#fff;font-size:17px;font-weight:800;letter-spacing:.2px}
+.ksb-reports .brand-sub{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#8ca7c7;margin-top:3px}
+.ksb-reports .nav-label{color:#7190b3;font-size:10px;letter-spacing:1.35px;font-weight:750;padding:20px 22px 9px;text-transform:uppercase}
+.ksb-reports .nav-scroll{overflow:auto;flex:1;padding:0 10px 20px;scrollbar-color:#456078 transparent;scrollbar-width:thin}
+.ksb-reports .nav-group{margin:1px 0}
+.ksb-reports .nav-group-btn,.ksb-reports .nav-sub-btn{display:flex;gap:11px;align-items:center;text-align:left;color:#b9cbe0;background:transparent;border:0;width:100%;padding:11px 12px;border-radius:9px;transition:background .12s,color .12s}
+.ksb-reports .nav-group-btn:hover,.ksb-reports .nav-sub-btn:hover{background:rgba(255,255,255,.075);color:#fff}
+.ksb-reports .nav-group-btn.active,.ksb-reports .nav-sub-btn.active{background:#24558b;color:#fff}
+.ksb-reports .nav-group-btn.active::before,.ksb-reports .nav-sub-btn.active::before{content:"";position:absolute;left:0;width:3px;height:20px;border-radius:2px;background:#65aaf1}
+.ksb-reports .nav-group-btn{font-size:12.5px;font-weight:700;position:relative}
+.ksb-reports .nav-ico{width:19px;text-align:center;font-size:16px;opacity:.94}
+.ksb-reports .nav-name{flex:1}
+.ksb-reports .nav-count{font-size:10px;background:rgba(255,255,255,.09);color:#91aaca;border-radius:5px;padding:2px 6px}
+.ksb-reports .chevron{font-size:13px;transform:rotate(0);color:#799abf}
+.ksb-reports .nav-group.open .chevron{transform:rotate(90deg)}
+.ksb-reports .nav-children{display:none;padding:3px 0 9px 28px}
+.ksb-reports .nav-group.open .nav-children{display:block}
+.ksb-reports .nav-sub-btn{font-size:11.5px;padding:9px 10px 9px 12px;line-height:1.35;position:relative}
+.ksb-reports .nav-sub-btn.active{background:rgba(39,107,181,.5)}
+.ksb-reports .nav-sub-btn .fid{opacity:.45;font-size:9px;margin-left:auto}
+.ksb-reports .side-footer{padding:15px 18px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:#90a8c5;line-height:1.6}
+.ksb-reports .side-footer strong{color:#dbeaff}
+.ksb-reports .main{min-width:0;flex:1}
+.ksb-reports .topbar{position:sticky;top:0;z-index:9;min-height:75px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 31px;box-shadow:0 1px 7px rgba(30,52,84,.02)}
+.ksb-reports .top-left{display:flex;align-items:center;gap:15px}
+.ksb-reports .mobile-menu{display:none;border:0;background:#edf3f9;border-radius:8px;padding:8px 11px;color:var(--navy)}
+.ksb-reports .breadcrumb{color:#8a99a9;font-size:11px;font-weight:650;margin-bottom:5px;letter-spacing:.5px}
+.ksb-reports .top-title{font-size:17px;font-weight:800;letter-spacing:-.35px;color:#16344d}
+.ksb-reports .top-right{display:flex;align-items:center;gap:10px}
+.ksb-reports .org-select{width:190px;font-size:12px}
+.ksb-reports .role-select{width:149px;font-size:12px}
+.ksb-reports .avatar{width:35px;height:35px;border-radius:50%;background:#e2ecf9;color:#2860a1;font-size:11px;font-weight:800;display:grid;place-items:center;border:1px solid #cddbed}
+.ksb-reports .content{padding:28px 31px 60px;max-width:1650px;margin:auto}
+.ksb-reports .notice{display:flex;align-items:center;gap:9px;background:#e9f2fd;border:1px solid #d4e5f8;border-radius:11px;padding:11px 15px;font-size:11.5px;color:#375d83;margin-bottom:23px;line-height:1.5}
+.ksb-reports .notice strong{color:#1c4f82}
+.ksb-reports .page-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:20px}
+.ksb-reports .eyebrow{color:var(--brand);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:850;margin-bottom:7px}
+.ksb-reports .page-title{font-size:25px;font-weight:800;line-height:1.2;letter-spacing:-.8px;color:#143049;margin:0}
+.ksb-reports .page-desc{font-size:12px;color:#8394a6;margin:9px 0 0;line-height:1.6}
+.ksb-reports .head-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ksb-reports .btn{min-height:36px;padding:9px 13px;border-radius:8px;border:1px solid #dbe5ef;background:#fff;color:#34536f;font-weight:700;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.ksb-reports .btn:hover{background:#f6f9fd;border-color:#b7cee4}
+.ksb-reports .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 3px 7px rgba(16,79,155,.11)}
+.ksb-reports .btn.primary:hover{background:#0c4286}
+.ksb-reports .btn.subtle{background:#edf4fb;border-color:#dce9f7;color:#20568d}
+.ksb-reports .btn.danger{color:#b63e4b;background:#fff7f8;border-color:#f3d6da}
+.ksb-reports .kpi-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:19px}
+.ksb-reports .kpi{background:#fff;border:1px solid var(--border);padding:20px 20px 18px;border-radius:13px;min-height:135px;box-shadow:0 3px 12px rgba(26,53,88,.025)}
+.ksb-reports .kpi-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ksb-reports .kpi-label{font-size:11px;color:#74879d;font-weight:650}
+.ksb-reports .kpi-icon{width:37px;height:37px;display:grid;place-items:center;background:#e9f2fe;border-radius:10px;font-size:18px;color:#2362aa}
+.ksb-reports .kpi-icon.green{background:#e8f6f1;color:#15976a}
+.ksb-reports .kpi-icon.orange{background:#fcf1dd;color:#ac7529}
+.ksb-reports .kpi-icon.red{background:#ffeded;color:#ce5e5e}
+.ksb-reports .kpi-value{margin:10px 0 1px;font-size:29px;letter-spacing:-.9px;font-weight:850;color:#163650}
+.ksb-reports .kpi-note{color:#8ca0b1;font-size:10.5px}
+.ksb-reports .dashboard-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:17px}
+.ksb-reports .panel{background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:0 3px 16px rgba(29,55,83,.025);min-width:0}
+.ksb-reports .panel-head{padding:19px 20px 15px;border-bottom:1px solid #edf1f5;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.ksb-reports .panel-title{font-size:13px;font-weight:800;color:#1c3650}
+.ksb-reports .panel-sub{font-size:10.5px;color:#8797a6;margin-top:4px}
+.ksb-reports .panel-body{padding:20px}
+.ksb-reports .chart-bars{display:flex;align-items:flex-end;gap:16px;height:194px;padding:10px 8px 2px;border-bottom:1px solid #e5eaf0}
+.ksb-reports .bar-group{flex:1;display:flex;gap:5px;justify-content:center;align-items:end;height:100%;position:relative}
+.ksb-reports .bar{max-width:21px;flex:1;border-radius:5px 5px 0 0;background:linear-gradient(180deg,#4d97e0,#2068b1);min-height:9px}
+.ksb-reports .bar.secondary{background:#d3e4f6}
+.ksb-reports .bar-lab{position:absolute;bottom:-26px;font-size:10px;color:#8fa0b0}
+.ksb-reports .legend{display:flex;justify-content:center;gap:17px;margin-top:42px;color:#8293a5;font-size:10px}
+.ksb-reports .legend-dot{display:inline-block;width:8px;height:8px;border-radius:3px;background:#2f7ec7;margin-right:5px}
+.ksb-reports .legend-dot.light{background:#d3e4f6}
+.ksb-reports .task-row{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid #f0f3f6;align-items:center}
+.ksb-reports .task-row:last-child{border:0}
+.ksb-reports .task-icon{display:grid;place-items:center;width:37px;height:37px;border-radius:11px;background:#eff5fb;font-size:16px}
+.ksb-reports .task-content{flex:1;min-width:0}
+.ksb-reports .task-title{font-weight:750;font-size:11.5px;color:#3b536c}
+.ksb-reports .task-desc{font-size:10.5px;color:#95a3b4;margin-top:4px}
+.ksb-reports .pill{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:7px;font-size:10px;font-weight:700;white-space:nowrap}
+.ksb-reports .pill.green{background:#e7f6ef;color:#168259}
+.ksb-reports .pill.orange{background:#fff2df;color:#a27122}
+.ksb-reports .pill.blue{background:#eaf3ff;color:#2065a7}
+.ksb-reports .pill.gray{background:#eef1f5;color:#75869b}
+.ksb-reports .pill.red{background:#ffeeef;color:#b95259}
+.ksb-reports .mini-layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:17px}
+.ksb-reports .org-stat{display:flex;align-items:center;gap:12px;margin:15px 0}
+.ksb-reports .org-name{font-size:11px;color:#57708a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ksb-reports .org-bar{height:7px;background:#ebf0f6;border-radius:8px;overflow:hidden;margin-top:7px}
+.ksb-reports .org-bar-inner{height:100%;background:#3c83c9;border-radius:8px}
+.ksb-reports .org-count{font-size:12px;color:#44627c;font-weight:800;margin-left:auto}
+.ksb-reports .quick-action{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e6eef5;border-radius:10px;margin:9px 0;cursor:pointer;background:#fff;text-align:left;width:100%}
+.ksb-reports .quick-action:hover{background:#f6faff}
+.ksb-reports .quick-icon{font-size:20px}
+.ksb-reports .quick-name{font-size:12px;font-weight:750;color:#385b7b}
+.ksb-reports .quick-sub{font-size:10px;color:#9aabba;margin-top:4px}
+.ksb-reports .table-panel{overflow:hidden}
+.ksb-reports .toolbar{padding:16px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.ksb-reports .search-input{min-width:225px;flex:1;max-width:350px}
+.ksb-reports .toolbar select{font-size:11px}
+.ksb-reports .toolbar .spacer{flex:1}
+.ksb-reports .datatable-wrap{overflow:auto;max-width:100%;border-top:1px solid #edf1f5}
+.ksb-reports table{border-collapse:collapse;width:100%;font-size:11.5px;white-space:nowrap}
+.ksb-reports thead{background:#f7f9fc}
+.ksb-reports th{padding:14px 15px;text-align:left;color:#718397;font-size:10px;letter-spacing:.2px;font-weight:800;border-bottom:1px solid var(--border)}
+.ksb-reports td{padding:14px 15px;border-bottom:1px solid #ecf1f5;color:#476078}
+.ksb-reports tbody tr:hover{background:#fafcff}
+.ksb-reports tbody tr:last-child td{border-bottom:0}
+.ksb-reports .td-strong{color:#1e405d;font-weight:800}
+.ksb-reports .td-link{border:0;background:transparent;padding:0;color:#12549b;font-weight:800;text-align:left}
+.ksb-reports .td-link:hover{text-decoration:underline}
+.ksb-reports .emp-cell{display:flex;align-items:center;gap:10px}
+.ksb-reports .tiny-avatar{width:31px;height:31px;display:grid;place-items:center;color:#225c9f;font-size:10px;font-weight:800;border-radius:9px;background:#ebf2fc;flex:0 0 auto}
+.ksb-reports .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-size:11px;color:#8192a5;border-top:1px solid var(--border)}
+.ksb-reports .pagination{display:flex;gap:5px}
+.ksb-reports .pagebtn{width:29px;height:28px;background:#fff;border:1px solid #e0e8ef;border-radius:7px;color:#7a92a9}
+.ksb-reports .pagebtn.active{background:#eaf3fc;color:#1d5c9c;border-color:#cde2f7}
+.ksb-reports .tabstrip{display:flex;gap:16px;border-bottom:1px solid #e4ecf3;padding:0 19px;margin-bottom:0;overflow:auto}
+.ksb-reports .tab{background:transparent;border:0;border-bottom:2px solid transparent;color:#8a9aac;font-weight:700;font-size:11.5px;white-space:nowrap;padding:14px 2px 12px}
+.ksb-reports .tab.active{color:#15579b;border-color:#175ca7}
+.ksb-reports .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 23px}
+.ksb-reports .detail-field label{font-size:10px;color:#8a9baf;display:block;margin-bottom:5px}
+.ksb-reports .detail-field div{font-size:12px;font-weight:700;color:#314e68}
+.ksb-reports .drawer-shade{position:fixed;inset:0;background:rgba(13,32,52,.45);z-index:20;display:flex;justify-content:flex-end}
+.ksb-reports .drawer{width:min(600px,100%);background:#fff;box-shadow:-20px 0 60px rgba(20,42,66,.12);display:flex;flex-direction:column;animation:drawerIn .18s ease}
+.ksb-reports .drawer-top{padding:20px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ebeff3}
+.ksb-reports .drawer-body{padding:20px 24px;overflow:auto;flex:1}
+.ksb-reports .drawer-footer{padding:14px 24px;border-top:1px solid #edf1f5;display:flex;justify-content:flex-end;gap:10px}
+.ksb-reports .close{border:0;background:#eef3f7;color:#5c748b;border-radius:8px;width:30px;height:30px;font-size:20px}
+.ksb-reports .modal-shade{position:fixed;inset:0;background:rgba(12,32,54,.5);z-index:23;display:grid;place-items:center;padding:20px}
+.ksb-reports .modal{width:min(520px,100%);background:#fff;border-radius:16px;box-shadow:0 20px 70px rgba(20,42,66,.2)}
+.ksb-reports .modal-top{padding:20px 24px;border-bottom:1px solid #edf1f5;display:flex;justify-content:space-between}
+.ksb-reports .modal-body{padding:22px 24px}
+.ksb-reports .modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #edf1f5}
+.ksb-reports .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ksb-reports .form-field{display:flex;flex-direction:column;gap:5px}
+.ksb-reports .form-field label{font-size:11px;color:#60768b;font-weight:700}
+.ksb-reports .form-field.wide{grid-column:1/-1}
+.ksb-reports .form-field input,.ksb-reports .form-field select{width:100%}
+.ksb-reports .placeholder{padding:44px 26px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:9px}
+.ksb-reports .placeholder-icon{width:62px;height:62px;border-radius:19px;background:#eef5fd;display:grid;place-items:center;font-size:27px}
+.ksb-reports .placeholder h3{margin:6px 0 0;font-size:17px;color:#315374}
+.ksb-reports .placeholder p{font-size:12px;color:#8a9fb4;max-width:510px;line-height:1.7;margin:0}
+.ksb-reports .placeholder-fields{margin-top:9px;display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:720px}
+.ksb-reports .field-pill{font-size:10px;background:#f5f8fc;color:#71879d;padding:6px 9px;border:1px solid #e6edf5;border-radius:7px}
+.ksb-reports .info-list{display:flex;flex-direction:column;gap:7px;margin-top:16px}
+.ksb-reports .row-info{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:10px 12px;border-radius:8px;background:#f8fafc}
+.ksb-reports .row-info span:first-child{color:#6e8195;font-size:11px}
+.ksb-reports .row-info span:last-child{color:#365877;font-size:11px;font-weight:750}
+.ksb-reports .toast{position:fixed;bottom:23px;right:26px;z-index:35;background:#183a59;color:#fff;padding:13px 18px;border-radius:11px;box-shadow:0 12px 38px rgba(7,42,81,.18);font-size:12px;max-width:380px;line-height:1.5;animation:toast .2s ease}
+.ksb-reports .sheet-table td,.ksb-reports .sheet-table th{padding:10px 8px;font-size:10px;text-align:center;min-width:32px}
+.ksb-reports .sheet-table .stickycol{position:sticky;left:0;z-index:2;background:#fff;text-align:left;min-width:190px;padding-left:13px}
+.ksb-reports .sheet-table th.stickycol{z-index:3;background:#f7f9fc}
+.ksb-reports .sheet-table .weekend{background:#faf7f3;color:#a98247}
+.ksb-reports .sheet-table .cell-ok{color:#1e846b;font-weight:750}
+.ksb-reports .sheet-table .cell-off{color:#cf8e28}
+.ksb-reports .sheet-table .cell-miss{color:#cb6464}
+.ksb-reports .sheet-table th{padding:10px 7px}
+.ksb-reports .eyebrow-line{display:flex;align-items:center;gap:9px;font-size:10.5px;color:#8a9bae;margin-bottom:10px}
+.ksb-reports .section-label{font-size:10px;color:#7390a9;letter-spacing:.8px;text-transform:uppercase;font-weight:850;padding:14px 18px 10px}
+.ksb-reports .config-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.ksb-reports .config-card{padding:20px;border-radius:12px;border:1px solid var(--border);background:#fff}
+.ksb-reports .config-card-icon{font-size:22px;margin-bottom:13px}
+.ksb-reports .config-card h3{font-size:13px;color:#244a6d;margin:0 0 7px}
+.ksb-reports .config-card p{font-size:11px;color:#93a3b3;line-height:1.6;margin:0 0 16px}
+.ksb-reports .config-card .btn{font-size:10px}
+.ksb-reports .sensitive{filter:blur(5px);user-select:none}
+.ksb-reports .orgtree{padding:20px}
+.ksb-reports .tree-node{padding:12px 15px;background:#f5f9fe;border:1px solid #dceaf8;border-radius:10px;margin:9px 0;color:#2a5478;font-size:12px;font-weight:750}
+.ksb-reports .tree-node small{font-size:10px;color:#8ca1b3;font-weight:500}
+.ksb-reports .tree-indent{margin-left:30px;border-left:1px dashed #c9dced;padding-left:16px}
+.ksb-reports .metric-inline{display:flex;gap:9px;align-items:center;font-size:11px;color:#7991a7}
+.ksb-reports .metric-value{font-weight:800;color:#2d5779}
+.ksb-reports .tag-beta{background:#fff6e6;color:#a97b2d;padding:4px 7px;border-radius:6px;font-weight:850;font-size:9px;text-transform:uppercase;letter-spacing:.45px}
+.ksb-reports .mobile-shade{display:none}
+@media(max-width:1160px){.ksb-reports .kpi-row{grid-template-columns:repeat(2,1fr)}
+.ksb-reports .dashboard-grid{grid-template-columns:1fr}
+.ksb-reports .mini-layout{grid-template-columns:1fr 1fr}
+.ksb-reports .topbar{padding:0 20px}
+.ksb-reports .content{padding:25px 21px 50px}
+.ksb-reports .org-select{width:150px}}
+@media(max-width:820px){.ksb-reports .sidebar{position:fixed;left:0;transform:translateX(-102%);transition:transform .18s ease;box-shadow:20px 0 45px rgba(10,28,47,.14)}
+.ksb-reports .sidebar.mobile-open{transform:none}
+.ksb-reports .mobile-shade.show{display:block;position:fixed;inset:0;z-index:10;background:rgba(9,22,36,.45)}
+.ksb-reports .mobile-menu{display:block}
+.ksb-reports .topbar{gap:10px;min-height:67px}
+.ksb-reports .org-select{width:134px}
+.ksb-reports .role-select{display:none}
+.ksb-reports .mini-layout{grid-template-columns:1fr}
+.ksb-reports .page-head{align-items:flex-start;flex-direction:column}
+.ksb-reports .config-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:570px){.ksb-reports .top-title{font-size:14px}
+.ksb-reports .topbar{padding:0 12px}
+.ksb-reports .top-right{gap:5px}
+.ksb-reports .org-select{width:119px;font-size:10px}
+.ksb-reports .avatar{display:none}
+.ksb-reports .content{padding:17px 12px 40px}
+.ksb-reports .page-title{font-size:21px}
+.ksb-reports .kpi-row{gap:9px}
+.ksb-reports .kpi{padding:14px;min-height:122px}
+.ksb-reports .kpi-value{font-size:24px}
+.ksb-reports .kpi-label{font-size:10px}
+.ksb-reports .kpi-icon{width:31px;height:31px}
+.ksb-reports .toolbar{padding:13px}
+.ksb-reports .search-input{min-width:100%;max-width:100%}
+.ksb-reports .config-grid{grid-template-columns:1fr}
+.ksb-reports .detail-grid{grid-template-columns:1fr}
+.ksb-reports .form-grid{grid-template-columns:1fr}
+.ksb-reports .form-field.wide{grid-column:auto}
+.ksb-reports .panel-head{padding:15px}
+.ksb-reports .panel-body{padding:15px}}
+.ksb-reports .drawer.hr-wide{width:min(1140px,96vw);max-height:100vh;height:100vh;overflow:hidden}
+.ksb-reports .hr-drawer-header{padding:14px 24px;min-height:65px;gap:12px;background:#fff;flex:0 0 auto}
+.ksb-reports .hr-title-line{display:flex;align-items:center;gap:10px;font-size:15px;color:#17334d;flex-wrap:wrap}
+.ksb-reports .hr-header-sub{color:#92a2b1;font-size:10px;margin:4px 0 0 40px}
+.ksb-reports .hr-header-buttons{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.ksb-reports .hr-header-buttons .btn{min-height:29px;padding:6px 10px}
+.ksb-reports .hr-drawer-body{padding:18px 23px 26px;background:#fbfcfe;overflow:auto}
+.ksb-reports .hr-person-top{display:grid;grid-template-columns:155px minmax(0,1fr);gap:23px;background:#fff;border:1px solid #e8edf4;border-radius:12px;padding:18px;margin-bottom:20px}
+.ksb-reports .hr-avatar-art{height:173px;background:#edf2f8;border:1px solid #e0e8f1;border-radius:8px;color:#c1cedd;display:flex;align-items:center;justify-content:center;gap:12px;flex-direction:column}
+.ksb-reports .hr-avatar-art span{font-size:56px;line-height:1}
+.ksb-reports .hr-avatar-art small{font-size:9px;font-weight:800;letter-spacing:.9px}
+.ksb-reports .hr-avatar-caption{font-size:9px;text-align:center;color:#9badbd;margin-top:9px;line-height:1.4}
+.ksb-reports .hr-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px 12px}
+.ksb-reports .hr-field{min-width:0}
+.ksb-reports .hr-field-label{font-size:10px;font-weight:750;color:#45617b;margin-bottom:5px}
+.ksb-reports .hr-field-value{font-size:11px;border:1px solid #e0e8ef;border-radius:6px;padding:9px 10px;min-height:35px;background:#f9fbfd;color:#37536a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ksb-reports .hr-section{padding:20px 16px 19px;background:#fff;border:1px solid #e7edf3;border-radius:10px;margin-bottom:15px}
+.ksb-reports .hr-section-title{border-left:4px solid #2680d6;padding-left:10px;margin:0 0 16px;color:#244764;font-size:14px;font-weight:800}
+.ksb-reports .hr-section-sub{font-size:10.5px;color:#94a5b3;margin:-5px 0 14px;line-height:1.5}
+.ksb-reports .hr-stack .hr-section:last-child{margin-bottom:0}
+.ksb-reports .hr-tab-panel{background:#fff;border:1px solid #e7edf3;border-radius:11px;overflow:hidden;margin-bottom:12px}
+.ksb-reports .hr-tabnav{display:flex;align-items:stretch;background:#fff;border-bottom:1px solid #e9eef4;padding:0 7px}
+.ksb-reports .hr-tab-arrow{width:31px;flex:0 0 31px;border:0;background:#f6f9fc;color:#426f96;font-size:24px;cursor:pointer;align-self:center;height:32px;border-radius:7px}
+.ksb-reports .hr-tab-arrow:hover{background:#eaf2fb}
+.ksb-reports .hr-tabs{display:flex;align-items:stretch;flex:1;min-width:0;gap:4px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#c3d8ea transparent;scroll-behavior:smooth}
+.ksb-reports .hr-tab{background:transparent;border:0;border-bottom:3px solid transparent;color:#72879e;padding:17px 14px 13px;white-space:nowrap;font-size:11px;font-weight:700;flex:0 0 auto}
+.ksb-reports .hr-tab.active{color:#115ca7;border-bottom-color:#247bd2}
+.ksb-reports .hr-tabcontent{padding:18px;min-height:220px}
+.ksb-reports .hr-tabcontent .hr-section{border:0;box-shadow:none;padding:8px 0;margin:0 0 15px}
+.ksb-reports .hr-tabcontent .hr-section:last-child{margin-bottom:0}
+.ksb-reports .hr-table-wrap{width:100%;overflow:auto;border:1px solid #e7edf3;border-radius:7px}
+.ksb-reports .hr-table{min-width:690px;font-size:11px}
+.ksb-reports .hr-table th,.ksb-reports .hr-table td{padding:12px 13px;border-right:1px solid #edf1f5;white-space:nowrap}
+.ksb-reports .hr-table th{background:#f8fafc;color:#4d6278}
+.ksb-reports .hr-table td{color:#42617a}
+.ksb-reports .hr-table td.hr-empty{text-align:center;color:#98aabd;padding:46px 15px;font-size:12px}
+.ksb-reports .hr-table-footer{display:flex;justify-content:flex-end;font-size:10px;color:#91a3b4;margin-top:11px}
+.ksb-reports .hr-link{background:none;border:0;color:#1768b7;font-size:11px;font-weight:750;white-space:nowrap;padding:1px;cursor:pointer}
+.ksb-reports .hr-link:hover{text-decoration:underline}
+.ksb-reports .hr-inline-action{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;font-size:11px;color:#75899d}
+.ksb-reports .hr-help{font-size:11px;color:#8096ab;line-height:1.6;border-radius:6px;background:#f5f9ff;padding:12px 14px;margin:13px 0 0}
+.ksb-reports .hr-experience-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:1px 0 18px}
+.ksb-reports .hr-experience-cards>div{border:1px solid #e1eaf3;border-radius:9px;padding:16px;background:#f9fbff;display:flex;flex-direction:column;gap:7px}
+.ksb-reports .hr-experience-cards span{font-size:11px;color:#7890a5}
+.ksb-reports .hr-experience-cards strong{font-size:24px;color:#24537e}
+.ksb-reports .hr-experience-cards small{color:#91a4b6;font-size:10px}
+.ksb-reports .hr-timeline{padding:8px 0 2px 7px}
+.ksb-reports .hr-timeitem{display:grid;grid-template-columns:110px 1fr;gap:19px;margin-bottom:20px;position:relative}
+.ksb-reports .hr-timeitem:before{content:"";position:absolute;left:120px;top:8px;width:8px;height:8px;background:#2683cf;border-radius:100%}
+.ksb-reports .hr-timeitem>div:last-child{border-left:1px solid #d5e4f1;padding-left:18px;padding-bottom:11px}
+.ksb-reports .hr-time-date{font-size:11px;color:#577998;font-weight:750;padding-top:4px}
+.ksb-reports .hr-timeitem strong{font-size:12px;color:#294b66}
+.ksb-reports .hr-timeitem p,.ksb-reports .hr-timeitem small{display:block;font-size:10.5px;color:#8095a8;line-height:1.5;margin:7px 0}
+@media(max-width:980px){.ksb-reports .hr-fields{grid-template-columns:repeat(3,1fr)}
+.ksb-reports .hr-person-top{grid-template-columns:130px minmax(0,1fr)}
+.ksb-reports .hr-avatar-art{height:152px}}
+@media(max-width:680px){.ksb-reports .drawer.hr-wide{width:100vw}
+.ksb-reports .hr-drawer-header{padding:12px;align-items:flex-start;flex-direction:column}
+.ksb-reports .hr-header-sub{margin-left:0}
+.ksb-reports .hr-drawer-body{padding:12px}
+.ksb-reports .hr-person-top{display:block;padding:13px}
+.ksb-reports .hr-avatar-block{display:none}
+.ksb-reports .hr-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.ksb-reports .hr-section{padding:16px 12px}
+.ksb-reports .hr-tabcontent{padding:11px}
+.ksb-reports .hr-experience-cards{grid-template-columns:1fr}
+.ksb-reports .hr-timeitem{grid-template-columns:75px 1fr;gap:12px}
+.ksb-reports .hr-timeitem:before{left:84px}}
+.ksb-reports .catalog-actions{white-space:nowrap}
+.ksb-reports .catalog-actions .btn{margin-right:5px;padding:7px 10px}
+.ksb-reports .catalog-form .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ksb-reports .print-overlay{position:fixed;inset:0;z-index:100;background:#ecf1f7;display:flex;flex-direction:column;overflow:auto;color:#243a4f}
+.ksb-reports .print-topbar{min-height:70px;background:#fff;border-bottom:1px solid #d9e3ed;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 28px;position:sticky;top:0;z-index:2}
+.ksb-reports .print-topbar b{display:block;font-size:15px}
+.ksb-reports .print-topbar small{display:block;color:#7a8ea3;margin-top:5px;font-size:11px}
+.ksb-reports .print-actions{display:flex;align-items:center;gap:8px}
+.ksb-reports .print-workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;max-width:1360px;width:100%;margin:0 auto;padding:24px}
+.ksb-reports .print-workspace aside{position:sticky;top:96px;align-self:start}
+.ksb-reports .print-editor{background:#fff;border:1px solid #dae5ee;border-radius:13px;padding:20px;box-shadow:0 2px 6px #1f3a4b0b}
+.ksb-reports .print-editor-title{font-size:14px;font-weight:800;margin-bottom:18px}
+.ksb-reports .print-form-grid{display:grid;gap:14px}
+.ksb-reports .print-form-grid .form-field{width:100%}
+.ksb-reports .print-checkboxes{display:flex;flex-direction:column;gap:13px;margin:20px 0;border-top:1px solid #e6ecf2;padding-top:17px}
+.ksb-reports .print-checkboxes label{font-size:12px;display:flex;align-items:center;gap:8px;line-height:1.3}
+.ksb-reports .print-checkboxes input{min-height:auto;accent-color:#104f9b;width:16px;height:16px;flex:0 0 auto}
+.ksb-reports .print-editor-hint{font-size:10.5px;color:#7690a7;line-height:1.7;border-radius:8px;background:#f2f7fd;padding:12px}
+.ksb-reports .print-preview{display:flex;justify-content:center;min-width:0}
+.ksb-reports .print-sheet{width:210mm;min-height:297mm;padding:18mm 19mm;background:#fff;box-shadow:0 12px 28px #152c4130;color:#172838;font-family:Arial,"DejaVu Sans",sans-serif;font-size:10pt;line-height:1.38}
+.ksb-reports .print-letterhead{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #155a9c;padding-bottom:10px;gap:12px}
+.ksb-reports .print-letterhead>div:first-child{display:flex;flex-direction:column;gap:2px}
+.ksb-reports .print-letterhead b{color:#104f9b;font-size:23pt;letter-spacing:-1px}
+.ksb-reports .print-letterhead span{font-size:7.5pt;font-weight:750}
+.ksb-reports .print-meta{font-size:7pt;color:#6d7d8d;text-align:right;line-height:1.5}
+.ksb-reports .print-doc-head{text-align:center;margin:18px 0 24px}
+.ksb-reports .print-eyebrow{font-size:8pt;letter-spacing:1px;color:#477ba9}
+.ksb-reports .print-doc-head h1{font-size:15pt;margin:8px 0;color:#163f66;line-height:1.4}
+.ksb-reports .print-doc-head p{font-size:8.5pt;color:#5c6d7d}
+.ksb-reports .print-section{margin:0 0 19px;break-inside:avoid-page}
+.ksb-reports .print-section h3{font-size:10.5pt;margin:0 0 10px;border-bottom:1px solid #9cb3cb;padding:4px 0 6px;color:#174a77}
+.ksb-reports .print-fields{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #dae2ea;border-left:1px solid #dae2ea}
+.ksb-reports .print-field{min-width:0;display:grid;grid-template-columns:42% 58%;border-bottom:1px solid #dae2ea;border-right:1px solid #dae2ea;font-size:8.5pt}
+.ksb-reports .print-field span{padding:7px 6px;background:#f4f7fa;color:#53697c}
+.ksb-reports .print-field strong{padding:7px 6px;font-weight:600;overflow-wrap:anywhere}
+.ksb-reports .print-table{width:100%;border-collapse:collapse;font-size:8.3pt}
+.ksb-reports .print-table th,.ksb-reports .print-table td{border:1px solid #cbd8e3;padding:7px;text-align:left}
+.ksb-reports .print-table th{background:#eef4f9;color:#37506a}
+.ksb-reports .print-paragraph{font-size:9pt;line-height:1.65;margin:6px 0}
+.ksb-reports .print-paragraph.muted{color:#677989}
+.ksb-reports .print-lines{font-size:9pt;line-height:2}
+.ksb-reports .print-lines b{display:block;margin-top:7px}
+.ksb-reports .print-lines div{border-bottom:1px dotted #a8b9c9;height:23px}
+.ksb-reports .print-signatures{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-top:35px;break-inside:avoid}
+.ksb-reports .print-signatures b{display:block;font-size:9pt}
+.ksb-reports .print-signatures span{font-size:8pt;font-style:italic}
+.ksb-reports .print-disclaimer{margin-top:95px;padding-top:9px;border-top:1px solid #d7e2ec;color:#a05f37;font-size:7.5pt;text-align:center;break-inside:avoid}
+@media(max-width:1050px){.ksb-reports .print-workspace{grid-template-columns:250px minmax(0,1fr);gap:12px;padding:12px}
+.ksb-reports .print-sheet{width:210mm;min-width:210mm;transform-origin:top center;zoom:.75}}
+@media(max-width:720px){.ksb-reports .print-workspace{display:flex;flex-direction:column}
+.ksb-reports .print-workspace aside{position:static}
+.ksb-reports .print-sheet{zoom:.55}
+.ksb-reports .print-topbar{padding:12px;flex-wrap:wrap}
+.ksb-reports .print-sheet{box-shadow:none}}
+@media print{.ksb-reports,.ksb-reports{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;color:#111!important}
+.ksb-reports .app,.ksb-reports .drawer-shade,.ksb-reports .modal-shade,.ksb-reports .toast,.ksb-reports .print-editor,.ksb-reports .print-topbar,.ksb-reports .print-workspace>aside{display:none!important}
+.ksb-reports .print-overlay{display:block!important;position:static!important;overflow:visible!important;background:transparent!important}
+.ksb-reports .print-workspace,.ksb-reports .print-preview{display:block!important;margin:0!important;padding:0!important;width:auto!important;max-width:none!important;overflow:visible!important}
+.ksb-reports .print-sheet{width:210mm!important;min-width:0!important;min-height:297mm!important;box-shadow:none!important;border:0!important;transform:none!important;zoom:1!important;margin:0!important;padding:16mm 17mm!important;font-family:Arial,"DejaVu Sans",sans-serif!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.ksb-reports .print-section,.ksb-reports .print-signatures{break-inside:avoid-page}}
+.ksb-reports{--brand:#0a4e9b;--brand2:#1974c5;--navy:#083e77;--ink:#17324a;--muted:#667e94;--border:#dfeaf5;--bg:#f3f8fc;--panel:#fff;--danger:#ed1c24;--ring:rgba(10,78,155,.15)}
+.ksb-reports{background:radial-gradient(circle at 82% 4%,rgba(111,190,251,.11),transparent 36%),#f3f8fc}
+.ksb-reports .sidebar{background:linear-gradient(165deg,#0753a1 0%,#06396f 65%,#072f5d 100%);color:#eaf4ff;box-shadow:6px 0 22px rgba(20,59,113,.07)}
+.ksb-reports .sidebar:before{content:"";pointer-events:none;position:absolute;top:0;right:0;width:2px;height:100%;background:linear-gradient(to bottom,#ed1c24 0%,rgba(255,255,255,0) 42%)}
+.ksb-reports .sidebar-header{gap:10px;padding:23px 13px 19px;min-width:0}
+.ksb-reports .brand-logo-official{width:116px;flex:0 0 116px;height:52px;padding:7px 5px;border-radius:11px;background:#fff;box-shadow:0 5px 15px rgba(0,0,0,.13);letter-spacing:normal}
+.ksb-reports .brand-logo-official img{width:100%;height:100%;object-fit:contain}
+.ksb-reports .brand-title{font-size:16px;letter-spacing:.5px}
+.ksb-reports .brand-title-accent{font-size:9px;letter-spacing:1.2px;color:#a2d7ff;vertical-align:middle}
+.ksb-reports .brand-sub{font-size:9px;letter-spacing:.6px;color:#a9d4f7}
+.ksb-reports .nav-label{color:#94c2ed}
+.ksb-reports .nav-group-btn,.ksb-reports .nav-sub-btn{color:#dbeaff}
+.ksb-reports .nav-group-btn:hover,.ksb-reports .nav-sub-btn:hover{background:rgba(255,255,255,.13)}
+.ksb-reports .nav-group-btn.active,.ksb-reports .nav-sub-btn.active{background:rgba(255,255,255,.16);color:#fff}
+.ksb-reports .nav-group-btn.active::before,.ksb-reports .nav-sub-btn.active::before{background:#ff4249}
+.ksb-reports .nav-count{color:#bfdffa;background:rgba(255,255,255,.14)}
+.ksb-reports .side-footer{color:#abd1ee}
+.ksb-reports .side-footer strong{color:#fff}
+.ksb-reports .topbar{border-bottom:1px solid #dce9f5;background:rgba(255,255,255,.98)}
+.ksb-reports .topbar:after{content:"";height:3px;width:100%;background:linear-gradient(90deg,#0a4e9b 0%,#2389d0 68%,#ed1c24 100%);position:absolute;bottom:0;left:0}
+.ksb-reports .top-title,.ksb-reports .page-title{color:#123d68}
+.ksb-reports .eyebrow{color:#0a4e9b}
+.ksb-reports .notice{background:#e9f5ff;border-color:#d1e7fa;color:#376582}
+.ksb-reports .notice strong{color:#0a4e9b}
+.ksb-reports .btn.primary{background:#0a4e9b;border-color:#0a4e9b;box-shadow:0 4px 14px rgba(10,78,155,.15)}
+.ksb-reports .btn.primary:hover{background:#1263ae}
+.ksb-reports .btn.danger{color:#c7212c;background:#fff8f8}
+.ksb-reports .kpi,.ksb-reports .panel{box-shadow:0 6px 18px rgba(26,82,139,.035)}
+.ksb-reports .kpi-icon{background:#e5f2ff;color:#0a4e9b}
+.ksb-reports .report-small-link{font-size:11px;color:#0a4e9b;font-weight:750;border:0;background:transparent;cursor:pointer}
+.ksb-reports .report-small-link:hover{text-decoration:underline}
+.ksb-reports .report-filterbar{display:flex;align-items:center;gap:15px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:15px;padding:16px 18px;margin-bottom:17px;box-shadow:0 6px 15px rgba(22,83,147,.025)}
+.ksb-reports .report-filter-title{display:flex;gap:10px;align-items:center;flex:1;min-width:230px}
+.ksb-reports .report-filter-title strong{display:block;font-size:13px;color:#17496f}
+.ksb-reports .report-filter-title small{display:block;color:#8c9bad;margin-top:4px;font-size:10.5px}
+.ksb-reports .report-filter-icon{background:#e9f3ff;color:#0a4e9b;width:39px;height:39px;border-radius:10px;display:grid;place-items:center;font-size:21px}
+.ksb-reports .report-filterbar label{font-size:10.5px;font-weight:750;color:#658098;display:flex;flex-direction:column;gap:5px}
+.ksb-reports .report-filterbar select{min-width:130px;font-size:11.5px}
+.ksb-reports .report-filterbar label:has(select[data-report-change="reportDept"]) select{min-width:185px}
+.ksb-reports .report-asof{display:flex;flex-direction:column;gap:5px;min-width:103px;border-left:1px solid #e7edf4;padding-left:14px}
+.ksb-reports .report-asof span{font-size:10px;color:#8296a9}
+.ksb-reports .report-asof strong{font-size:12px;color:#164e84}
+.ksb-reports .report-stat-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.ksb-reports .report-stat{min-width:0;border:1px solid #e2ebf5;background:#fff;border-radius:13px;padding:16px 15px 15px;box-shadow:0 5px 12px rgba(32,82,137,.025);position:relative;overflow:hidden}
+.ksb-reports .report-stat:before{content:"";display:block;background:#0a4e9b;position:absolute;left:0;top:0;width:100%;height:3px}
+.ksb-reports .report-stat.red:before{background:#ed1c24}
+.ksb-reports .report-stat.green:before{background:#19a78e}
+.ksb-reports .report-stat.violet:before{background:#856cc8}
+.ksb-reports .report-stat-top{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#6b8298;font-size:10.5px;font-weight:750}
+.ksb-reports .report-stat-top b{font-size:17px;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#edf5ff;color:#0a4e9b}
+.ksb-reports .report-stat.red .report-stat-top b{background:#fff1f1;color:#ed1c24}
+.ksb-reports .report-stat.green .report-stat-top b{background:#e7fbf7;color:#19a78e}
+.ksb-reports .report-stat.violet .report-stat-top b{background:#f2edfc;color:#856cc8}
+.ksb-reports .report-stat>strong{display:block;color:#16456e;font-size:30px;letter-spacing:-.7px;margin:8px 0 3px;line-height:1.1}
+.ksb-reports .report-stat>small{font-size:9.8px;color:#95a5b6}
+.ksb-reports .report-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0 17px;border-bottom:1px solid #d9e6f3}
+.ksb-reports .report-tabs button{background:transparent;border:0;padding:13px 16px;color:#70879a;font-size:12px;font-weight:750;border-bottom:3px solid transparent}
+.ksb-reports .report-tabs button:hover{color:#0a4e9b}
+.ksb-reports .report-tabs button.active{color:#0a4e9b;border-bottom-color:#0a4e9b;background:#e8f3ff;border-radius:9px 9px 0 0}
+.ksb-reports .report-visual-grid{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-bottom:17px;align-items:stretch}
+.ksb-reports .report-visual-grid>.panel{min-height:260px}
+.ksb-reports .report-visual-grid .panel-body{padding:20px 22px}
+.ksb-reports .report-visual-grid .panel-head{padding:17px 20px}
+.ksb-reports .report-full-grid{grid-template-columns:1.3fr .7fr}
+.ksb-reports .report-full-grid>.panel{min-height:350px}
+.ksb-reports .report-donut-wrap{display:flex;align-items:center;justify-content:center;gap:32px;min-height:204px}
+.ksb-reports .report-donut{width:175px;height:175px;flex:0 0 175px;border-radius:50%;display:grid;place-items:center}
+.ksb-reports .report-donut-center{height:118px;width:118px;border-radius:100%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px #edf2f7}
+.ksb-reports .report-donut-center strong{font-size:32px;color:#124a80}
+.ksb-reports .report-donut-center small{color:#8297a8;font-size:11px}
+.ksb-reports .report-donut-legend{display:flex;flex-direction:column;gap:8px;min-width:160px}
+.ksb-reports .report-legend-item{display:grid;grid-template-columns:11px 1fr auto;gap:10px;align-items:center;background:transparent;border:0;border-radius:7px;padding:6px 5px;font-size:11px;color:#617a90;text-align:left}
+.ksb-reports .report-legend-item:hover{background:#f4f8fe}
+.ksb-reports .report-legend-item b{font-size:13px;color:#163f65}
+.ksb-reports .report-dot,.ksb-reports .report-key-new,.ksb-reports .report-key-left{width:9px;height:9px;border-radius:3px;display:inline-block}
+.ksb-reports .report-dot-0{background:#0a4e9b}
+.ksb-reports .report-dot-1{background:#ed1c24}
+.ksb-reports .report-dot-2{background:#c2cfdb}
+.ksb-reports .report-prog-list{display:flex;flex-direction:column;gap:8px}
+.ksb-reports .report-prog-item{padding:5px 8px 8px;border:1px solid transparent;border-radius:8px;background:#fff;cursor:pointer;text-align:left}
+.ksb-reports .report-prog-item:hover,.ksb-reports .report-prog-item.selected{background:#f3f8ff;border-color:#d3e5f8}
+.ksb-reports .report-prog-top{display:flex;justify-content:space-between;gap:9px;color:#60778d;font-size:11px;margin-bottom:8px}
+.ksb-reports .report-prog-top b{color:#1e486d;font-size:12px}
+.ksb-reports .report-prog-top b small{font-size:10px;color:#93a6b9;font-weight:500}
+.ksb-reports .report-prog-track{height:9px;width:100%;display:block;border-radius:20px;background:#edf3f9;overflow:hidden}
+.ksb-reports .report-prog-fill{display:block;height:100%;border-radius:20px;background:#0a4e9b}
+.ksb-reports .report-fill-1{background:#258bd0}
+.ksb-reports .report-fill-2{background:#ed1c24}
+.ksb-reports .report-fill-3{background:#19a78e}
+.ksb-reports .report-fill-4{background:#9275cf}
+.ksb-reports .report-month-chart{height:174px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;margin:9px 0 4px;align-items:end;padding:8px 4px 0;border-bottom:1px solid #e5edf5}
+.ksb-reports .report-month{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:10px;color:#93a8b9;gap:8px}
+.ksb-reports .report-month-bars{display:flex;height:85%;width:100%;align-items:flex-end;justify-content:center;gap:4px}
+.ksb-reports .report-month-bar{width:16px;min-height:2px;border-radius:5px 5px 0 0;display:flex;justify-content:center;align-items:flex-start;padding-top:3px}
+.ksb-reports .report-month-bar.new{background:linear-gradient(180deg,#23b99d,#13987f)}
+.ksb-reports .report-month-bar.left{background:linear-gradient(180deg,#f9666e,#ed1c24)}
+.ksb-reports .report-month-bar span{font-size:10px;font-weight:800;color:#fff}
+.ksb-reports .report-chart-legend{display:flex;gap:20px;justify-content:center;margin-top:21px;font-size:11px;color:#7690a5}
+.ksb-reports .report-chart-legend span{display:flex;align-items:center;gap:6px}
+.ksb-reports .report-key-new{background:#19a78e}
+.ksb-reports .report-key-left{background:#ed1c24}
+.ksb-reports .report-definitions{display:flex;gap:11px;background:#eef7ff;border:1px solid #d5e8f8;padding:14px 17px;border-radius:10px;font-size:11px;color:#5c7992;line-height:1.7;margin-bottom:17px}
+.ksb-reports .report-definitions>span{font-size:18px;color:#0a4e9b;flex:0 0 auto}
+.ksb-reports .report-roster{margin-top:1px;scroll-margin-top:98px}
+.ksb-reports .report-roster-controls{display:flex;gap:9px;flex-wrap:wrap;padding:16px 18px}
+.ksb-reports .report-roster-controls select{max-width:235px;font-size:11px;min-height:35px}
+.ksb-reports .report-roster-controls input{flex:1 1 190px;min-width:160px;min-height:35px;font-size:11px}
+.ksb-reports .report-table{font-size:11px}
+.ksb-reports .report-table th,.ksb-reports .report-table td{padding:12px 11px}
+.ksb-reports .report-table th{background:#eff6fd;color:#55738b}
+.ksb-reports .report-table td{white-space:normal;min-width:68px}
+.ksb-reports .report-table td:nth-child(2){min-width:124px}
+.ksb-reports .report-table td:nth-child(7){min-width:130px}
+.ksb-reports .report-empty{text-align:center;padding:44px 10px!important;color:#869caf}
+.ksb-reports .report-roster .table-footer{color:#718da6}
+.ksb-reports .report-explainer{line-height:1.7;font-size:12px;color:#58768e}
+.ksb-reports .report-explainer p{margin:0 0 18px}
+.ksb-reports .report-flag{width:37px;height:31px;border-radius:8px;background:#e9f4ff;color:#0a4e9b;font-size:12px;font-weight:800;display:grid;place-items:center;margin-bottom:8px}
+.ksb-reports .report-highlight{display:flex;align-items:flex-start;flex-direction:column;border:1px solid #d9eafd;background:linear-gradient(135deg,#ecf7ff,#fff);padding:25px;border-radius:13px;gap:10px}
+.ksb-reports .report-highlight span{font-weight:800;color:#16456e;font-size:14px}
+.ksb-reports .report-highlight strong{font-size:46px;color:#0a4e9b;line-height:1}
+.ksb-reports .report-highlight small{color:#7392ac;font-size:11px}
+.ksb-reports .report-highlight .btn{margin-top:7px}
+.ksb-reports .report-help{font-size:11px;color:#7b91a4;line-height:1.7;margin-top:14px}
+.ksb-reports .report-movement-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:19px}
+.ksb-reports .report-movement-cards>*{background:#f4f9fe;border:1px solid #e1ebf4;border-radius:10px;text-align:left;padding:11px;display:flex;flex-direction:column;gap:4px;color:#607992}
+.ksb-reports .report-movement-cards button{cursor:pointer}
+.ksb-reports .report-movement-cards button:hover{border-color:#74b4e3}
+.ksb-reports .report-movement-cards b{font-size:22px;color:#0a4e9b}
+.ksb-reports .report-movement-cards span{font-size:11px;font-weight:750}
+.ksb-reports .report-movement-cards small{font-size:10px;color:#9badbe}
+.ksb-reports .report-month-table td,.ksb-reports .report-month-table th{padding:10px 17px}
+.ksb-reports .report-pos{color:#16865f}
+.ksb-reports .report-neg{color:#ce3540}
+.ksb-reports .report-print-workspace{display:block;width:210mm;max-width:none;grid-template-columns:none;margin:0 auto}
+.ksb-reports .report-print-workspace .print-preview{display:block}
+.ksb-reports .report-print-sheet{min-height:297mm}
+.ksb-reports .report-letterhead-logo{display:flex;flex-direction:column;gap:5px}
+.ksb-reports .report-letterhead-logo img{display:block;width:100px;height:46px;object-fit:contain;object-position:left center}
+.ksb-reports .report-letterhead-logo span{font-size:7pt}
+.ksb-reports .report-print-sheet .print-disclaimer{margin-top:30px}
+.ksb-reports .report-print-sheet .print-section{break-inside:avoid}
+@media(max-width:1450px){.ksb-reports .report-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ksb-reports .report-stat>strong{font-size:27px}}
+@media(max-width:1100px){.ksb-reports .report-filter-title{flex-basis:100%}
+.ksb-reports .report-full-grid{grid-template-columns:1fr 1fr}
+.ksb-reports .report-donut-wrap{gap:17px}
+.ksb-reports .report-donut{width:145px;height:145px;flex-basis:145px}
+.ksb-reports .report-donut-center{width:95px;height:95px}}
+@media(max-width:900px){.ksb-reports .report-visual-grid,.ksb-reports .report-full-grid{grid-template-columns:1fr}
+.ksb-reports .report-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ksb-reports .report-filterbar label{flex:1}
+.ksb-reports .report-filterbar select{width:100%}}
+@media(max-width:540px){.ksb-reports .report-stat-grid{grid-template-columns:1fr 1fr;gap:9px}
+.ksb-reports .report-stat{padding:13px}
+.ksb-reports .report-stat>strong{font-size:23px}
+.ksb-reports .report-stat-top span{font-size:10px}
+.ksb-reports .report-donut-wrap{flex-wrap:wrap}
+.ksb-reports .report-donut-legend{width:100%}
+.ksb-reports .report-filter-title{min-width:0}
+.ksb-reports .report-filterbar label{width:100%}
+.ksb-reports .report-tabs button{font-size:11px;padding:11px}
+.ksb-reports .report-month-chart{gap:2px}
+.ksb-reports .report-month-bar{width:8px}
+.ksb-reports .report-roster-controls select{width:100%;max-width:none}}
+@media print{.ksb-reports .report-print-workspace{width:100%!important;max-width:none!important;padding:0!important}
+.ksb-reports .report-print-sheet{width:210mm!important;min-height:297mm!important;display:block;page-break-inside:auto}
+.ksb-reports .report-print-sheet .print-disclaimer{margin-top:28px!important}}
+.ksb-reports .catalog-summary{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px;background:linear-gradient(110deg,#e7f3ff 0%,#fff 73%);border:1px solid #cfe3f8;border-radius:13px;margin-bottom:18px;color:#145188}
+.ksb-reports .catalog-summary>div{display:flex;align-items:center;gap:13px}
+.ksb-reports .catalog-summary-mark{display:grid;place-items:center;width:45px;height:45px;border-radius:13px;background:#0a4e9b;color:white;font-size:22px;flex:none}
+.ksb-reports .catalog-summary strong{font-size:15px}
+.ksb-reports .catalog-summary p{font-size:11px;margin:4px 0 0;line-height:1.5;color:#6384a0}
+.ksb-reports .catalog-summary>span{color:#6384a0;font-size:11px;white-space:nowrap}
+.ksb-reports .catalog-hub{display:grid;grid-template-columns:235px minmax(0,1fr);gap:17px;align-items:start}
+.ksb-reports .catalog-nav{background:#fff;border:1px solid #dce7f2;border-radius:12px;padding:16px 10px;box-shadow:0 5px 15px rgba(12,59,106,.03)}
+.ksb-reports .catalog-nav-title{padding:3px 12px 13px;font-size:10px;letter-spacing:.08em;font-weight:850;color:#6d8aa6}
+.ksb-reports .catalog-nav-heading{padding:15px 12px 7px;color:#9aacc0;font-size:10px;letter-spacing:.03em;font-weight:850;text-transform:uppercase}
+.ksb-reports .catalog-item{display:flex;align-items:center;gap:10px;width:100%;border:1px solid transparent;background:transparent;color:#647e96;padding:11px 11px;border-radius:9px;text-align:left;font-size:12px;cursor:pointer}
+.ksb-reports .catalog-item:hover{background:#f1f7ff;color:#11599e}
+.ksb-reports .catalog-item.active{color:#0a4e9b;border-color:#cfe4fa;background:#eaf4ff;font-weight:800}
+.ksb-reports .catalog-item-icon{font-size:16px;width:23px;text-align:center;color:#427aaf}
+.ksb-reports .catalog-item-label{flex:1;min-width:0}
+.ksb-reports .catalog-item-count{font-size:10px;color:#93abc1;background:#eef3f8;padding:2px 7px;border-radius:20px}
+.ksb-reports .catalog-item.active .catalog-item-count{color:#0a4e9b;background:#d4e9fc}
+.ksb-reports .catalog-side-hint{margin:17px 8px 4px;background:#f6f9fc;border-radius:8px;padding:11px;font-size:10.5px;line-height:1.65;color:#889aab}
+.ksb-reports .catalog-workspace{background:#fff;border:1px solid #dce7f2;border-radius:12px;min-width:0;box-shadow:0 5px 15px rgba(12,59,106,.03);overflow:hidden}
+.ksb-reports .catalog-workspace-header{display:flex;gap:15px;align-items:center;padding:25px 23px 17px}
+.ksb-reports .catalog-header-icon{display:grid;place-items:center;font-size:24px;color:#0a4e9b;background:#eaf4ff;border-radius:12px;width:53px;height:53px;flex:none}
+.ksb-reports .catalog-eyebrow{font-size:10px;font-weight:800;letter-spacing:.08em;color:#4487bf}
+.ksb-reports .catalog-workspace-header h2{margin:4px 0 5px;font-size:21px;color:#19466d}
+.ksb-reports .catalog-workspace-header p{margin:0;font-size:11.5px;color:#7790a6;line-height:1.5}
+.ksb-reports .catalog-metrics{display:flex;gap:11px;padding:0 22px 17px}
+.ksb-reports .catalog-metrics>div{display:flex;align-items:center;gap:10px;background:#f5f9fd;padding:10px 15px;border:1px solid #e9eff6;border-radius:8px;min-width:120px}
+.ksb-reports .catalog-metrics strong{font-size:20px;color:#0a4e9b}
+.ksb-reports .catalog-metrics span{color:#7890a8;font-size:10.5px}
+.ksb-reports .catalog-toolbar{display:flex;align-items:center;gap:10px;padding:16px 20px;background:#fbfdff;border-top:1px solid #e8eef5;border-bottom:1px solid #e8eef5}
+.ksb-reports .catalog-toolbar input{flex:1;max-width:390px}
+.ksb-reports .catalog-toolbar>span{margin-left:auto;color:#91a4b6;font-size:11px}
+.ksb-reports .catalog-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.ksb-reports .catalog-table th{text-align:left;white-space:nowrap;background:#eef6fc;color:#567792;font-size:10.5px;padding:14px}
+.ksb-reports .catalog-table td{border-top:1px solid #e9eef5;padding:13px 14px;color:#567188}
+.ksb-reports .catalog-table td.td-strong{color:#244b70}
+.ksb-reports .catalog-code{font-weight:850;color:#0a4e9b!important}
+.ksb-reports .catalog-actions{white-space:nowrap;display:flex;align-items:center;gap:6px}
+.ksb-reports .catalog-actions .btn{font-size:10.5px;padding:7px 9px;min-height:28px}
+.ksb-reports .catalog-related{display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap;background:#f6fbff;border-top:1px solid #e1edf8;padding:18px 22px}
+.ksb-reports .catalog-related b{color:#1b507a;font-size:12px}
+.ksb-reports .catalog-related p{color:#839db2;font-size:10.5px;margin:4px 0 0}
+.ksb-reports .catalog-related-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.ksb-reports .catalog-related-buttons .btn{font-size:10px}
+@media(max-width:1000px){.ksb-reports .catalog-hub{grid-template-columns:205px minmax(0,1fr)}
+.ksb-reports .catalog-summary{flex-wrap:wrap}}
+@media(max-width:760px){.ksb-reports .catalog-hub{grid-template-columns:1fr}
+.ksb-reports .catalog-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}
+.ksb-reports .catalog-nav-title,.ksb-reports .catalog-side-hint{grid-column:1/-1}
+.ksb-reports .catalog-nav-heading{grid-column:1/-1}
+.ksb-reports .catalog-summary>span{white-space:normal}
+.ksb-reports .catalog-metrics{flex-wrap:wrap}
+.ksb-reports .catalog-toolbar{flex-wrap:wrap}
+.ksb-reports .catalog-toolbar input{max-width:unset;flex:1 1 100%}}
+.ksb-reports .catalog-nav{max-height:calc(100vh - 190px);overflow-y:auto;scrollbar-width:thin;position:sticky;top:15px}
+.ksb-reports .catalog-nav-heading{position:relative}
+.ksb-reports .catalog-item-label{line-height:1.35}
+@media(max-width:760px){.ksb-reports .catalog-nav{max-height:none;position:static;overflow:visible}
+.ksb-reports .catalog-item{min-height:46px}}
+.ksb-reports .cap-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 24px;border:1px solid #d1e4f6;border-radius:13px;background:linear-gradient(112deg,#edf7ff 0%,#fff 75%);margin-bottom:15px}
+.ksb-reports .cap-hero h3{font-size:19px;color:#0a4e9b;margin:6px 0 7px}
+.ksb-reports .cap-hero p{font-size:11.5px;color:#668199;line-height:1.65;margin:0;max-width:660px}
+.ksb-reports .cap-eyebrow{letter-spacing:.12em;font-size:10px;font-weight:850;color:#3684bd}
+.ksb-reports .cap-hero-status{background:#fff;border:1px solid #d7e5f3;padding:9px 13px;font-size:11px;font-weight:700;color:#246296;border-radius:30px;white-space:nowrap}
+.ksb-reports .cap-360-stats,.ksb-reports .cap-mini-stats,.ksb-reports .cap-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ksb-reports .cap-stat{min-height:126px;border:1px solid #e2edf6;border-radius:11px;background:#fff;padding:17px;display:flex;flex-direction:column;gap:7px}
+.ksb-reports .cap-stat-icon{display:grid;place-items:center;width:29px;height:29px;background:#eaf5ff;border-radius:8px;color:#1366ac}
+.ksb-reports .cap-stat span,.ksb-reports .cap-summary-grid span{font-size:10.5px;color:#6c87a0;font-weight:750}
+.ksb-reports .cap-stat strong{font-size:19px;line-height:1.1;color:#0a4e9b;overflow-wrap:anywhere}
+.ksb-reports .cap-stat small,.ksb-reports .cap-summary-grid small{font-size:10px;line-height:1.5;color:#8ea4b9}
+.ksb-reports .cap-360-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:17px 0}
+.ksb-reports .cap-card{background:#fff;border:1px solid #e0eaf4;border-radius:13px;padding:19px;min-width:0}
+.ksb-reports .cap-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px;border-bottom:1px solid #e8eef5;padding-bottom:12px}
+.ksb-reports .cap-card h4{font-size:13px;color:#1b537c;margin:0}
+.ksb-reports .cap-text-btn{color:#0965b2;font-size:11px;font-weight:800;background:transparent;border:0;cursor:pointer;white-space:nowrap}
+.ksb-reports .cap-text-btn:hover{text-decoration:underline}
+.ksb-reports .cap-pairs{display:grid;grid-template-columns:135px 1fr;row-gap:13px;column-gap:10px;align-items:start;font-size:11px}
+.ksb-reports .cap-pairs span{color:#8da1b3}
+.ksb-reports .cap-pairs b{color:#365770;font-weight:700}
+.ksb-reports .cap-rows>div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #e9f0f7;color:#7893aa;font-size:11px}
+.ksb-reports .cap-rows>div:last-child{border:0}
+.ksb-reports .cap-rows b{color:#164e7e;text-align:right}
+.ksb-reports .cap-checklist{padding:0;list-style:none;display:grid;gap:12px;margin:0}
+.ksb-reports .cap-checklist li{display:flex;align-items:start;gap:9px;line-height:1.5;font-size:11px;color:#5d7589}
+.ksb-reports .cap-checklist span{font-size:13px;color:#1caa8a;font-weight:900}
+.ksb-reports .cap-card-foot{margin:15px 0 0;font-size:10px;line-height:1.6;color:#a27e58}
+.ksb-reports .cap-timeline{display:grid;gap:0;padding-left:9px}
+.ksb-reports .cap-event{display:grid;grid-template-columns:91px minmax(0,1fr);gap:11px;padding:10px 0}
+.ksb-reports .cap-event-date{font-size:10px;font-weight:800;color:#0a4e9b}
+.ksb-reports .cap-event>div:last-child{border-left:2px solid #d2e4f5;padding:0 0 13px 13px}
+.ksb-reports .cap-event strong{font-size:11px;color:#244b6d}
+.ksb-reports .cap-event p{color:#738ca2;font-size:10.5px;line-height:1.5;margin:5px 0}
+.ksb-reports .cap-event small{color:#9baebe;font-size:10px}
+.ksb-reports .cap-quick-bar{padding:15px;background:#edf6fd;border:1px solid #d8e8f7;border-radius:10px;display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.ksb-reports .cap-quick-bar>span{margin-right:auto;font-size:11px;color:#6785a0;font-weight:800}
+.ksb-reports .cap-mini-stats{margin:12px 0 17px}
+.ksb-reports .cap-mini-stats>div{border:1px solid #e2ecf5;background:#fff;border-radius:9px;padding:12px;display:flex;align-items:center;gap:11px}
+.ksb-reports .cap-mini-stats b{color:#0a4e9b;font-size:21px}
+.ksb-reports .cap-mini-stats span{color:#7991a6;font-size:10.5px}
+.ksb-reports .cap-tabs{display:flex;gap:5px;border-bottom:1px solid #e2ecf5;overflow-x:auto}
+.ksb-reports .cap-tabs button{white-space:nowrap;padding:13px 20px;background:transparent;border:0;border-bottom:3px solid transparent;color:#70889c;cursor:pointer;font-size:11.5px;font-weight:700}
+.ksb-reports .cap-tabs button.active{border-bottom-color:#0a4e9b;color:#0a4e9b}
+.ksb-reports .cap-section{padding:20px 0}
+.ksb-reports .cap-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.ksb-reports .cap-section-head b{display:block;color:#1b5077;font-size:13px}
+.ksb-reports .cap-section-head small{display:block;color:#8da4b7;font-size:10.5px;margin-top:6px;line-height:1.4}
+.ksb-reports .cap-data-table th,.ksb-reports .cap-data-table td{padding:12px}
+.ksb-reports .cap-empty{text-align:center;background:#f8fbff;border:1px dashed #cddfeb;border-radius:10px;padding:30px 15px;color:#6f89a0;font-size:12px;font-weight:700}
+.ksb-reports .cap-empty small{display:block;font-weight:400;margin:8px auto 0;max-width:400px;line-height:1.5}
+.ksb-reports .cap-note{padding:12px 15px;background:#f1f7fe;color:#6a8299;font-size:11px;border-radius:10px;line-height:1.7}
+.ksb-reports .cap-checkbox{display:flex;align-items:center;gap:8px;grid-column:1/-1;font-size:11px;color:#466580}
+.ksb-reports .cap-checkbox input{width:17px;height:17px;min-height:auto;accent-color:#0a4e9b}
+.ksb-reports .cap-form .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ksb-reports .cap-page-hero{display:flex;align-items:center;justify-content:space-between;padding:26px 30px;border-radius:15px;background:linear-gradient(115deg,#0a4e9b,#0d65b7 66%,#2283d0);color:#fff;margin-bottom:16px;box-shadow:0 10px 22px #0a4e9b20}
+.ksb-reports .cap-page-hero .cap-eyebrow{color:#b6e1ff}
+.ksb-reports .cap-page-hero h2{font-size:25px;margin:8px 0;color:white}
+.ksb-reports .cap-page-hero p{font-size:11.5px;opacity:.91;max-width:710px;line-height:1.7;margin:0}
+.ksb-reports .cap-page-hero-icon{font-size:45px;opacity:.9}
+.ksb-reports .cap-summary-grid{margin-bottom:17px}
+.ksb-reports .cap-summary-grid>div{border-radius:12px;border:1px solid #dbe8f3;background:#fff;display:flex;flex-direction:column;gap:7px;padding:17px}
+.ksb-reports .cap-summary-grid strong{font-size:27px;color:#0a4e9b}
+.ksb-reports .cap-filterbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:15px 17px;border-top:1px solid #e6edf5;border-bottom:1px solid #e6edf5;background:#fbfdff}
+.ksb-reports .cap-filterbar>input{min-width:230px;flex:2 1 250px}
+.ksb-reports .cap-filterbar>select{min-width:140px;flex:1 1 155px}
+.ksb-reports .cap-filterbar>input,.ksb-reports .cap-filterbar>select{min-height:37px}
+.ksb-reports .cap-register-table{border-collapse:collapse;width:100%;font-size:11px}
+.ksb-reports .cap-register-table td,.ksb-reports .cap-register-table th{text-align:left;border-bottom:1px solid #e4edf5;padding:12px 10px}
+.ksb-reports .cap-register-table th{background:#eef6ff;color:#547894;font-size:10px;white-space:nowrap}
+.ksb-reports .cap-register-table td{color:#46637b}
+.ksb-reports .cap-register-table .btn{white-space:nowrap;padding:6px 9px;min-height:27px;font-size:10px}
+@media(max-width:1120px){.ksb-reports .cap-360-stats,.ksb-reports .cap-mini-stats,.ksb-reports .cap-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.ksb-reports .cap-360-grid{grid-template-columns:1fr}
+.ksb-reports .cap-stat{padding:12px}
+.ksb-reports .cap-hero{padding:17px}
+.ksb-reports .cap-hero .btn{display:none}
+.ksb-reports .cap-page-hero{padding:18px}
+.ksb-reports .cap-page-hero h2{font-size:20px}
+.ksb-reports .cap-page-hero-icon{display:none}
+.ksb-reports .cap-section-head{align-items:flex-start;flex-direction:column}
+.ksb-reports .cap-form .form-grid{grid-template-columns:1fr}
+.ksb-reports .cap-filterbar>input,.ksb-reports .cap-filterbar>select{flex:1 1 100%}
+.ksb-reports .cap-quick-bar>span{flex:1 1 100%}}
+@media(max-width:430px){.ksb-reports .cap-360-stats,.ksb-reports .cap-mini-stats,.ksb-reports .cap-summary-grid{grid-template-columns:1fr 1fr;gap:7px}
+.ksb-reports .cap-stat strong{font-size:16px}
+.ksb-reports .cap-pairs{grid-template-columns:105px 1fr}
+.ksb-reports .cap-360-grid{gap:8px}
+.ksb-reports .cap-card{padding:14px}}
+.ksb-reports .cap-compact-head{display:flex;align-items:center;gap:15px;background:linear-gradient(120deg,#eef7ff,#fff);border:1px solid #dcebf7;padding:13px 19px;border-radius:12px;margin-bottom:16px}
+.ksb-reports .cap-compact-avatar{background:linear-gradient(135deg,#0a4e9b,#2288d4);color:white;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-weight:850;font-size:18px;flex:none}
+.ksb-reports .cap-compact-details{flex:1;min-width:0}
+.ksb-reports .cap-compact-name{font-size:16px;color:#1b5079;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ksb-reports .cap-compact-name span{font-size:10px;color:#7fa0b9;background:#e3f0fc;border-radius:20px;padding:4px 9px}
+.ksb-reports .cap-compact-details p{font-size:11px;color:#7090a7;margin:7px 0 0}
+.ksb-reports .cap-compact-meta{text-align:right;display:flex;align-items:end;flex-direction:column;gap:9px}
+.ksb-reports .cap-compact-meta>span:last-child{font-size:10px;color:#869eb3}
+@media(max-width:680px){.ksb-reports .cap-compact-head{padding:11px;gap:9px}
+.ksb-reports .cap-compact-avatar{width:39px;height:39px;font-size:13px}
+.ksb-reports .cap-compact-meta{display:none}
+.ksb-reports .cap-compact-name{font-size:13px}}
+.ksb-reports{--brand:#0a4e9b;--border:#dbe5ef;--ink:#163650;color:#163650;font:14px system-ui,sans-serif}.ksb-reports .report-missing{padding:12px 16px;background:#fff8e8;border:1px solid #ead8aa;border-radius:9px;margin:12px 0;font-size:12px}.ksb-reports .report-filterbar input{min-height:34px;border:1px solid #dbe5ef;border-radius:7px;padding:6px}.ksb-reports .btn[disabled]{opacity:.5;cursor:not-allowed}.ksb-reports .report-summary-breakdown{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}.ksb-reports .report-summary-breakdown span{border:1px solid #dbe5ef;border-radius:8px;padding:8px 12px;background:#fff}.ksb-reports .report-table td{max-width:350px;white-space:normal}.ksb-reports .report-print-frame{width:100%;height:70vh;border:0}.ksb-reports input,.ksb-reports select,.ksb-reports button{font-family:inherit}.ksb-reports .report-row-select{cursor:pointer}
+
+
+.ksb-reports .panel{position:static;width:auto;height:auto;display:block;padding:0;overflow:visible;max-width:none;top:auto;left:auto;z-index:auto;flex:none}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -4008,6 +4690,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     { id: 'tg', t: 'Chấm công', d: 'Chấm công, tổng hợp công và nghỉ phép.' },
     { id: 'lg', t: 'Lương', d: 'Bảng lương, phiếu lương và cách đơn vị tự đặt công thức tính.' },
     { id: 'td', t: 'Tuyển dụng', d: 'Từ nhu cầu tuyển đến ngày người mới đi làm.' },
+    { id: 'reports', t: 'Báo cáo', d: 'Nhóm báo cáo KSB theo giao diện đã duyệt v0.7.1.' },
     { id: 'ht', t: 'Cài đặt hệ thống', s: 'Cài đặt', d: 'Nhập – xuất dữ liệu, danh mục và cài đặt.' }
   ];
   var MODS = [
@@ -4043,10 +4726,22 @@ if (typeof module !== 'undefined') module.exports = XW;
     { id: 'appnv', g: 'ht', t: 'Ứng dụng nhân viên', st: 'ok', k: 'app dien thoai nhan vien tai khoan pin cap khoa mo khoa dang nhap' },
     { id: 'caidat', g: 'ht', t: 'Cài đặt', st: 'ok', k: 'cai dat nguong xoa du lieu' }
   ];
+  MODS.push(
+    {id:'report-K03',g:'reports',t:'Báo cáo tổng hợp nhân sự',st:'ok',rpt:1,perm:'nv',k:'bao cao KSB'},
+    {id:'report-F31',g:'reports',t:'Trạng thái nhân viên hàng ngày',st:'ok',rpt:1,perm:'cc',k:'bao cao KSB'},
+    {id:'report-F32',g:'reports',t:'Nhật ký nhập dữ liệu',st:'ok',rpt:1,perm:'nhap',k:'bao cao KSB'},
+    {id:'report-F34',g:'reports',t:'Tổng hợp thời gian',st:'ok',rpt:1,perm:'cc',k:'bao cao KSB'},
+    {id:'report-F35',g:'reports',t:'Nhật ký chỉnh sửa Chấm công & Nghỉ phép',st:'ok',rpt:1,perm:'cc',k:'bao cao KSB'},
+    {id:'report-F36',g:'reports',t:'Báo cáo thời gian làm việc',st:'ok',rpt:1,perm:'cc',k:'bao cao KSB'},
+    {id:'report-F37',g:'reports',t:'Lịch sử điều chỉnh lương',st:'ok',rpt:1,perm:'bl',k:'bao cao KSB'},
+    {id:'report-F38',g:'reports',t:'Báo cáo lương',st:'ok',rpt:1,perm:'bl',k:'bao cao KSB'}
+  );
+  IC.g_reports = IC.cocau;
+  MODS.filter(function(m){return m.rpt;}).forEach(function(m){IC[m.id]=IC.cocau;});
   var NAV = MODS; // giữ tên cũ cho phần kiểm tra trang hợp lệ
   function modOf(id) { return MODS.filter(function (m) { return m.id === id; })[0]; }
   function groupOf(id) { var m = modOf(id); return m ? m.g : 'tq'; } // null = module chính đứng riêng, không thuộc nhóm
-  var TREE = ['tq', 'ns', 'tg', 'lg', 'td', 'hoinhap', 'daotao', 'bhxh', 'ht']; // thứ tự trên thanh công cụ
+  var TREE = ['tq', 'ns', 'tg', 'lg', 'td', 'hoinhap', 'daotao', 'bhxh', 'reports', 'ht']; // thứ tự trên thanh công cụ
   function isSoon(m) { return m && typeof m.st === 'number'; }
   // 12/11/2026 18:36 anh: chọn mục hiện trên thanh tính năng (Cài đặt) – bỏ tick thì ẩn khỏi thanh trái, chức năng vẫn chạy (mở qua tìm kiếm, nút liên kết)
   function navH() { return (S && S.settings && S.settings.navHide) || {}; }
@@ -19920,7 +20615,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   })();
 
   /* ---------------- Dữ liệu phân quyền ---------------- */
-  function pqMods() { return MODS.filter(function (m) { return !m.par && !isSoon(m) && m.id !== 'phanquyen'; }); }
+  function pqMods() { return MODS.filter(function (m) { return !m.par && !m.rpt && !isSoon(m) && m.id !== 'phanquyen'; }); }
   function pqDefRoles() {
     function mk(rule) { var q = {}; pqMods().forEach(function (m) { var v = rule(m); if (v) q[m.id] = v; }); return q; }
     return [
@@ -19951,6 +20646,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   }
   function pqAdmin() { var c = pqCtx(); return !c || !!(c.role && c.role.sys && !c.none); }
   function pqLvl(id) {
+    var reportModule = modOf(id); if (reportModule && reportModule.rpt) id = reportModule.perm;
     var c = pqCtx(); if (!c) return 's'; if (c.role.sys) return 's';
     if (id === 'phanquyen' || !modOf(id)) return '';
     var v = (c.role.q || {})[id] || ''; if (v === 's' && c.pb && c.pb.length) v = 'x';
@@ -21915,6 +22611,114 @@ var cur = ndSnap(u), out = cur, sd = { n: 0, kept: 0 };
      - Cài đặt riêng từng người (giao diện, màu, công ty đang xem…) không gửi lên máy chủ.
      Không có window.QTT_SV (bản dùng thử trên quantritute.com, bản tải về) → mọi thứ chạy như cũ, dữ liệu trên trình duyệt.
      ===================================================================== */
+  /* KSB approved reports v0.7.1: retained rendering, authenticated read-only data. */
+  (function () {
+    const SPEC = [
+      ['K03','Báo cáo tổng hợp nhân sự','nv',[]],
+      ['F31','Trạng thái nhân viên hàng ngày','cc',['Tổ chức','Ngày','Điểm danh','Đi muộn','Nghỉ phép','Nhân sự mới','Nghỉ việc']],
+      ['F32','Nhật ký nhập dữ liệu','nhap',[]],
+      ['F34','Tổng hợp thời gian','cc',['Nhân viên','Ca','Ngày','Giờ vào','Giờ ra','Giờ công','OT']],
+      ['F35','Nhật ký chỉnh sửa Chấm công & Nghỉ phép','cc',['Nhân viên','Ngày công','Người sửa','Dữ liệu cũ','Dữ liệu mới']],
+      ['F36','Báo cáo thời gian làm việc','cc',['Tháng','Kỳ lương','Tổ chức','Nhóm','Ca','Mã nhân viên']],
+      ['F37','Lịch sử điều chỉnh lương','bl',['Nhân viên','Ngày hiệu lực','Lương cơ bản','Phụ cấp','Người cập nhật']],
+      ['F38','Báo cáo lương','bl',[]]
+    ];
+    const state={reportYear:HR.isoToday().slice(0,4),reportDept:'all',reportTab:'overview',reportMajor:'all',reportDegree:'all',reportGender:'all',reportDetail:'active',reportSearch:'',reportFrom:'',reportTo:'',reportPrint:false,org:'all',employees:[],month:refDate().slice(0,7),date:refDate(),tableSearch:'',status:'all'};
+    const REPORT_TABS=[['overview','Tổng quan'],['education','Trình độ'],['majors','Ngành đào tạo'],['movement','Biến động nhân sự']],GENDERS=['Nam','Nữ','Chưa cập nhật'];
+    let EDUCATION_LEVELS=[],departments=[],reply=null,replyKey='',loadingKey='',failedKey='',failure='',generation=0,unitScopeKey='';
+    const normalized=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLocaleLowerCase('vi-VN');
+    const fmtDate=v=>v?vn(v):'Chưa có dữ liệu';
+    const orgName=id=>id==='all'?(reply?.orgs?.length===1?reply.orgs[0].name:'KSB · Các đơn vị đang chọn'):(reply?.orgs||[]).find(x=>x.id===id)?.name||'Đơn vị đang chọn';
+    const shortOrg=orgName;
+    const current=()=>SPEC.find(x=>'report-'+x[0]===curPage);
+    const reportYears=()=>{const now=+HR.isoToday().slice(0,4),values=state.employees.flatMap(e=>[e.joined,e.leftDate]).filter(Boolean).map(x=>+x.slice(0,4));const first=Math.min(now-2,+state.reportYear,...values.filter(x=>x>=1900));return Array.from({length:now-first+1},(_,i)=>String(now-i));};
+    function csvValue(v){const s=String(v??'');return typeof v==='string'&&/^[=+\-@\t\r]/.test(s)?"'"+s:s;}
+    function reportData(){return reply.data;}
+    function reportBreakdown(d){return (d.missing.hireDates||d.missing.leaveDates?'<div class="report-missing">Thiếu ngày vào làm: '+d.missing.hireDates+' hồ sơ; thiếu ngày nghỉ: '+d.missing.leaveDates+' hồ sơ đã nghỉ. Thống kê biến động chỉ tính các ngày đã được khai báo.</div>':'')+(d.missing.legacyEducation?'<div class="report-missing">'+d.missing.legacyEducation+' hồ sơ có giá trị Trình độ cũ chưa khớp danh mục; hiển thị Chưa cập nhật, không tự suy diễn ngành học thành trình độ.</div>':'')+'<div class="report-summary-breakdown">'+d.companies.map(x=>'<span>'+esc(x.name)+': <b>'+x.count+'</b></span>').join('')+'</div>';}
+    function resetDetails(){state.reportMajor='all';state.reportDegree='all';state.reportGender='all';state.reportDetail='active';state.reportSearch='';}
+    function requestKey(spec){return JSON.stringify([spec[0],selUnits().map(u=>u.id).sort(),refDate(),state.reportYear,state.reportDept,state.month,state.date,state.reportFrom,state.reportTo]);}
+    function load(spec,key){if(loadingKey===key||failedKey===key)return;loadingKey=key;const turn=++generation;
+      const q=new URLSearchParams({id:spec[0],asof:refDate(),units:selUnits().map(u=>u.id).join(','),year:state.reportYear,dept:state.reportDept==='all'?'':state.reportDept,month:state.month,date:state.date,from:state.reportFrom,to:state.reportTo});
+      svApi('bao-cao?'+q).then(j=>{if(turn!==generation)return;loadingKey='';if(!j.ok){failedKey=key;failure=j.loi||'Chưa đọc được báo cáo';}else{reply=j;replyKey=key;failedKey='';failure='';state.employees=j.data?.records||[];departments=j.departments||[];EDUCATION_LEVELS=j.levels||[];}
+        if(current()&&requestKey(current())===key)render();
+      },()=>{if(turn!==generation)return;loadingKey='';failedKey=key;failure='Không kết nối được máy chủ';if(current())render();});
+    }
+    function rowsFiltered(){const s=normalized(state.tableSearch);return (reply.rows||[]).filter(r=>(state.status==='all'||r.state===state.status)&&(!s||normalized(Object.values(r).map(v=>typeof v==='object'?JSON.stringify(v):String(v??'')).join(' ')).includes(s)));}
+    const empty=v=>v===null||v===undefined||v===''?'Chưa có dữ liệu':typeof v==='object'?JSON.stringify(v):String(v);
+    const employeeCell=r=>r.code?'<button class="td-link" data-report-employee="'+esc(r.code)+'" data-report-unit="'+esc(r.unit)+'">'+esc(r.code)+' · '+esc(r.name)+'</button>':'Toàn đơn vị';
+    function genericView(spec){const rows=rowsFiltered();
+      if(reply.designMissing)return heading(spec[1],'Bản nguồn v0.7.1 chưa xác nhận cấu trúc màn hình.','',''+spec[0]+' / CHƯA ĐỦ BẰNG CHỨNG')+'<div class="panel"><div class="placeholder"><div class="placeholder-icon">?</div><h3>Chưa đủ bằng chứng để dựng đúng màn hình</h3><p>Giữ nguyên trạng thái thiếu thiết kế theo xác nhận của anh; không tự thêm cột hoặc công thức.</p><span class="pill orange">Chờ thiết kế được duyệt</span></div></div>';
+      const values={F31:r=>[r.company+' · '+r.dept,r.date,r.attendance,r.late,r.leave,r.newHire,r.exit],F34:r=>[r.code,r.shift,r.date,r.in,r.out,r.hours,r.ot],F35:r=>[r.code,r.date,r.by,r.old,r.new],F36:r=>[r.month,r.period,r.company,r.group,r.shift,r.code],F37:r=>[r.code,r.date,r.salary,r.allowance,r.by]};
+      const statuses=[...new Set((reply.rows||[]).map(r=>r.state).filter(Boolean))];
+      const fields=spec[3],indexEmployee=spec[0]==='F36'?5:spec[0]==='F31'?-1:0;
+      const filter='<div class="report-filterbar"><label>'+(spec[0]==='F31'?'Ngày báo cáo<input type="date" data-report-change="date" value="'+esc(state.date)+'">':'Tháng báo cáo<input type="month" data-report-change="month" value="'+esc(state.month)+'">')+'</label><label>Phòng ban<select data-report-change="reportDept"><option value="all">Tất cả phòng ban</option>'+departments.map(n=>'<option'+(state.reportDept===n?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select></label></div>';
+      const table='<div class="panel"><div class="panel-head"><div><div class="panel-title">Cấu trúc danh sách / bộ lọc</div><div class="panel-sub">'+rows.length+' bản ghi trong phạm vi được cấp</div></div></div><div class="toolbar"><input class="search-input" data-report-table-search placeholder="⌕ Tìm kiếm trong bảng..." value="'+esc(state.tableSearch)+'"><select data-report-change="status"><option value="all">Tất cả trạng thái</option>'+statuses.map(n=>'<option'+(state.status===n?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select><div class="spacer"></div><button class="btn" data-report-export="table">⇩ Xuất dữ liệu</button><button class="btn primary" disabled title="Báo cáo chỉ đọc; cập nhật tại chức năng nghiệp vụ hiện có">＋ Thêm mới</button></div><div class="datatable-wrap"><table><thead><tr>'+fields.map(f=>'<th>'+esc(f)+'</th>').join('')+'</tr></thead><tbody>'+(rows.length?rows.map(r=>'<tr>'+values[spec[0]](r).map((v,i)=>'<td>'+(i===indexEmployee?employeeCell(r):spec[0]==='F31'&&i===0?esc(v)+'<br>'+employeeCell(r):spec[0]==='F36'&&i===0?esc(v)+'<br><small>Giờ công: '+esc(empty(r.hours))+' · OT: '+esc(empty(r.ot))+'</small>':esc(empty(v)))+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="'+fields.length+'" class="report-empty">Chưa có dữ liệu</td></tr>')+'</tbody></table></div></div>';
+      return heading(spec[1],'Số liệu từ hệ thống hiện có, giới hạn phạm vi tại máy chủ.','',spec[0]+' / BÁO CÁO')+filter+table+'<div class="report-missing">'+(reply.missing||[]).map(esc).join('<br>')+'</div>';
+    }
+    function view(){const spec=current();if(!spec)return '';return spec[0]==='K03'?hrReport():genericView(spec);}
+    function redraw(){const h=document.getElementById('ksbReportHost');if(h&&current())h.innerHTML=view();}
+    function exportTable(){const s=current(),keyMap={F31:['company','date','attendance','late','leave','newHire','exit'],F34:['code','shift','date','in','out','hours','ot'],F35:['code','date','by','old','new'],F36:['month','period','company','group','shift','code'],F37:['code','date','salary','allowance','by']};const fields=keyMap[s[0]],extra=s[0]==='F36'?['hours','ot']:s[0]==='F31'?['code','name']:[],labels=s[0]==='F36'?['Giờ công','OT']:s[0]==='F31'?['Mã NV','Họ tên']:[];const rows=[s[3].concat(labels),...rowsFiltered().map(r=>fields.concat(extra).map(k=>r[k]==null?'':typeof r[k]==='object'?JSON.stringify(r[k]):r[k]))];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+csvValue(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='KSB_'+s[0]+'_'+state.month+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+    function printReport(){const doc=reportPrintDocument(reportData()),css=document.getElementById('ksbReportStyle').textContent,m=modal('Báo cáo tổng hợp nhân sự','Xem trước / Lưu PDF','<div class="ksb-reports"><iframe class="report-print-frame" title="Bản in báo cáo nhân sự"></iframe><div class="link-row"><button class="btn btn-primary" id="ksbReportPrintNow">In / Lưu PDF</button><button class="btn" data-close>Đóng</button></div></div>',true),frame=m.querySelector('iframe');frame.srcdoc='<!doctype html><meta charset="utf-8"><style>'+css+'@page{size:A4;margin:12mm}body{margin:0;background:#fff}.ksb-reports .print-sheet{box-shadow:none;border:0;width:100%;padding:0;min-height:0}.ksb-reports .print-section{break-inside:avoid}.ksb-reports .print-letterhead{display:flex}.ksb-reports .print-letterhead img{max-width:60px}thead{display:table-header-group}</style><div class="ksb-reports">'+doc+'</div>';m.querySelector('#ksbReportPrintNow').onclick=()=>{frame.contentWindow.focus();frame.contentWindow.print();};}
+    SPEC.forEach(spec=>{PAGES['report-'+spec[0]]=()=>{const unitKey=selUnits().map(u=>u.id).sort().join(',');if(unitScopeKey!==unitKey){unitScopeKey=unitKey;state.reportDept='all';resetDetails();}const key=requestKey(spec);if(!SV||!SV.me)return '<div class="ksb-reports"><p>Đăng nhập để xem báo cáo.</p></div>';if(replyKey!==key){load(spec,key);return '<div class="ksb-reports"><h1>'+esc(spec[1])+'</h1><p>'+esc(failedKey===key?failure:'Đang đọc dữ liệu báo cáo…')+'</p>'+(failedKey===key?'<button class="btn" data-act="report-retry">Thử lại</button>':'')+'</div>';}return '<div class="ksb-reports" id="ksbReportHost">'+view()+'</div>';};});
+    ACTS['report-retry']=()=>{failedKey='';render();};
+    document.addEventListener('click',event=>{if(!event.target.closest('.ksb-reports')||!current())return;
+      const employee=event.target.closest('[data-report-employee]');if(employee){openProfile(employee.dataset.reportUnit,employee.dataset.reportEmployee);return;}
+      const tab=event.target.closest('[data-report-tab]');if(tab){state.reportTab=tab.dataset.reportTab;redraw();return;}
+      const pick=event.target.closest('[data-report-pick]');if(pick){const type=pick.dataset.reportPick,key={gender:'reportGender',degree:'reportDegree',major:'reportMajor'}[type];state[key]=state[key]===pick.dataset.reportValue?'all':pick.dataset.reportValue;if(type==='degree')state.reportTab='education';if(type==='major')state.reportTab='majors';state.reportDetail='active';state.reportSearch='';redraw();return;}
+      const detail=event.target.closest('[data-report-detail]');if(detail){resetDetails();state.reportDetail=detail.dataset.reportDetail;redraw();document.getElementById('report-roster')?.scrollIntoView({block:'start',behavior:'smooth'});return;}
+      const exp=event.target.closest('[data-report-export]');if(exp){exp.dataset.reportExport==='table'?exportTable():reportDownload(exp.dataset.reportExport);return;}
+      const action=event.target.closest('[data-report-action]')?.dataset.reportAction;if(action==='clear'){resetDetails();redraw();}if(action==='accounting'){resetDetails();state.reportMajor='@accounting';redraw();document.getElementById('report-roster')?.scrollIntoView({block:'start'});}if(action==='print')printReport();if(action==='manageMajors'){const us=selUnits();if(us.length===1&&ACTS['ksb-catalog-edit']){const a=document.createElement('button');a.setAttribute('data-u',us[0].id);ACTS['ksb-catalog-edit'](a);}else toast('Chọn một công ty để quản lý danh mục chuyên ngành.');}
+    });
+    document.addEventListener('change',event=>{if(!event.target.closest('.ksb-reports')||!current())return;const key=event.target.dataset.reportChange;if(!['reportYear','reportDept','reportDetail','reportGender','reportDegree','reportMajor','month','date','status','reportFrom','reportTo'].includes(key))return;state[key]=event.target.value;if(['reportYear','reportDept','month','date','reportFrom','reportTo'].includes(key)){resetDetails();if(key==='reportYear'){state.reportFrom='';state.reportTo='';}render();}else redraw();});
+    document.addEventListener('input',event=>{if(!event.target.closest('.ksb-reports')||!current())return;const roster=event.target.matches('[data-report-search]'),table=event.target.matches('[data-report-table-search]');if(!roster&&!table)return;const start=event.target.selectionStart;state[roster?'reportSearch':'tableSearch']=event.target.value;redraw();const input=document.querySelector(roster?'[data-report-search]':'[data-report-table-search]');if(input){input.focus();input.setSelectionRange(start,start);}});
+function printFieldTable(pairs){return `<div class="print-fields">${pairs.map(([k,v])=>`<div class="print-field"><span>${esc(k)}</span><strong>${esc(v||'Chưa có dữ liệu')}</strong></div>`).join('')}</div>`;}
+function printSection(title,inner){return `<section class="print-section"><h3>${esc(title)}</h3>${inner}</section>`;}
+function heading(title,desc,buttons='',eyebrow='KSB HUMAN RESOURCES'){return `<div class="page-head"><div><div class="eyebrow">${eyebrow}</div><h1 class="page-title">${esc(title)}</h1><p class="page-desc">${esc(desc)}</p></div><div class="head-actions">${buttons}</div></div>`;}
+function reportPct(n,total){return total?Math.round(n/total*100):0;}
+function reportStat(label,value,note,icon,tone='blue'){return `<div class="report-stat ${tone}"><div class="report-stat-top"><span>${esc(label)}</span><b>${icon}</b></div><strong>${value}</strong><small>${esc(note)}</small></div>`;}
+function reportProgress(entries,total,type,opts={}){
+ const max=Math.max(1,...entries.map(x=>x.count));
+ return `<div class="report-prog-list">${entries.map((x,i)=>`<button type="button" class="report-prog-item ${opts.selected===x.name?'selected':''}" data-report-pick="${esc(type)}" data-report-value="${esc(x.name)}" title="Xem nhân sự thuộc nhóm ${esc(x.name)}"><span class="report-prog-top"><span>${esc(x.name)}</span><b>${x.count}<small> · ${reportPct(x.count,total)}%</small></b></span><span class="report-prog-track"><span class="report-prog-fill report-fill-${i%5}" style="width:${reportPct(x.count,max)}%"></span></span></button>`).join('')}</div>`;
+}
+function reportDonut(d){const m=reportPct(d.male,d.total),f=reportPct(d.female,d.total);return `<div class="report-donut-wrap"><div class="report-donut" role="img" aria-label="Nam ${d.male}, nữ ${d.female}, chưa cập nhật ${d.unknownGender}" style="background:conic-gradient(#0a4e9b 0 ${m}%,#ed1c24 ${m}% ${m+f}%,#c2cfdb ${m+f}% 100%)"><div class="report-donut-center"><strong>${d.total}</strong><small>nhân sự</small></div></div><div class="report-donut-legend">${d.genders.map((g,i)=>`<button type="button" class="report-legend-item" data-report-pick="gender" data-report-value="${esc(g.name)}"><i class="report-dot report-dot-${i}"></i><span>${esc(g.name)}</span><b>${g.count}</b></button>`).join('')}</div></div>`;}
+function reportMovementChart(d){const mx=Math.max(1,...d.monthly.flatMap(x=>[x.hires,x.exits]));return `<div class="report-month-chart">${d.monthly.map(m=>`<div class="report-month"><div class="report-month-bars"><div class="report-month-bar new" style="height:${m.hires?Math.max(9,m.hires/mx*100):2}%" title="Tháng ${m.month}: tuyển ${m.hires}"><span>${m.hires||''}</span></div><div class="report-month-bar left" style="height:${m.exits?Math.max(9,m.exits/mx*100):2}%" title="Tháng ${m.month}: nghỉ ${m.exits}"><span>${m.exits||''}</span></div></div><span>T${m.month}</span></div>`).join('')}</div><div class="report-chart-legend"><span><i class="report-key-new"></i>Tuyển mới</span><span><i class="report-key-left"></i>Nghỉ việc</span></div>`;}
+function reportFilteredPeople(d){const dataset=state.reportDetail==='new'?d.hired:state.reportDetail==='left'?d.exited:d.active;
+ const search=normalized(state.reportSearch);return dataset.filter(e=>
+ (state.reportGender==='all'||(e.gender||'Chưa cập nhật')===state.reportGender)&&
+ (state.reportDegree==='all'||(e.degree||'Chưa cập nhật')===state.reportDegree)&&
+ (state.reportMajor==='all'||(state.reportMajor==='@accounting'?(e.majors||[]).some(x=>normalized(x).includes('ke toan')):(e.majors||[]).includes(state.reportMajor)))&&
+ (!search||normalized([e.code,e.name,e.dept,e.pos,e.major,e.degree].join(' ')).includes(search))
+ );}
+function reportRoster(d){const people=reportFilteredPeople(d),types=[['active','Đang làm tại ngày chốt'],['new','Tuyển mới trong năm'],['left','Nghỉ việc trong năm']];return `<section class="panel report-roster" id="report-roster"><div class="panel-head"><div><div class="panel-title">Danh sách đối chiếu</div><div class="panel-sub">Bấm mã nhân viên để mở hồ sơ · ${people.length} kết quả sau lọc</div></div><button class="btn" data-report-export="roster">⇩ Xuất danh sách CSV</button></div><div class="report-roster-controls"><select aria-label="Nhóm nhân sự" data-report-change="reportDetail">${types.map(([id,label])=>`<option value="${id}" ${state.reportDetail===id?'selected':''}>${label}</option>`).join('')}</select><select aria-label="Giới tính" data-report-change="reportGender"><option value="all">Mọi giới tính</option>${GENDERS.map(x=>`<option ${state.reportGender===x?'selected':''}>${x}</option>`).join('')}</select><select aria-label="Trình độ cao nhất" data-report-change="reportDegree"><option value="all">Mọi trình độ</option>${EDUCATION_LEVELS.map(x=>`<option ${state.reportDegree===x?'selected':''}>${x}</option>`).join('')}</select><select aria-label="Ngành đào tạo" data-report-change="reportMajor"><option value="all">Mọi chuyên ngành</option>${state.reportMajor==='@accounting'?'<option value="@accounting" selected>Chứa “Kế toán”</option>':''}${[...new Set(state.employees.flatMap(e=>e.majors||['Chưa cập nhật']))].sort((a,b)=>a.localeCompare(b,'vi')).map(x=>`<option ${state.reportMajor===x?'selected':''}>${esc(x)}</option>`).join('')}</select><input aria-label="Tìm trong danh sách" data-report-search value="${esc(state.reportSearch)}" placeholder="⌕ Tìm mã, tên, ngành đào tạo..."/><button class="btn report-clear" data-report-action="clear">Xóa lọc</button></div><div class="datatable-wrap"><table class="report-table"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Công ty</th><th>Phòng ban</th><th>Giới tính</th><th>Trình độ cao nhất</th><th>Chuyên ngành đào tạo</th><th>${state.reportDetail==='left'?'Ngày nghỉ':state.reportDetail==='new'?'Ngày tuyển':'Ngày vào'}</th></tr></thead><tbody>${people.length?people.map(e=>`<tr><td><button class="td-link" data-report-employee="${esc(e.code)}" data-report-unit="${esc(e.org)}">${esc(e.code)}</button></td><td class="td-strong">${esc(e.name)}</td><td>${esc(shortOrg(e.org))}</td><td>${esc(e.dept)}</td><td>${esc(e.gender||'Chưa cập nhật')}</td><td>${esc(e.degree||'Chưa cập nhật')}</td><td>${esc(e.major||'Chưa cập nhật')}</td><td>${fmtDate(state.reportDetail==='left'?e.leftDate:e.joined)}</td></tr>`).join(''):`<tr><td colspan="8" class="report-empty">Không có nhân sự phù hợp bộ lọc · thử chọn nhóm khác hoặc xóa lọc</td></tr>`}</tbody></table></div><div class="table-footer"><span>Số liệu từ API báo cáo, giới hạn công ty/phòng ban tại máy chủ.</span><span>${people.length} nhân viên</span></div></section>`;}
+function hrReport(){const d=reportData();const reportButtons=`<button class="btn" data-report-export="summary">⇩ Xuất số liệu CSV</button><button class="btn primary" data-report-action="print">▤ In báo cáo / PDF</button>`;
+ const head=heading('Báo cáo tổng hợp nhân sự','Thống kê thực trạng nhân sự, trình độ – chuyên ngành đào tạo và biến động tuyển dụng / nghỉ việc',reportButtons,'QUẢN TRỊ NGUỒN NHÂN LỰC / KSB HRM');
+ const filters=`<div class="report-filterbar"><div class="report-filter-title"><span class="report-filter-icon">◷</span><div><strong>Kỳ và phạm vi thống kê</strong><small>Tính từ hồ sơ và văn bằng đang lưu trong phạm vi được cấp</small></div></div><label>Năm báo cáo<select data-report-change="reportYear">${reportYears().map(y=>`<option ${state.reportYear===y?'selected':''}>${y}</option>`).join('')}</select></label><label>Phòng ban<select data-report-change="reportDept"><option value="all">Tất cả phòng ban</option>${departments.map(x=>`<option ${state.reportDept===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>Từ ngày<input type="date" data-report-change="reportFrom" value="${esc(state.reportFrom||d.start)}"></label><label>Đến ngày<input type="date" data-report-change="reportTo" value="${esc(state.reportTo||d.end)}"></label><div class="report-asof"><span>Ngày chốt</span><strong>${fmtDate(d.cutoff)}</strong></div></div>`;
+ const stats=`<div class="report-stat-grid">${reportStat('Đang làm việc',d.total,'Bao gồm cả thử việc','♙')}${reportStat('Lao động nữ',d.female,reportPct(d.female,d.total)+'% trên nhân sự hiện hữu','♀','red')}${reportStat('Lao động nam',d.male,reportPct(d.male,d.total)+'% trên nhân sự hiện hữu','♂')}${reportStat('Đại học trở lên',d.universityPlus,reportPct(d.universityPlus,d.total)+'% nhân sự hiện hữu','✧','violet')}${reportStat('Tuyển mới trong năm',d.hired.length,'Trong khoảng thời gian đang chọn','↗','green')}${reportStat('Nghỉ việc trong năm',d.exited.length,'Trong khoảng thời gian đang chọn','↘','red')}</div>`;
+ const tabs=`<div class="report-tabs" role="tablist" aria-label="Nhóm báo cáo">${REPORT_TABS.map(([id,label])=>`<button role="tab" aria-selected="${state.reportTab===id}" class="${state.reportTab===id?'active':''}" data-report-tab="${id}">${label}</button>`).join('')}</div>`;
+ let body='';if(state.reportTab==='overview')body=`<div class="report-visual-grid"><section class="panel"><div class="panel-head"><div><div class="panel-title">Cơ cấu giới tính</div><div class="panel-sub">Nhân sự hiện hữu tại ${fmtDate(d.cutoff)}</div></div><span class="pill blue">Tỷ trọng</span></div><div class="panel-body">${reportDonut(d)}</div></section><section class="panel"><div class="panel-head"><div><div class="panel-title">Cơ cấu trình độ</div><div class="panel-sub">Văn bằng cao nhất theo từng nhân viên</div></div><button class="report-small-link" data-report-tab="education">Xem chi tiết →</button></div><div class="panel-body">${reportProgress(d.degrees.filter(x=>x.count>0),d.total,'degree')}</div></section></div><div class="report-visual-grid"><section class="panel"><div class="panel-head"><div><div class="panel-title">Ngành đào tạo phổ biến</div><div class="panel-sub">Đếm người theo chuyên ngành đã khai báo</div></div><button class="report-small-link" data-report-tab="majors">Tất cả ngành →</button></div><div class="panel-body">${reportProgress(d.majors.slice(0,6),d.total,'major')}</div></section><section class="panel"><div class="panel-head"><div><div class="panel-title">Tuyển mới và nghỉ việc theo tháng</div><div class="panel-sub">Phát sinh trong năm ${state.reportYear}</div></div><button class="report-small-link" data-report-tab="movement">Xem biến động →</button></div><div class="panel-body">${reportMovementChart(d)}</div></section></div>`;
+ if(state.reportTab==='education')body=`<div class="report-visual-grid report-full-grid"><section class="panel"><div class="panel-head"><div><div class="panel-title">Phân bổ theo trình độ cao nhất</div><div class="panel-sub">Mỗi nhân viên chỉ được tính một lần · ${d.total} hồ sơ hiện hữu</div></div><span class="pill blue">${reportPct(d.universityPlus,d.total)}% đại học trở lên</span></div><div class="panel-body">${reportProgress(d.degrees,d.total,'degree',{selected:state.reportDegree})}</div></section><section class="panel"><div class="panel-head"><div><div class="panel-title">Nguyên tắc tổng hợp</div></div><div class="panel-body report-explainer"><div class="report-flag">01</div><p>Thống kê theo <strong>văn bằng cao nhất</strong> của mỗi người: Tiến sĩ, Thạc sĩ, Đại học, Cao đẳng, Trung cấp, các bậc khác và Chưa cập nhật.</p><div class="report-flag">02</div><p>Ngành đào tạo được thống kê riêng. Ví dụ, người có bằng Đại học nhưng học ngành Kế toán được ghi nhận đồng thời ở nhóm “Đại học” và ngành “Kế toán”.</p><div class="report-flag">03</div><p>Nhấn vào bất kỳ cột nào để lọc danh sách nhân viên bên dưới. Phần hồ sơ cho phép đối chiếu trường trình độ/chuyên ngành.</p></div></section></div>`;
+ if(state.reportTab==='majors')body=`<div class="report-visual-grid report-full-grid"><section class="panel"><div class="panel-head"><div><div class="panel-title">Nhân sự theo ngành nghề đào tạo</div><div class="panel-sub">Phân loại theo ngành học, không theo chức vụ hiện tại</div></div><span class="pill blue">${d.majors.length} chuyên ngành</span></div><div class="panel-body">${reportProgress(d.majors,d.total,'major',{selected:state.reportMajor})}</div></section><section class="panel"><div class="panel-head"><div><div class="panel-title">Tra cứu chuyên ngành</div><div class="panel-sub">Ví dụ: tìm nhóm nhân viên được đào tạo ngành Kế toán</div></div><span class="pill blue">Tra cứu</span></div><div class="panel-body"><div class="report-highlight"><span>Nhóm Kế toán</span><strong>${d.active.filter(e=>(e.majors||[]).some(m=>normalized(m).includes('ke toan'))).length}</strong><small>người có chuyên ngành chứa “Kế toán”</small><button class="btn primary" data-report-action="accounting">Xem danh sách Kế toán</button><button class="btn" data-report-action="manageMajors">⚙ Quản lý danh mục chuyên ngành</button></div><p class="report-help">Sử dụng các văn bằng đã khai báo tại Kinh nghiệm & Học vấn. Một người có nhiều văn bằng cùng chuyên ngành chỉ được tính một lần trong chuyên ngành đó.</p></div></section></div>`;
+ if(state.reportTab==='movement')body=`<div class="report-visual-grid report-full-grid"><section class="panel"><div class="panel-head"><div><div class="panel-title">Biến động nguồn nhân lực trong năm ${state.reportYear}</div><div class="panel-sub">So sánh tuyển mới và nghỉ việc theo tháng</div></div><span class="pill ${d.hired.length-d.exited.length>=0?'green':'red'}">Thay đổi thuần ${d.hired.length-d.exited.length>=0?'+':''}${d.hired.length-d.exited.length}</span></div><div class="panel-body">${reportMovementChart(d)}<div class="report-movement-cards"><button data-report-detail="new"><b>${d.hired.length}</b><span>Tuyển mới</span><small>Xem danh sách ↗</small></button><button data-report-detail="left"><b>${d.exited.length}</b><span>Nghỉ việc</span><small>Xem danh sách ↗</small></button><div><b>${d.hired.length-d.exited.length>=0?'+':''}${d.hired.length-d.exited.length}</b><span>Chênh lệch thuần</span><small>Tuyển mới trừ nghỉ việc</small></div></div></div></section><section class="panel"><div class="panel-head"><div><div class="panel-title">Bảng phát sinh theo tháng</div><div class="panel-sub">Từ ${fmtDate(d.start)} đến ${fmtDate(d.end)}</div></div></div><div class="datatable-wrap"><table class="report-month-table"><thead><tr><th>Tháng</th><th>Tuyển mới</th><th>Nghỉ việc</th><th>Chênh lệch</th></tr></thead><tbody>${d.monthly.map(x=>`<tr><td>Tháng ${x.month}</td><td>${x.hires}</td><td>${x.exits}</td><td><b class="${x.hires>=x.exits?'report-pos':'report-neg'}">${x.hires-x.exits>=0?'+':''}${x.hires-x.exits}</b></td></tr>`).join('')}</tbody></table></div></section></div>`;
+ return `${head}${filters}${stats}${reportBreakdown(d)}${tabs}${body}<div class="report-definitions"><span>ⓘ</span><div><b>Quy ước:</b> “Đang làm” tính theo ngày vào và ngày nghỉ; “Tuyển mới” theo ngày vào; “Nghỉ việc” theo ngày thôi việc trong năm. Trình độ và ngành đào tạo lấy từ hồ sơ, văn bằng hiện có; chưa có lịch sử hiệu lực đầy đủ cho mọi thời điểm quá khứ. Người có nhiều chuyên ngành được tính một lần trong mỗi ngành, không cộng số ngành thành tổng nhân sự.</div></div>${reportRoster(d)}`;
+}
+function reportDownload(kind){const d=reportData(),org=orgName(state.org),scope=state.reportDept==='all'?'Tất cả phòng ban':state.reportDept;
+ const meta=[state.reportYear,fmtDate(d.cutoff),org,scope,fmtDate(d.start),fmtDate(d.end)];let rows;
+ if(kind==='roster')rows=[['Mã NV','Họ tên','Công ty','Phòng ban','Giới tính','Trình độ cao nhất','Chuyên ngành đào tạo','Ngày vào làm','Ngày nghỉ việc'],...reportFilteredPeople(d).map(e=>[e.code,e.name,orgName(e.org),e.dept,e.gender,e.degree,e.major,e.joined,e.leftDate])];
+ else rows=[['Nhóm chỉ tiêu','Nội dung','Số người','Năm','Ngày chốt','Phạm vi công ty','Phòng ban','Từ ngày','Đến ngày'],...[
+ ['Quy mô','Đang làm',d.total],['Quy mô','Đại học trở lên',d.universityPlus],['Tuyển dụng','Tuyển mới trong năm',d.hired.length],['Tuyển dụng','Nghỉ việc trong năm',d.exited.length],
+ ...d.companies.map(x=>['Công ty',x.name,x.count]),...d.departments.map(x=>['Phòng ban',x.name,x.count]),...d.statuses.map(x=>['Trạng thái',x.name,x.count]),...d.genders.map(x=>['Giới tính',x.name,x.count]),...d.degrees.map(x=>['Trình độ cao nhất',x.name,x.count]),...d.majors.map(x=>['Chuyên ngành đào tạo',x.name,x.count]),...d.monthly.flatMap(x=>[['Tuyển mới theo tháng','Tháng '+x.month,x.hires],['Nghỉ việc theo tháng','Tháng '+x.month,x.exits]])
+ ].map(([g,n,c])=>[g,n,c,...meta])];
+ const csv='\ufeff'+rows.map(r=>r.map(x=>'"'+csvValue(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(b),link=document.createElement('a');link.href=url;link.download=`KSB_Bao_cao_${kind==='roster'?'Danh_sach':'Tong_hop'}_${state.reportYear}.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);toast('Đã xuất dữ liệu báo cáo trong phạm vi đang xem.');
+}
+function reportPrintDocument(d){const entries=(xs,total)=>`<table class="print-table"><thead><tr><th>Chỉ tiêu</th><th>Số người</th><th>Tỷ lệ</th></tr></thead><tbody>${xs.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.count}</td><td>${reportPct(x.count,total)}%</td></tr>`).join('')}</tbody></table>`;
+ return `<div class="print-sheet report-print-sheet"><div class="print-letterhead"><div class="report-letterhead-logo"><img src="data:image/png;base64,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" alt="Logo KSB"><span>${esc(orgName(state.org))}</span></div><div class="print-meta">BÁO CÁO NỘI BỘ<br>NHÂN SỰ · THEO PHẠM VI ĐƯỢC CẤP</div></div><div class="print-doc-head"><div class="print-eyebrow">KSB · QUẢN TRỊ NGUỒN NHÂN LỰC</div><h1>BÁO CÁO TỔNG HỢP NHÂN SỰ NĂM ${esc(state.reportYear)}</h1><p>Phạm vi: ${esc(orgName(state.org))}${state.reportDept==='all'?'':' · '+esc(state.reportDept)}<br>Ngày chốt: ${fmtDate(d.cutoff)}</p></div>${printSection('I. Tổng quan nguồn nhân lực',printFieldTable([['Nhân sự hiện hữu',String(d.total)+' người'],['Nam / Nữ',d.male+' / '+d.female+' người'],['Đại học trở lên',d.universityPlus+' người'],['Tuyển mới trong năm',d.hired.length+' người'],['Nghỉ việc trong năm',d.exited.length+' người'],['Thay đổi thuần',String(d.hired.length-d.exited.length)+' người']]))}${printSection('II. Cơ cấu giới tính',entries(d.genders,d.total))}${printSection('III. Trình độ đào tạo cao nhất',entries(d.degrees,d.total))}${printSection('IV. Chuyên ngành đào tạo',entries(d.majors,d.total))}${printSection('V. Tuyển dụng và nghỉ việc',`<p class="print-paragraph"><b>Tuyển mới:</b> ${d.hired.length} người; <b>Nghỉ việc:</b> ${d.exited.length} người; <b>Thay đổi thuần:</b> ${d.hired.length-d.exited.length>=0?'+':''}${d.hired.length-d.exited.length} người.</p>`)}<div class="print-signatures"><div><b>PHÒNG HÀNH CHÍNH – NHÂN SỰ</b><span>(Người lập báo cáo, ký và ghi rõ họ tên)</span></div><div><b>ĐẠI DIỆN LÃNH ĐẠO</b><span>(Xác nhận, ký và ghi rõ họ tên)</span></div></div><div class="print-disclaimer">Số liệu trích từ hồ sơ QLNS-KSB theo phạm vi được cấp. Thống kê biến động chỉ tính ngày đã khai báo; thiếu ngày vào làm: ${d.missing.hireDates}, thiếu ngày nghỉ: ${d.missing.leaveDates}. Kỳ thống kê: ${fmtDate(d.start)} – ${fmtDate(d.end)}.</div></div>`;
+}
+function reportPrintOverlay(){if(!state.reportPrint)return'';const d=reportData();return `<div class="print-overlay report-print-overlay" role="dialog" aria-modal="true" aria-label="Xem trước báo cáo nhân sự"><header class="print-topbar"><div><b>Báo cáo tổng hợp nhân sự · ${state.reportYear}</b><small>Kiểm tra số liệu và chọn In / Lưu PDF từ trình duyệt</small></div><div class="print-actions"><button class="btn" data-report-action="closePrint">Đóng</button><button class="btn primary" data-report-action="printNow">▤ In / Lưu PDF</button></div></header><div class="print-workspace report-print-workspace"><main class="print-preview">${reportPrintDocument(d)}</main></div></div>`;}
+
+  })();
+  /* End approved KSB reports. */
+
   var SV = (function () { var c = window.QTT_SV; return c && c.api ? { api: c.api, ver: c.v || '', me: null, cty: '', kv: {}, hash: {}, base: {}, pend: {}, tm: {}, fly: {}, mute: 0, st: 'ok', at: 0, err: '', tk: null, newer: null, conflict: false } : null; })();
   function svOn() { return !!SV; }
   function ksbOn() { return !!(SV && window.QTT_SV.ksbCodes); }
