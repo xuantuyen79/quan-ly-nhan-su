@@ -5,6 +5,7 @@
    - Quản lý (/quan-ly): nhân viên, lượt chấm, IP văn phòng, lượt bị từ chối, cài đặt, tải CSV.
    Giờ chấm lấy theo đồng hồ máy chủ (không tin giờ điện thoại). Hiển thị theo giờ Việt Nam (UTC+7). */
 import qrcode from './qrcode.mjs';
+import { sendKsbFeedback } from './ksb-feedback.js';
 import { reportsAPI } from './ksb-reports.js';
 import APP_HTML from './app.html';
 import { ICON_PNG_B64, ICON_SVG } from './icon.js';
@@ -1191,6 +1192,10 @@ async function api(req, env, url) {
         await setCfg(db, o); return json({ ok: true });
       }
       return json({ ok: true, on: !!(cfg.mail_key && cfg.mail_from), key: cfg.mail_key ? 're_…' + String(cfg.mail_key).slice(-4) : '', from: cfg.mail_from || '', name: cfg.mail_name || '', reply: cfg.mail_reply || '', dom: dom, autoDom: !!autoDom, admin: !!U.sys });
+    }
+    if (r === 'gop-y' && req.method === 'POST') {
+      const result = await sendKsbFeedback(body, cfg);
+      return json(result.body, result.status);
     }
     if (r === 'email-gui' && req.method === 'POST') {
       if (!cfg.mail_key || !cfg.mail_from) return bad('Chưa thiết lập gửi email tự động. Vào Cài đặt → Gửi email tự động.');
