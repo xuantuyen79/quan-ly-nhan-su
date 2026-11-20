@@ -8003,14 +8003,15 @@ if (typeof module !== 'undefined') module.exports = XW;
       var b = ev.target.closest('[data-ac]'); if (!b) return; var k = b.getAttribute('data-ac'); if ((k === 'grant' || k === 'reset') && accBlocked(u, id)) return;
       if (k === 'lock' || k === 'unlock') { u.acc[id] = Object.assign(ac, { st: k === 'lock' ? 'lock' : 'on', at: nowVn(), why: k === 'lock' ? 'Khóa bởi người quản lý' : '' }); save(k === 'lock' ? 'khóa' : 'mở khóa'); m.close(); render(); toast(k === 'lock' ? 'Đã khóa tài khoản ' + id : 'Đã mở khóa ' + id, 'ok'); return; }
       var pin = newPin();
-      hashPin(u.id, id, pin).then(function (hs) {
-        u.acc = u.acc || {}; u.acc[id] = { st: 'on', at: nowVn(), pinAt: nowVn(), pin: hs, why: '' }; save(k === 'grant' ? 'cấp mới' : 'đặt lại PIN'); if (wfOn(u)) wfPushPin(u, id, pin, e); /* 0.3.1: gửi PIN lên máy chủ chấm công */
+      b.disabled = true;
+      anvSet(u, id, k, pin).then(function () {
+        save(k === 'grant' ? 'cấp mới' : 'đặt lại PIN');
         $('#pinOut', m).innerHTML = '<div class="pin-box"><span>Mã PIN của ' + esc(shortName(e['Họ và tên'])) + '</span><b class="mono">' + pin.slice(0, 3) + ' ' + pin.slice(3) + '</b><small>Chỉ hiện <b>một lần</b>. Đưa trực tiếp cho nhân viên, không gửi qua nhóm chat chung. Nhân viên nên đổi PIN ở lần đăng nhập đầu.</small><button class="btn btn-sm" id="pinCopy">Sao chép</button></div>';
         $$('[data-ac]', m).forEach(function (x) { x.remove(); });
         var ie = $('#accInfo', m); if (ie) ie.outerHTML = infoHtml(u.acc[id]);
         $('#pinCopy', m).addEventListener('click', function () { try { navigator.clipboard.writeText('Tài khoản ' + id + ' – PIN ' + pin); toast('Đã sao chép', 'ok'); } catch (er) { } });
         render();
-      });
+      }, function (er) { b.disabled = false; toast('Chưa đặt lại được PIN', 'err', er.message); });
     });
   };
 
@@ -8046,7 +8047,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var e = nvIndex(u)[id] || {}; u.acc = u.acc || {};
     if (k === 'lock' || k === 'unlock') { var ac = u.acc[id] || {}; u.acc[id] = Object.assign(ac, { st: k === 'lock' ? 'lock' : 'on', at: nowVn(), why: k === 'lock' ? 'Khóa bởi người quản lý' : '' }); return Promise.resolve(null); }
     var pin = /^\d{6}$/.test(String(arguments[3] || '')) ? String(arguments[3]) : newPin();
-    return hashPin(u.id, id, pin).then(function (hs) { u.acc[id] = { st: 'on', at: nowVn(), pinAt: nowVn(), pin: hs, why: '' }; if (wfOn(u)) wfPushPin(u, id, pin, e); return pin; });
+    return hashPin(u.id, id, pin).then(function (hs) { return (wfOn(u) ? wfPushPin(u, id, pin, e) : Promise.resolve()).then(function () { u.acc[id] = { st: 'on', at: nowVn(), pinAt: nowVn(), pin: hs, why: '' }; return pin; }); });
   }
   function anvSync(u) { if (wfOn(u)) { try { wfCall(u, 'nhan-vien', { list: wfPeople(u) }).then(function () { ANV_AT[u.id] = 0; anvFetch(); }, function () { }); } catch (e) { } } }
   PAGES.appnv = function () {
@@ -8135,7 +8136,7 @@ if (typeof module !== 'undefined') module.exports = XW;
         saveUnits(); log('Tài khoản ' + id + ' (' + u.name + '): ' + { grant: 'cấp mới', reset: 'đặt lại PIN', lock: 'khóa', unlock: 'mở khóa' }[k]);
         if (k === 'lock' || k === 'unlock') { anvSync(u); toast(k === 'lock' ? 'Đã khóa tài khoản ' + id : 'Đã mở khóa ' + id, 'ok', k === 'lock' ? 'Nhân viên bị đăng xuất khỏi app ở lần đồng bộ tới.' : ''); render(); return; }
         if (k === 'grant') anvSync(u); render(); anvPinBox([{ u: u, e: e, id: id, pin: pin }], (k === 'grant' ? 'Đã cấp tài khoản – ' : 'Mã PIN mới – ') + e['Họ và tên']);
-      });
+      }, function (er) { toast('Chưa đặt lại được PIN', 'err', er.message); });
     }
     if (k === 'lock') confirmBox('Khóa tài khoản ' + e['Họ và tên'] + '?', 'Nhân viên không đăng nhập được app nữa. Mở lại lúc nào cũng được.', 'Khóa', go);
     else if (k === 'reset') confirmBox('Đặt lại mã PIN của ' + e['Họ và tên'] + '?', 'Mã PIN cũ hết dùng được ngay; phần mềm tạo mã mới để anh/chị đưa cho nhân viên.', 'Đặt lại PIN', go);
@@ -8148,7 +8149,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       var out = [], us = {};
       L.reduce(function (p, r) { return p.then(function () { return anvSet(r.u, r.id, 'grant').then(function (pin) { out.push({ u: r.u, e: r.e, id: r.id, pin: pin }); us[r.u.id] = r.u; }); }); }, Promise.resolve()).then(function () {
         saveUnits(); log('Cấp tài khoản hàng loạt: ' + out.length + ' người'); Object.keys(us).forEach(function (k) { anvSync(us[k]); }); render(); anvPinBox(out, 'Đã cấp ' + out.length + ' tài khoản');
-      });
+      }, function (er) { saveUnits(); toast('Máy chủ chưa xác nhận đủ các tài khoản', 'err', 'Đã xác nhận ' + out.length + ' tài khoản. ' + er.message); });
     });
   };
   // 12/11 góp ý: Thông tin tài khoản – tên đăng nhập, mật khẩu, đổi mật khẩu, khóa, xóa
@@ -8195,10 +8196,11 @@ if (typeof module !== 'undefined') module.exports = XW;
       if (tay && !/^\d{6}$/.test(v)) { er.textContent = 'Mã PIN gồm đúng 6 chữ số'; er.className = 'down'; return; }
       if (tay && (/^(\d)\1+$/.test(v) || v === '123456' || v === '654321')) { er.textContent = 'Mã PIN quá dễ đoán – chọn mã khác'; er.className = 'down'; return; }
       if (accBlocked(u, id)) return;
+      $('#anvPwOk', m).disabled = true; er.textContent = 'Đang chờ máy chủ xác nhận PIN mới…';
       anvSet(u, id, 'grant', tay ? v : '').then(function (pin) {
         saveUnits(); log('Tài khoản ' + id + ' (' + u.name + '): ' + (isNew ? 'tạo mới' : 'đổi mật khẩu'));
         if (isNew) anvSync(u); m.close(); render(); if (drawer && drawer._id === id && drawer._u === u) drawProfile(u, id, drawer._tab); anvPinBox([{ u: u, e: e, id: id, pin: pin }], (isNew ? 'Đã tạo tài khoản – ' : 'Mật khẩu mới – ') + e['Họ và tên']);
-      });
+      }, function (er) { $('#anvPwOk', m).disabled = false; er = er || {}; $('#anvPinE', m).textContent = er.message || 'Máy chủ chưa xác nhận PIN mới. Thử lại.'; });
     });
   }
   // Tạo tài khoản mới: chọn nhân sự chưa có tài khoản
@@ -11701,9 +11703,9 @@ if (typeof module !== 'undefined') module.exports = XW;
     return wfCall(u, 'cong', { ym: ym, nguoi: ccUser(), list: list }).then(function (j) { if (!tam) { u.wf.sent = u.wf.sent || {}; u.wf.sent[ym] = (bcX(u).lock[ym] || {}).at || nowVn(); } return j.n; });
   }
   function wfPushPin(u, id, pin, e) {
-    if (!wfOn(u)) return; e = e || nvIndex(u)[id] || {};
-    wfCall(u, 'pin', { ma: id, pin: pin, ten: e['Họ và tên'] || id, pb: e['Phòng ban'] || '', cty: u.name }).then(function () { u.wf.noPin = (u.wf.noPin || []).filter(function (x) { return x !== id; }); wfLog(u, 'Đã gửi mã PIN mới của ' + id + ' lên máy chủ chấm công'); saveUnits(); toast('Đã gửi mã PIN lên máy chủ chấm công', 'ok', id + ' đăng nhập điện thoại bằng mã PIN này.'); },
-      function (er) { wfLog(u, 'Chưa gửi được PIN ' + id + ': ' + er.message, false); saveUnits(); toast('Chưa gửi được mã PIN lên máy chủ chấm công', 'err', er.message + ' Đặt lại PIN khi có mạng.'); });
+    if (!wfOn(u)) return Promise.resolve(); e = e || nvIndex(u)[id] || {};
+    return wfCall(u, 'pin', { ma: id, pin: pin, ten: e['Họ và tên'] || id, pb: e['Phòng ban'] || '', cty: u.name }).then(function () { u.wf.noPin = (u.wf.noPin || []).filter(function (x) { return x !== id; }); wfLog(u, 'Đã gửi mã PIN mới của ' + id + ' lên máy chủ chấm công'); saveUnits(); toast('Đã gửi mã PIN lên máy chủ chấm công', 'ok', id + ' đăng nhập điện thoại bằng mã PIN này.'); },
+      function (er) { wfLog(u, 'Chưa gửi được PIN ' + id + ': ' + er.message, false); saveUnits(); throw er; });
   }
   function wfPushDon(u, d) {
     if (d['Nguồn'] !== 'Điện thoại') return;

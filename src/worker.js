@@ -765,8 +765,11 @@ async function session(db, req, vai) {
   if ((vai === 'ql' || vai === 'qt') && row.created < Date.now() - AGE[vai] * 1000) return null;
   if (row.last < Date.now() - 3600e3) await db.prepare('UPDATE phien SET last = ? WHERE tok = ?').bind(Date.now(), row.tok).run();
   if (vai === 'nv') {
-    const nv = await db.prepare('SELECT ma, ten, active, ncc, qt, mk IS NOT NULL AS co_mk, mk_doi FROM nv WHERE ma = ?').bind(row.ma).first();
+    const nv = await db.prepare("SELECT ma, ten, active, ncc, qt, length(coalesce(pin,''))>0 AS co_pin, length(coalesce(mk,''))>0 AS co_mk, mk_doi FROM nv WHERE ma = ?").bind(row.ma).first();
     if (!nv || !nv.active) return null;
+    // PIN-backed employees must not inherit UI/password gates from an obsolete mk.
+    nv.co_mk = nv.co_mk && passwordLogin(nv) ? 1 : 0;
+    if (!nv.co_mk) nv.mk_doi = null;
     row.nv = nv;
   }
   return row;
@@ -816,6 +819,11 @@ async function sharedDevices(db) {
 
 /* 13/11/2026: tài khoản có quyền quản trị */
 function qtOf(nv) { if (!nv || !nv.qt) return null; try { const o = JSON.parse(nv.qt); return o && typeof o === 'object' ? o : null; } catch (e) { return null; } }
+// Keep password-only employee accounts initialized earlier; an ordinary account with a PIN uses that PIN.
+function passwordLogin(nv) { return !!qtOf(nv) || (!(nv.pin || nv.co_pin) && !!(nv.mk || nv.co_mk)); }
+// Evaluate the current row inside the UPDATE so a concurrent admin grant cannot lose its password.
+const PIN_KEEP_ADMIN = "CASE WHEN json_valid(qt) THEN json_type(qt) IN ('object','array') ELSE 0 END";
+const PIN_AUTH_CLEANUP = ['mk','mk_salt','mk_doi'].map(k => k + ' = CASE WHEN (' + PIN_KEEP_ADMIN + ') THEN ' + k + ' ELSE NULL END').join(', ');
 async function qtUser(db, req) {
   const row = await session(db, req, 'qt'); if (!row) return null;
   if (!row.ma) return { ma: '', ten: 'Quản trị hệ thống', t: 'Quản trị hệ thống (dự phòng)', r: 'qt', sys: 1, du_phong: 1 };
@@ -986,8 +994,8 @@ async function api(req, env, url) {
       const ma = String(body.ma || '').trim().toUpperCase(), pin = String(body.pin || '');
       if (!/^\d{4,8}$/.test(pin)) return jc({ ok: false, loi: 'Mã PIN 4–8 chữ số.' }, 400);
       const old = await db.prepare('SELECT ma FROM nv WHERE ma = ?').bind(ma).first(), salt = randHex(16), h = await hashPin(pin, salt);
-      if (old) await db.prepare('UPDATE nv SET pin = ?, salt = ?, fail = 0, lock_until = 0, active = 1, pin_doi = NULL' + (body.cty ? ', cty = ?' : '') + ' WHERE ma = ?').bind(...(body.cty ? [h, salt, String(body.cty).slice(0, 120), ma] : [h, salt, ma])).run();
-      else { const ten = String(body.ten || '').trim().slice(0, 120); if (!ten) return jc({ ok: false, loi: 'Thiếu họ tên.' }, 400); await db.prepare("INSERT INTO nv (ma, ten, pin, salt, active, created, pb, nguon, cty) VALUES (?, ?, ?, ?, 1, ?, ?, 'phan-mem', ?) ON CONFLICT(ma) DO UPDATE SET pin = excluded.pin, salt = excluded.salt, fail = 0, lock_until = 0, active = 1, pin_doi = NULL").bind(ma, ten, h, salt, now, String(body.pb || '').slice(0, 120), String(body.cty || '').slice(0, 120)).run(); } // 17/11: chạy song song với "nhan-vien" (cấp hàng loạt) không còn mất PIN
+      if (old) await db.prepare('UPDATE nv SET pin = ?, salt = ?, fail = 0, lock_until = 0, active = 1, pin_doi = NULL, ' + PIN_AUTH_CLEANUP + (body.cty ? ', cty = ?' : '') + ' WHERE ma = ?').bind(...(body.cty ? [h, salt, String(body.cty).slice(0, 120), ma] : [h, salt, ma])).run();
+      else { const ten = String(body.ten || '').trim().slice(0, 120); if (!ten) return jc({ ok: false, loi: 'Thiếu họ tên.' }, 400); await db.prepare("INSERT INTO nv (ma, ten, pin, salt, active, created, pb, nguon, cty) VALUES (?, ?, ?, ?, 1, ?, ?, 'phan-mem', ?) ON CONFLICT(ma) DO UPDATE SET pin = excluded.pin, salt = excluded.salt, fail = 0, lock_until = 0, active = 1, pin_doi = NULL, " + PIN_AUTH_CLEANUP).bind(ma, ten, h, salt, now, String(body.pb || '').slice(0, 120), String(body.cty || '').slice(0, 120)).run(); } // 17/11: chạy song song với "nhan-vien" (cấp hàng loạt) không còn mất PIN
       await db.prepare("DELETE FROM phien WHERE vai = 'nv' AND ma = ?").bind(ma).run();
       return jc({ ok: true });
     }
@@ -1252,7 +1260,7 @@ async function api(req, env, url) {
       const q = body.qt ? JSON.stringify({ r: String(body.qt.r || '').slice(0, 30), t: String(body.qt.t || '').slice(0, 60), sys: body.qt.sys ? 1 : 0 }) : null;
       const st = [db.prepare('UPDATE nv SET qt = ? WHERE ma = ?').bind(q, ma)];
       if (body.mk) { const e = pwBad(body.mk); if (e) return bad(e); const salt = randHex(16); st.push(db.prepare('UPDATE nv SET mk = ?, mk_salt = ?, mk_doi = ?, fail = 0, lock_until = 0 WHERE ma = ?').bind(await hashPw(body.mk, salt), salt, U.ma === ma ? null : 1, ma)); }
-      if (!q) st.push(db.prepare('UPDATE nv SET mk = NULL, mk_salt = NULL, mk_doi = NULL WHERE ma = ?').bind(ma)); // bỏ quyền quản trị → về đăng nhập bằng mã PIN
+      if (!q) st.push(db.prepare('UPDATE nv SET mk = NULL, mk_salt = NULL, mk_doi = NULL, fail = 0, lock_until = 0 WHERE ma = ?').bind(ma)); // bỏ quyền quản trị → về đăng nhập bằng mã PIN
       if (body.off !== undefined) st.push(db.prepare('UPDATE nv SET active = ? WHERE ma = ?').bind(body.off ? 0 : 1, ma));
       if (body.mk || !q || body.off) st.push(db.prepare("DELETE FROM phien WHERE ma = ? AND vai IN ('nv','qt')").bind(ma));
       await db.batch(st);
@@ -1412,14 +1420,15 @@ async function api(req, env, url) {
   if (p === '/api/dang-nhap' && req.method === 'POST') {
     const ma = String(body.ma || '').trim().toUpperCase(), pin = String(body.pin || '');
     const nv = await db.prepare('SELECT * FROM nv WHERE ma = ?').bind(ma).first();
-    if (!nv || !nv.active || !(nv.pin || nv.mk)) return bad('Sai mã nhân viên hoặc mã PIN, mật khẩu.', 401);
+    const usePassword = nv && passwordLogin(nv);
+    if (!nv || !nv.active || !(usePassword ? nv.mk : nv.pin)) return bad('Sai mã nhân viên hoặc mã PIN, mật khẩu.', 401);
     if (nv.lock_until > now) return bad('Nhập sai nhiều lần. Thử lại sau ' + Math.ceil((nv.lock_until - now) / 60e3) + ' phút hoặc nhờ kế toán mở khóa.', 429);
     // 13/11: tài khoản có quyền quản trị đăng nhập bằng mật khẩu (không dùng mã PIN nữa)
-    if (nv.mk ? !await checkPw(pin, nv.mk_salt, nv.mk) : await hashPin(pin, nv.salt) !== nv.pin) {
+    if (usePassword ? !await checkPw(pin, nv.mk_salt, nv.mk) : await hashPin(pin, nv.salt) !== nv.pin) {
       if (demo) return bad('Sai mã PIN. Bản thử: mã PIN của mọi tài khoản mẫu là ' + DEMO_PIN + '.', 401);
       const f = nv.fail + 1;
       await db.prepare('UPDATE nv SET fail = ?, lock_until = ? WHERE ma = ?').bind(f >= 5 ? 0 : f, f >= 5 ? now + 15 * 60e3 : 0, ma).run();
-      return bad(nv.mk ? 'Sai mã nhân viên hoặc mật khẩu. Tài khoản có quyền quản trị đăng nhập bằng mật khẩu, không dùng mã PIN.' : 'Sai mã nhân viên hoặc mã PIN.', 401);
+      return bad(usePassword ? (qtOf(nv) ? 'Sai mã nhân viên hoặc mật khẩu. Tài khoản có quyền quản trị đăng nhập bằng mật khẩu, không dùng mã PIN.' : 'Sai mã nhân viên hoặc mật khẩu.') : 'Sai mã nhân viên hoặc mã PIN.', 401);
     }
     await db.prepare('UPDATE nv SET fail = 0, lock_until = 0, login_at = ? WHERE ma = ?').bind(now, ma).run();
     await noteDevice(db, req, ma, 'dn');
@@ -1618,7 +1627,7 @@ async function api(req, env, url) {
     }
     const cu = String(body.cu || ''), moi = String(body.moi || ''); if (!/^\d{4,8}$/.test(moi)) return bad('Mã PIN mới 4–8 chữ số.');
     const nv = await db.prepare('SELECT pin, salt FROM nv WHERE ma = ?').bind(s.nv.ma).first(); if (!nv || await hashPin(cu, nv.salt) !== nv.pin) return bad('Mã PIN hiện tại chưa đúng.');
-    const salt = randHex(16); await db.prepare('UPDATE nv SET pin = ?, salt = ?, pin_doi = ? WHERE ma = ?').bind(await hashPin(moi, salt), salt, now, s.nv.ma).run(); return json({ ok: true });
+    const salt = randHex(16); await db.prepare('UPDATE nv SET pin = ?, salt = ?, pin_doi = ?, ' + PIN_AUTH_CLEANUP + ' WHERE ma = ?').bind(await hashPin(moi, salt), salt, now, s.nv.ma).run(); return json({ ok: true });
   }
   /* ----- 0.4.2: nhân viên xem hợp đồng, file kho của chính mình ----- */
   if (p === '/api/hop-dong') {
@@ -1730,7 +1739,7 @@ async function api(req, env, url) {
         await db.prepare('INSERT INTO nv (ma, ten, pin, salt, active, created) VALUES (?, ?, ?, ?, 1, ?)').bind(ma, ten, await hashPin(String(body.pin), salt), salt, now).run();
       } else {
         if (ten) await db.prepare('UPDATE nv SET ten = ? WHERE ma = ?').bind(ten, ma).run();
-        if (body.pin) { const salt = randHex(16); await db.prepare('UPDATE nv SET pin = ?, salt = ?, fail = 0, lock_until = 0 WHERE ma = ?').bind(await hashPin(String(body.pin), salt), salt, ma).run(); }
+        if (body.pin) { const salt = randHex(16); await db.prepare('UPDATE nv SET pin = ?, salt = ?, fail = 0, lock_until = 0, pin_doi = NULL, ' + PIN_AUTH_CLEANUP + ' WHERE ma = ?').bind(await hashPin(String(body.pin), salt), salt, ma).run(); }
         if (body.active !== undefined) await db.prepare('UPDATE nv SET active = ? WHERE ma = ?').bind(body.active ? 1 : 0, ma).run();
         if (body.mo_khoa) await db.prepare('UPDATE nv SET fail = 0, lock_until = 0 WHERE ma = ?').bind(ma).run();
       }
