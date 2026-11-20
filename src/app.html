@@ -911,7 +911,7 @@ function api(path, body) {
 function hdr(sub, right) {
   return '<div class="top"><img src="/icon.svg" alt=""><div><div class="t1">Chấm công</div><div class="t2">' + esc(sub || '') + '</div></div><div class="sp"></div>' + (right || '') + '</div>';
 }
-function foot() { var br = window.QTT_BR || {}; return '<p class="faint small" style="text-align:center;margin-top:18px">' + (br.name ? esc(br.name) + ' · ' : '') + (window.QTT_BR ? 'bản ' : 'Quản trị tử tế · bản thử nghiệm ') + esc(VER) + (window.QTT_BR ? ' · Tác giả: <a href="https://quantritute.com" target="_blank" rel="noopener" style="color:inherit">Quản trị tử tế</a>' : '') + '</p>'; } // 16/11/2026: máy chủ của đơn vị có thương hiệu riêng + dòng tác giả
+function foot() { var br = window.QTT_BR || {}; return '<p class="faint small" style="text-align:center;margin-top:18px">' + (br.name ? esc(br.name) + ' · ' : '') + (window.QTT_BR ? 'bản ' : 'KSB-HRM') + esc(VER) + (window.QTT_BR ? ' · Tác giả: <a href="https://ksb.vn" target="_blank" rel="noopener" style="color:inherit">KSB System</a>' : '') + '</p>'; } // 16/11/2026: máy chủ của đơn vị có thương hiệu riêng + dòng tác giả
 /* ===== BẢN THỬ: thanh đầu trang + khung hướng dẫn từng bước ===== */
 var DEMO = false, HRM = '/phan-mem'; // 08/11: Phần mềm quản lý nhân sự toàn diện bản xem trước chạy cùng máy chủ thử
 function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
@@ -973,7 +973,7 @@ function loginView(st, note) {
     (note ? '<div class="msg inf">' + esc(note) + '</div>' : '') +
     (DEMO ? '<label class="lbl">Chọn nhân sự mẫu để thử</label><div class="pick" id="pick"><div class="faint small">Đang tải danh sách…</div></div>' : '') +
     '<label class="lbl" for="ma">Mã nhân viên</label><input id="ma" type="text" autocapitalize="characters" autocomplete="username" placeholder="Mã do công ty cấp">' +
-    '<label class="lbl" for="pin">Mã PIN hoặc mật khẩu</label><input id="pin" type="password" autocomplete="current-password" placeholder="Do kế toán cấp">' + // 13/11 (0.8.1): tài khoản có quyền quản trị đăng nhập bằng mật khẩu
+    '<label class="lbl" for="pin">Mã PIN hoặc mật khẩu</label><input id="pin" type="password" autocomplete="current-password" placeholder="Do HCNS cấp">' + // 13/11 (0.8.1): tài khoản có quyền quản trị đăng nhập bằng mật khẩu
     '<div style="margin-top:14px"><button class="btn pri full" id="go">Đăng nhập</button></div><div id="out"></div>' +
     '<p class="hint">Chỉ cần đăng nhập một lần trên điện thoại này.</p>' +
     (DEMO ? '<p class="hint demo-dl">Bản thử: dữ liệu anh/chị thao tác (lượt chấm, đơn từ…) lưu trên máy chủ chạy thử dùng chung, tự xóa sau 14 ngày. Không nhập dữ liệu thật.</p>' : '') + '</div>' + foot() + '</div>'; // 13/11 17:45 anh chốt (câu hỏi 3)
