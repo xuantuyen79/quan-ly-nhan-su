@@ -1860,7 +1860,7 @@ function brJs(c) { return JSON.stringify({ name: c.br_ten || '', logo: c.br_logo
 function htmlEsc(s) { return String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
 const MANIFEST = JSON.stringify({ name: 'Chấm công', short_name: 'Chấm công', start_url: '/', scope: '/', display: 'standalone', background_color: '#F4EFE5', theme_color: '#2F7D4F', icons: [{ src: '/icon.png', sizes: '512x512', type: 'image/png' }, { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }] });
 function b64ToBytes(b64) { const s = atob(b64), a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
-const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'permissions-policy': 'camera=(), microphone=(), geolocation=()' };
+const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'permissions-policy': 'camera=(self), microphone=(), geolocation=(self)' };
 
 export default {
   async scheduled(ev, env, ctx) { ctx.waitUntil(bcCron(env).catch(e => console.error('bcCron', e))); }, // 16/11: gửi báo cáo định kỳ (cron 15 phút/lần – wrangler.jsonc triggers)
