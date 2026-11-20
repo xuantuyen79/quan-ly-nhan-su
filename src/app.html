@@ -6,11 +6,12 @@
 <meta name="theme-color" content="#2F7D4F">
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Chấm công">
+<meta name="apple-mobile-web-app-title" content="QLNS-KSB">
+<meta name="application-name" content="KSB | CTCP Khoáng sản và Xây dựng Bình Dương">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon.png">
-<title>Chấm công</title>
+<title>KSB | CTCP Khoáng sản và Xây dựng Bình Dương</title>
 <style>/* Be Vietnam Pro – Fontsource, SIL OFL 1.1 */
 @font-face {
   font-family: 'Be Vietnam Pro';
@@ -433,6 +434,8 @@ td.ipbox,td.num{white-space:nowrap;word-break:normal}
 .qr-v{position:relative;border-radius:16px;overflow:hidden;background:#111;aspect-ratio:1/1}.qr-v video{width:100%;height:100%;object-fit:cover;display:block}.qr-f{position:absolute;inset:16%;border:3px solid rgba(255,255,255,.85);border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 /* vòng 5 (18:12): chấm công gọn, xuống dòng hợp lý */
 .nvx{text-wrap:pretty}.nvx h1,.nvx b,.nvx .nvx-sec,.nvx-task b,.nvx-sheet .hd b{text-wrap:balance}
+.nvx-wifi-state{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--mws);font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.nvx-wifi-state.invalid{background:var(--merr)}.nvx-wifi-state .wifi-title{display:flex;align-items:flex-start;gap:8px}.nvx-wifi-state .wifi-symbol{display:flex;flex:0 0 20px;color:var(--mwt)}.nvx-wifi-state.invalid .wifi-symbol{color:var(--merrt)}.nvx-wifi-state p{margin:4px 0 0}.nvx-wifi-state .wifi-title p{margin:2px 0 0}.nvx-wifi-state .wifi-ip{font-variant-numeric:tabular-nums}
 .nvx-pfoot{display:flex;align-items:center;gap:8px;margin-top:12px;min-width:0}.nvx-pfoot .pill{font-size:11.5px;padding:3px 9px;flex:none}.nvx-pfoot .ip{flex:1;min-width:0;font:11.5px ui-monospace,Menlo,Consolas,monospace;color:var(--mmut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nvx-q{width:30px!important;height:30px!important;margin:0!important;flex:none;border:0!important;background:#F6C744!important;color:#4A3500!important;font-size:15px!important;box-shadow:0 2px 6px -2px rgba(160,120,0,.5)}
 .nvx .kv2 dt{white-space:nowrap}.nvx .nw{white-space:nowrap}.nvx .kv2 .sub{display:block;margin:0;font-weight:500;font-size:12.5px;line-height:1.35;color:var(--mmut)}
@@ -1180,6 +1183,7 @@ var NI = {
   wallet: '<path d="M3 7a2 2 0 0 1 2-2h12v4"/><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="16.5" cy="13.5" r="1.5"/>', ot: '<path d="M12 6v6l4 2"/><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>', leaf: '<path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l7-7"/>'
 };
 // 13/11/2026 (0.8.1): biểu tượng Quản trị, màn hình máy tính, điện thoại
+NI.warn = '<path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5M12 17h.01"/>';
 NI.qt = '<path d="M12 2.8 4.5 5.6v5.6c0 4.6 3.1 8.3 7.5 10 4.4-1.7 7.5-5.4 7.5-10V5.6L12 2.8Z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/>';
 NI.pc = '<rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8 20.5h8M12 16.5v4"/>';
 NI.mb = '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/>';
@@ -1332,6 +1336,10 @@ function mkDoiView(st) {
   };
   $('#mk-out').onclick = function (e) { e.preventDefault(); api('/api/dang-xuat', { vai: 'nv' }).then(function () { boot(); }); };
 }
+function nvWifiStatusHtml(st) {
+  var w = st.wifi_status || { valid: st.wifi, ip: st.ip }, ok = !!w.valid;
+  return '<div class="nvx-wifi-state' + (ok ? '' : ' invalid') + '" role="status"><div class="wifi-title"><span class="wifi-symbol" aria-hidden="true">' + ni(ok ? 'check' : 'warn', 20) + '</span><div>' + (ok ? '<b>' + esc(w.name || 'WiFi Văn phòng KSB') + '</b><p>Kết nối hợp lệ – Bạn có thể chấm công</p>' : '<b>Bạn chưa kết nối mạng WiFi KSB</b>') + '</div></div><p class="wifi-ip">Địa chỉ IP: ' + esc(w.ip || 'Chưa xác định') + '</p>' + (ok ? '' : '<p>Vui lòng kết nối WiFi Công ty hoặc sử dụng phương thức chấm công GPS.</p>') + '</div>';
+}
 // Shared daily state for the main buttons and GPS; all valid methods participate.
 function nvPunchNext(st) {
   var start = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, last = null;
@@ -1372,8 +1380,8 @@ function nvView(st) {
       '<div class="nvx-today">' + (todayList.length ? todayList.map(function (r) { return '<span class="' + r.loai + '"><b>' + fTime(r.t) + '</b>' + (r.loai === 'vao' ? 'Vào' : 'Ra') + ' · ' + CACH[r.cach] + (r.gps_location_label ? ' · ' + esc(r.gps_location_label) : '') + '</span>'; }).join('') : '<span class="none">Chưa có lượt chấm hôm nay</span>') + '</div>' +
       '<div class="nvx-pbtn"><button class="nvx-big ' + next + '" id="b-main" data-l="' + next + '">' + ni('clock', 20) + '<span>' + (next === 'vao' ? 'Vào ca' : 'Ra ca') + '</span></button><button class="nvx-alt" id="b-alt" data-l="' + other + '">' + ni('clock', 20) + '<span>' + (other === 'vao' ? 'Vào ca' : 'Ra ca') + '</span></button></div><div id="res"></div>' +
       (st.me.ncc ? '<p class="hint">Bạn thuộc diện <b>không cần chấm công</b> – chấm hay không đều được tính đủ công.</p>' : '') +
-      (!st.wifi ? '<div class="nvx-row" style="margin-top:8px">' + (!hasPass() && st.che_do !== 'chi_wifi' ? '<button class="btn sm pri" data-qr>' + ni('qr', 16) + 'Quét mã QR</button>' : '<span></span>') + '<button class="btn sm" id="recheck">Kiểm tra lại mạng</button></div>' : '') +
-      '<div class="nvx-pfoot">' + (st.wifi ? '<span class="pill ok"><span class="dot"></span>Wi‑Fi văn phòng</span>' : '<span class="pill no"><span class="dot"></span>Ngoài mạng văn phòng</span>') + (st.ip ? '<span class="ip" title="IP lượt này (' + esc(st.ip_loai) + ')">IP ' + esc(st.ip) + '</span>' : '<span class="ip"></span>') + (DEMO ? '<button type="button" class="nvx-q" id="help" aria-label="Hướng dẫn thử chấm công" title="Hướng dẫn thử chấm công">?</button>' : '') + '</div></section>';
+      '<div class="nvx-row" style="margin-top:8px">' + (!st.wifi && !hasPass() && st.che_do !== 'chi_wifi' ? '<button class="btn sm pri" data-qr>' + ni('qr', 16) + 'Quét mã QR</button>' : '<span></span>') + '<button class="btn sm" id="recheck">Kiểm tra lại mạng</button></div>' +
+      '<div id="wifi-status">' + nvWifiStatusHtml(st) + '</div><div class="nvx-pfoot">' + (DEMO ? '<button type="button" class="nvx-q" id="help" aria-label="Hướng dẫn thử chấm công" title="Hướng dẫn thử chấm công">?</button>' : '') + '</div></section>';
     h += '<div id="gps-employee"></div></div>'; var lk = '';
     if (st.hn && !st.hn.xong) lk += hnHomeBtn(st);
     if (st.dt && (st.dt.kh || []).length) lk += dtHomeBtn(st); // 12/11 16:30: khóa học nội bộ
@@ -2075,9 +2083,15 @@ function nvBind(st, X) {
   if ($('#mtog')) $('#mtog').onclick = function () { ls('nv-hide-money', ls('nv-hide-money') !== '0' ? '0' : '1'); var y = scrY(); nvView(st); scrTop(y); };
   function punch(e) {
     var l = e.currentTarget.getAttribute('data-l'); $('#b-main').disabled = $('#b-alt').disabled = true; $('#res').innerHTML = '<div class="msg inf">Đang ghi nhận…</div>';
-    api('/api/cham', { loai: l, pass: hasPass() ? qrPass : undefined }).then(function (j) {
+    api('/api/trang-thai').then(function (current) {
+      if (!current.ok || !current.me) { if (current._status === 401 || !current.me && current.ok) return { _status: 401 }; return { ok: false, loi: current.loi || 'Chưa kiểm tra được kết nối. Vui lòng thử lại.' }; }
+      var status = $('#wifi-status'); if (status) status.innerHTML = nvWifiStatusHtml(current);
+      if (!current.wifi && !hasPass()) return { ok: false, loi: 'Bạn chưa kết nối mạng WiFi KSB. Vui lòng kết nối WiFi Công ty hoặc sử dụng phương thức chấm công GPS.' };
+      return api('/api/cham', { loai: l, pass: hasPass() ? qrPass : undefined });
+    }).then(function (j) {
       if (j._status === 401) return boot();
       if (j.ok) { qrPass = null; if (navigator.vibrate) navigator.vibrate(60); return boot('<div class="msg ok">' + (j.trung ? 'Đã có lượt ' : 'Đã chấm ') + (j.loai === 'vao' ? 'vào ca' : 'ra ca') + ' lúc <b>' + fTime(j.t) + '</b> (' + CACH[j.cach] + ')' + (j.trung ? ' – không ghi trùng.' : '.') + '</div>'); }
+      if (j.wifi_status && $('#wifi-status')) $('#wifi-status').innerHTML = nvWifiStatusHtml({ wifi_status: j.wifi_status });
       $('#b-main').disabled = $('#b-alt').disabled = false; $('#res').innerHTML = '<div class="msg err">' + esc(j.loi) + (j.ip ? '<div class="ipbox" style="margin-top:6px">IP: ' + esc(j.ip) + '</div>' : '') + '</div>';
     });
   }
@@ -2227,7 +2241,7 @@ function boot(msg) {
   api('/api/trang-thai').then(function (st) {
     if (!st.ok) { app.innerHTML = '<div class="wrap">' + hdr('') + '<div class="card"><div class="msg err">' + esc(st.loi) + '</div><button class="btn" style="margin-top:12px" onclick="boot()">Thử lại</button></div></div>'; return; }
     if (!st.setup) { app.innerHTML = '<div class="wrap">' + hdr('') + '<div class="card"><h2 style="font-size:19px">Chưa cài đặt</h2><p class="muted">Người quản lý mở <b>/quan-ly</b> để cài đặt lần đầu.</p><a class="btn pri" href="/quan-ly">Mở trang quản lý</a></div></div>'; return; }
-    document.title = 'Chấm công' + (st.ten_cty ? ' · ' + st.ten_cty : '');
+    document.title = 'KSB | CTCP Khoáng sản và Xây dựng Bình Dương';
     if (!st.me) return loginView(st, hasPass() ? 'Đăng nhập để chấm công bằng mã QR vừa quét (trong vòng 2 phút).' : '');
     if (st.me.doi_mk) return mkDoiView(st); // 13/11: mật khẩu tạm do quản trị viên cấp → đổi trước khi dùng
     nvView(st);

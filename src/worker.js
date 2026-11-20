@@ -1381,6 +1381,7 @@ async function api(req, env, url) {
     const o = { ok: true, ver: VER, demo, setup: isSetup, ten_cty: cfg.ten_cty, che_do: cfg.che_do, ip: cfg.hien_ip === '1' ? ip : null, ip_loai: ipKind(ip), wifi: matchOffice(ip, offices), co_ip_vp: offices.some(r => r.hieu_luc), now };
     if (s) {
       o.me = { ma: s.nv.ma, ten: s.nv.ten };
+      o.wifi_status = { valid: o.wifi, name: o.wifi ? 'WiFi Văn phòng KSB' : '', ip }; // Server-confirmed IP; authenticated employee display only, not an SSID.
       { const q = demo ? demoQtOf(s.nv.ma) : (s.nv.co_mk ? qtOf(s.nv) : null); if (q) o.me.qt = { r: q.r, t: q.t }; if (s.nv.co_mk) o.me.mk = 1; if (s.nv.mk_doi) o.me.doi_mk = 1; } // 13/11: một tài khoản – quyền quản trị, mật khẩu
       const d0 = vnDayStart(now), m = vnParts(now);
       const mStart = Date.UTC(m.y, Number(m.m) - 1, 1) - VN;
@@ -1504,7 +1505,8 @@ async function api(req, env, url) {
         else if (!offices.some(r => r.hieu_luc)) lyDo = 'Chưa có IP văn phòng. Hãy mở trang Mã QR chấm công (hoặc nhờ kế toán thêm IP văn phòng) rồi thử lại.';
         else lyDo = 'Không nhận ra mạng Wi-Fi văn phòng (' + ipKind(ip) + '). Hãy bắt Wi-Fi văn phòng' + (cfg.che_do === 'chi_wifi' ? '' : ' hoặc quét Mã QR chấm công đặt ở văn phòng') + '.';
         await logReject(db, s.nv.ma, ip, (hasQR ? (qrOk ? 'QR hợp lệ' : 'QR quá 2 phút') : 'Không có QR') + ' · ' + (wifi ? 'IP khớp' : 'IP không khớp') + ' · chế độ ' + cfg.che_do, req);
-        return json({ ok: false, loi: lyDo, ip: cfg.hien_ip === '1' ? ip : null }, 403);
+        if (!wifi && !hasQR) lyDo = 'Bạn chưa kết nối mạng WiFi KSB. Vui lòng kết nối WiFi Công ty hoặc sử dụng phương thức chấm công GPS.';
+      return json({ ok: false, loi: lyDo, ip: cfg.hien_ip === '1' ? ip : null, wifi_status: { valid: wifi, name: wifi ? 'WiFi Văn phòng KSB' : '', ip } }, 403);
       }
       cach = wifi ? 'wifi' : 'qr';
     }
@@ -1875,7 +1877,7 @@ self.addEventListener('notificationclick', e => {
 async function brCfg(env) { try { await ensureSchema(env.DB); return await getCfg(env.DB); } catch (e) { return {}; } } // 16/11/2026: thương hiệu riêng (br_ten, br_logo) lưu từ Cài đặt → Thương hiệu
 function brJs(c) { return JSON.stringify({ name: c.br_ten || '', logo: c.br_logo ? '/logo.' + ((/^data:image\/(png|webp|jpeg|svg\+xml)/.exec(c.br_logo) || [])[1] || 'png').replace('jpeg', 'jpg').replace('svg+xml', 'svg') : '', cty: c.ten_cty || '' }).replace(/</g, '\\u003c'); }
 function htmlEsc(s) { return String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
-const MANIFEST = JSON.stringify({ name: 'Chấm công', short_name: 'Chấm công', start_url: '/', scope: '/', display: 'standalone', background_color: '#F4EFE5', theme_color: '#2F7D4F', icons: [{ src: '/icon.png', sizes: '512x512', type: 'image/png' }, { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }] });
+const MANIFEST = JSON.stringify({ name: 'KSB | CTCP Khoáng sản và Xây dựng Bình Dương', short_name: 'QLNS-KSB', start_url: '/', scope: '/', display: 'standalone', background_color: '#F4EFE5', theme_color: '#2F7D4F', icons: [{ src: '/icon.png', sizes: '512x512', type: 'image/png' }, { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }] });
 function b64ToBytes(b64) { const s = atob(b64), a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
 const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'permissions-policy': 'camera=(self), microphone=(), geolocation=(self)' };
 
@@ -1890,7 +1892,7 @@ export default {
     try {
       if (url.pathname.startsWith('/api/')) return withMay(await api(req, env, url));
       if (url.pathname === '/sw.js') return new Response(SW_JS, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache', 'service-worker-allowed': '/' } }); // 16/11: thông báo đẩy
-      if (url.pathname === '/manifest.webmanifest') { const m = JSON.parse(MANIFEST), c = isDemo(env, url) ? {} : await brCfg(env); const nm = (c.br_ten || c.ten_cty || '').slice(0, 40); if (nm) { m.name = nm; m.short_name = nm.slice(0, 24); } const lg = /^data:image\/(png|webp|jpeg);base64,/.exec(c.br_logo || ''); if (lg) m.icons.unshift({ src: '/logo.' + (lg[1] === 'jpeg' ? 'jpg' : lg[1]), sizes: 'any', type: 'image/' + lg[1] }); return new Response(JSON.stringify(m), { headers: { 'content-type': 'application/manifest+json', 'cache-control': 'max-age=600' } }); }
+      if (url.pathname === '/manifest.webmanifest') { const m = JSON.parse(MANIFEST), c = isDemo(env, url) ? {} : await brCfg(env); const lg = /^data:image\/(png|webp|jpeg);base64,/.exec(c.br_logo || ''); if (lg) m.icons.unshift({ src: '/logo.' + (lg[1] === 'jpeg' ? 'jpg' : lg[1]), sizes: 'any', type: 'image/' + lg[1] }); return new Response(JSON.stringify(m), { headers: { 'content-type': 'application/manifest+json', 'cache-control': 'max-age=600' } }); }
       if (/^\/logo\.(png|webp|jpg|svg)$/.test(url.pathname)) { const c = await brCfg(env), lg = /^data:(image\/[a-z+]+);base64,(.*)$/.exec(c.br_logo || ''); if (!lg) return new Response('', { status: 404 }); return new Response(b64ToBytes(lg[2]), { headers: { 'content-type': lg[1], 'cache-control': 'max-age=600' } }); }
       if (url.pathname === '/icon.png') return new Response(b64ToBytes(ICON_PNG_B64), { headers: { 'content-type': 'image/png', 'cache-control': 'max-age=86400' } });
       if (url.pathname === '/font/tay-latin.woff2' || url.pathname === '/font/tay-vi.woff2') return new Response(b64ToBytes(url.pathname === '/font/tay-vi.woff2' ? TAY_VI : TAY_LATIN), { headers: { 'content-type': 'font/woff2', 'cache-control': 'public, max-age=2592000, immutable' } });
@@ -1910,7 +1912,7 @@ export default {
       if (!route) return new Response('Không có trang này', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
       let html = APP_HTML.replace('{{ROUTE}}', route).replace(/{{VER}}/g, VER);
       if (!isDemo(env, url)) html = html.replace('</head>', '<script>window.KSB_EMPLOYEE_CODES=true;</script></head>');
-      if (!isDemo(env, url)) { const c = await brCfg(env), nm = (c.br_ten || c.ten_cty || '').slice(0, 40), lg = /^data:image\/(png|webp|jpeg|svg\+xml);base64,/.exec(c.br_logo || ''); if (nm) html = html.replace('<title>Chấm công</title>', '<title>' + htmlEsc(nm) + '</title>').replace('content="Chấm công">', 'content="' + htmlEsc(nm.slice(0, 24)) + '">'); if (lg) { const ext = lg[1] === 'jpeg' ? 'jpg' : lg[1] === 'svg+xml' ? 'svg' : lg[1]; html = html.replace('<link rel="icon" href="/icon.svg" type="image/svg+xml">', '<link rel="icon" href="/logo.' + ext + '">'); } html = html.replace('</head>', '<script>window.QTT_BR=' + brJs(c) + ';</script>\n</head>'); } // 16/11/2026: thương hiệu riêng
+      if (!isDemo(env, url)) { const c = await brCfg(env), lg = /^data:image\/(png|webp|jpeg|svg\+xml);base64,/.exec(c.br_logo || ''); if (lg) { const ext = lg[1] === 'jpeg' ? 'jpg' : lg[1] === 'svg+xml' ? 'svg' : lg[1]; html = html.replace('<link rel="icon" href="/icon.svg" type="image/svg+xml">', '<link rel="icon" href="/logo.' + ext + '">'); } html = html.replace('</head>', '<script>window.QTT_BR=' + brJs(c) + ';</script>\n</head>'); } // 16/11/2026: thương hiệu riêng
       // 08/11: thẻ chia sẻ (tiêu đề + ảnh) khi dán link bản chạy thử lên Facebook/Zalo – chỉ ở bản thử, máy chủ của công ty không có
       if (isDemo(env, url) && (route === 'ql' || route === 'nv')) {
         const og = route === 'ql'
