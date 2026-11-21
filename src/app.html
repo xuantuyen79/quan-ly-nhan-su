@@ -1343,16 +1343,16 @@ function nvWifiStatusHtml(st) {
 // Shared daily state for the main buttons and GPS; all valid methods participate.
 function nvPunchNext(st) { return nvPunchState(st).next; }
 function nvPunchState(st) {
-  var start = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, last = null;
-  (st.thang || []).forEach(function (r) { if (!r.huy && r.t >= start && r.t <= st.now && (!last || r.t >= last.t)) last = r; });
-  return { last: last, next: last && last.loai === 'vao' ? 'ra' : 'vao' };
+  var start = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, last = null, outs = 0;
+  (st.thang || []).forEach(function (r) { if (!r.huy && r.t >= start && r.t <= st.now) { if (!last || r.t >= last.t) last = r; if (r.loai === 'ra' && ['wifi','qr','gps'].indexOf(r.cach) >= 0) outs++; } });
+  return { last: last, next: last && last.loai === 'vao' ? 'ra' : 'vao', outs: outs, complete: outs >= 2, supplement: outs === 1 && last && last.loai === 'ra' ? last.t : null };
 }
 function nvView(st) {
   LAST_ST = st; var DK = dkOn();
   DEMO = !!st.demo;
   var today0 = Math.floor((st.now + VN) / 864e5) * 864e5 - VN, q = vp(st.now), tIso = q.y + '-' + q.m + '-' + q.d;
   var mine = st.thang || [], todayList = mine.filter(function (r) { return r.t >= today0; });
-  var next = nvPunchNext(st), other = next === 'vao' ? 'ra' : 'vao';
+  var punchState = nvPunchState(st), next = nvPunchNext(st), other = next === 'vao' ? 'ra' : 'vao';
   var C = st.cong || [], need = C.filter(function (c) { return !c.du_lieu.tam && c.xn === 0; })[0];
   var HSo = st.ho_so || {}, HS = st.hs || null, ten = (HS && HS.ten) || st.me.ten, cty = st.cty || (HS && HS.cty) || HSo.cty || st.ten_cty || '', phNew = (st.phieu || []).filter(function (p) { return !p.xem_at; });
   var L = st.lich, DU = st.duyet || [], K = khMap(HS), MS = monthStats(st, HS, HSo), LE = leMap(HS), av = myAv(st);
@@ -1379,7 +1379,7 @@ function nvView(st) {
     h += '<section class="nvx-card nvx-punch"><div class="nvx-row"><span class="nvx-lbl">Chấm công hôm nay</span></div>' +
       (hasPass() ? '<span class="pill inf" id="qrpill" style="margin-top:8px">Đã quét mã QR</span>' : '') +
       '<div class="nvx-today">' + (todayList.length ? todayList.map(function (r) { return '<span class="' + r.loai + '"><b>' + fTime(r.t) + '</b>' + (r.loai === 'vao' ? 'Vào' : 'Ra') + ' · ' + CACH[r.cach] + (r.gps_location_label ? ' · ' + esc(r.gps_location_label) : '') + '</span>'; }).join('') : '<span class="none">Chưa có lượt chấm hôm nay</span>') + '</div>' +
-      '<div class="nvx-pbtn"><button class="nvx-big ' + next + '" id="b-main" data-l="' + next + '">' + ni('clock', 20) + '<span>' + (next === 'vao' ? 'Vào ca' : 'Ra ca') + '</span></button><button class="nvx-alt" id="b-alt" data-l="' + other + '">' + ni('clock', 20) + '<span>' + (other === 'vao' ? 'Vào ca' : 'Ra ca') + '</span></button></div><div id="res"></div>' +
+      '<div class="nvx-pbtn"><button class="nvx-big ' + next + '" id="b-main" data-l="' + next + '">' + ni('clock', 20) + '<span>' + (next === 'vao' ? 'Vào ca' : punchState.supplement ? 'Chấm bổ sung giờ ra' : 'Ra ca') + '</span></button><button class="nvx-alt" id="b-alt" data-l="' + other + '">' + ni('clock', 20) + '<span>' + (other === 'vao' ? 'Vào ca' : punchState.supplement ? 'Chấm bổ sung giờ ra' : 'Ra ca') + '</span></button></div>' + (punchState.complete ? '<p class="msg ok">Đã hoàn tất chấm công trong ngày (2 lượt Ra ca).</p>' : '') + '<div id="res"></div>' +
       (st.me.ncc ? '<p class="hint">Bạn thuộc diện <b>không cần chấm công</b> – chấm hay không đều được tính đủ công.</p>' : '') +
       '<div class="nvx-row" style="margin-top:8px">' + (!st.wifi && !hasPass() && st.che_do !== 'chi_wifi' ? '<button class="btn sm pri" data-qr>' + ni('qr', 16) + 'Quét mã QR</button>' : '<span></span>') + '<button class="btn sm" id="recheck">Kiểm tra lại mạng</button></div>' +
       '<div id="wifi-status">' + nvWifiStatusHtml(st) + '</div><div class="nvx-pfoot">' + (DEMO ? '<button type="button" class="nvx-q" id="help" aria-label="Hướng dẫn thử chấm công" title="Hướng dẫn thử chấm công">?</button>' : '') + '</div></section>';
@@ -2088,15 +2088,15 @@ function nvBind(st, X) {
       if (!current.ok || !current.me) { if (current._status === 401 || !current.me && current.ok) return { _status: 401 }; return { ok: false, loi: current.loi || 'Chưa kiểm tra được kết nối. Vui lòng thử lại.' }; }
       var status = $('#wifi-status'); if (status) status.innerHTML = nvWifiStatusHtml(current);
       if (!current.wifi && !hasPass()) return { ok: false, loi: 'Bạn chưa kết nối mạng WiFi KSB. Vui lòng kết nối WiFi Công ty hoặc sử dụng phương thức chấm công GPS.' };
-      return api('/api/cham', { loai: l, pass: hasPass() ? qrPass : undefined });
+      return api('/api/cham', { loai: l, ra_sau: l === 'ra' ? nvPunchState(st).supplement || undefined : undefined, pass: hasPass() ? qrPass : undefined });
     }).then(function (j) {
       if (j._status === 401) return boot();
       if (j.ok) { qrPass = null; if (navigator.vibrate) navigator.vibrate(60); return boot('<div class="msg ok">' + (j.trung ? 'Đã có lượt ' : 'Đã chấm ') + (j.loai === 'vao' ? 'vào ca' : 'ra ca') + ' lúc <b>' + fTime(j.t) + '</b> (' + CACH[j.cach] + ')' + (j.trung ? ' – không ghi trùng.' : '.') + '</div>'); }
       if (j.wifi_status && $('#wifi-status')) $('#wifi-status').innerHTML = nvWifiStatusHtml({ wifi_status: j.wifi_status });
-      $('#b-main').disabled = $('#b-alt').disabled = false; $('#res').innerHTML = '<div class="msg err">' + esc(j.loi) + (j.ip ? '<div class="ipbox" style="margin-top:6px">IP: ' + esc(j.ip) + '</div>' : '') + '</div>';
+      [$('#b-main'), $('#b-alt')].forEach(function (b) { b.disabled = nvPunchState(st).complete; }); $('#res').innerHTML = '<div class="msg err">' + esc(j.loi) + (j.ip ? '<div class="ipbox" style="margin-top:6px">IP: ' + esc(j.ip) + '</div>' : '') + '</div>';
     });
   }
-  if ($('#b-main')) { $('#b-main').onclick = punch; $('#b-alt').onclick = punch; gpsEmployeeMount(st, X.next); }
+  if ($('#b-main')) { [$('#b-main'), $('#b-alt')].forEach(function (b) { if (nvPunchState(st).complete) b.disabled = true; }); $('#b-main').onclick = punch; $('#b-alt').onclick = punch; gpsEmployeeMount(st, X.next); }
   if ($('#recheck')) $('#recheck').onclick = function () { boot(); };
   // lịch tháng
   app.querySelectorAll('[data-lm]').forEach(function (b) { b.onclick = function () { NVT.lm += +b.getAttribute('data-lm'); var y = scrY(); nvView(st); scrTop(y); }; });
@@ -2362,13 +2362,14 @@ function gpsEmployeeMount(st, next) {
     $('#gps-open').onclick = function () {
       var pane = $('#gps-pane'); pane._gpsTurn = (pane._gpsTurn || 0) + 1; var turn = pane._gpsTurn;
       pane.innerHTML = '<div class="gps-panel"><h3>CHẤM CÔNG BẰNG GPS</h3><p class="small muted">Vị trí chỉ được sử dụng khi bạn chủ động chấm công bằng GPS. Hệ thống tự xác nhận địa điểm đang hoạt động gần nhất trong bán kính cho phép.</p><button type="button" class="btn full" id="gps-locate">Xác định lại vị trí</button><p id="gps-state" role="status"></p><p id="gps-sequence" class="small muted" role="status"></p><div class="gps-actions"><button type="button" class="btn pri" id="gps-in" disabled>' + ni('clock', 20) + '<span>Vào ca</span></button><button type="button" class="btn" id="gps-out" disabled>' + ni('clock', 20) + '<span>Ra ca</span></button></div><button type="button" class="btn sm" id="gps-close">Đóng GPS</button></div>';
-      var valid = false, busy = false;
+      var valid = false, busy = false, sharedState = nvPunchState(st);
       function live() { return pane._gpsTurn === turn && document.body.contains(pane) && $('#gps-state'); }
-      function draw() { if (live()) { $('#gps-in').disabled = $('#gps-out').disabled = !valid || busy; } }
+      function draw() { if (live()) { $('#gps-in').disabled = !valid || busy || sharedState.complete; $('#gps-out').disabled = !valid || busy || sharedState.complete; } }
       function sequence(current) {
         if (!live()) return;
-        var shared = nvPunchState(current); next = shared.next;
-        $('#gps-sequence').textContent = (shared.last ? 'Lượt gần nhất: ' + (shared.last.loai === 'vao' ? 'Vào ca' : 'Ra ca') + ' lúc ' + fTime(shared.last.t) + ' (' + (CACH[shared.last.cach] || shared.last.cach) + '). ' : 'Chưa có lượt chấm hợp lệ hôm nay. ') + 'Lượt kế tiếp: ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.');
+        var shared = sharedState = nvPunchState(current); next = shared.next;
+        $('#gps-out').innerHTML = ni('clock', 20) + '<span>' + (shared.supplement ? 'Chấm bổ sung giờ ra' : 'Ra ca') + '</span>';
+        $('#gps-sequence').textContent = (shared.last ? 'Lượt gần nhất: ' + (shared.last.loai === 'vao' ? 'Vào ca' : 'Ra ca') + ' lúc ' + fTime(shared.last.t) + ' (' + (CACH[shared.last.cach] || shared.last.cach) + '). ' : 'Chưa có lượt chấm hợp lệ hôm nay. ') + (shared.complete ? 'Đã hoàn tất chấm công trong ngày (2 lượt Ra ca).' : shared.supplement ? 'Có thể chấm bổ sung giờ ra một lần.' : 'Lượt kế tiếp: ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.'));
       }
       function state(text, bad) { if (live()) { $('#gps-state').textContent = text; $('#gps-state').className = bad ? 'msg err' : 'msg inf'; } }
       $('#gps-close').onclick = function () { valid = false; pane._gpsTurn++; pane.innerHTML = ''; };
@@ -2397,7 +2398,7 @@ function gpsEmployeeMount(st, next) {
         gpsPosition().then(function (pos) {
           if (!live()) throw Error('Đã đóng GPS.');
           state('Đang gửi lượt ' + (loai === 'vao' ? 'Vào ca' : 'Ra ca') + ' đến máy chủ…');
-          return gpsAwait(api('/api/cham', Object.assign({ cach: 'gps', loai: loai }, pos)), 15000, 'Chưa xác nhận được kết quả ghi công sau 15 giây. Hãy kiểm tra lịch sử trước khi chấm lại.');
+          return gpsAwait(api('/api/cham', Object.assign({ cach: 'gps', loai: loai, ra_sau: loai === 'ra' ? sharedState.supplement || undefined : undefined }, pos)), 15000, 'Chưa xác nhận được kết quả ghi công sau 15 giây. Hãy kiểm tra lịch sử trước khi chấm lại.');
         }).then(function (r) {
           if (!r.ok && r._status !== 409) throw Error(r.loi || 'Chưa nhận được kết quả ghi công. Vui lòng kiểm tra lịch sử.');
           var note = r.ok ? (r.trung ? 'Đã có lượt ' : 'Đã chấm ') + (r.loai === 'vao' ? 'vào' : 'ra') + ' lúc ' + fTime(r.t) + ' (' + (CACH[r.cach] || r.cach) + ')' + (r.trung ? ' – không ghi trùng.' : '.') : r.loi;

@@ -32,6 +32,6 @@ test('GPS renders two actions, shows shared state, submits requested kind and re
   c.gpsEmployeeMount({now,thang:[]});await new Promise(r=>setImmediate(r));get('#gps-open').onclick();await new Promise(r=>setImmediate(r));
   assert.match(get('#gps-pane').innerHTML,/id="gps-in"/);assert.match(get('#gps-pane').innerHTML,/id="gps-out"/);assert.match(get('#gps-pane').innerHTML,/<span>Vào ca<\/span>/);assert.match(get('#gps-pane').innerHTML,/<span>Ra ca<\/span>/);assert.equal(get('#gps-in').disabled,false);assert.equal(get('#gps-out').disabled,false);assert.match(get('#gps-sequence').textContent,/Lượt kế tiếp: Ra ca/);
   get('#gps-out').onclick();get('#gps-out').onclick();await new Promise(r=>setImmediate(r));assert.equal(posted.length,1);assert.equal(posted[0].loai,'ra');assert.equal(boots.length,1);assert.match(boots[0],conflict?/Trạng thái chấm công đã thay đổi/:/Đã chấm ra/);
-  get('#gps-open').onclick();await new Promise(r=>setImmediate(r));assert.equal(get('#gps-in').disabled,false);assert.equal(get('#gps-out').disabled,false);assert.match(get('#gps-sequence').textContent,/Lượt kế tiếp: Vào ca/);
+  get('#gps-open').onclick();await new Promise(r=>setImmediate(r));assert.equal(get('#gps-in').disabled,false);assert.equal(get('#gps-out').disabled,false);assert.match(get('#gps-sequence').textContent,/Có thể chấm bổ sung giờ ra/);
  }
 });

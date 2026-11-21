@@ -1515,22 +1515,44 @@ async function api(req, env, url) {
     const columns = hasGpsSchema ? ',gps_location_id,gps_location_label,gps_distance,gps_accuracy' : '';
     const values = [s.nv.ma, now, loai, cach, ip, wifi ? 1 : 0, shortUA(req.headers.get('user-agent')), req.may || null];
     if (hasGpsSchema) values.push(gps?.location_id || null, gps?.label || null, gps?.distance ?? null, gps?.accuracy ?? null);
-    // GPS follows the existing daily next-punch rule across every method and location.
-    // Wi-Fi/QR keep their existing duplicate-only behavior, including overnight punches.
+    // Count employee-app OUT events only; manager corrections keep their existing workflow.
+    const start = vnDayStart(now), supplement = loai === 'ra' && Number.isFinite(body.ra_sau);
+    const lastSql = 'SELECT t FROM cham WHERE ma=? AND huy=0 AND t>=? AND t<=? ORDER BY t DESC,id DESC LIMIT 1';
+    const outCountSql = "SELECT COUNT(*) AS n FROM cham WHERE ma=? AND huy=0 AND loai='ra' AND cach IN ('wifi','qr','gps') AND t>=? AND t<=?";
     const dayFilter = gps ? ' AND t>=?' : '';
     const duplicateArgs = [loai, now-DUP_MS, s.nv.ma, now];
-    if (gps) duplicateArgs.push(vnDayStart(now));
+    if (gps) duplicateArgs.push(start);
     let condition = 'COALESCE((SELECT CASE WHEN loai=? AND t>? THEN 1 ELSE 0 END FROM cham WHERE ma=? AND huy=0 AND t<=?' + dayFilter + ' ORDER BY t DESC,id DESC LIMIT 1),0)=0';
     const args = [...values, ...duplicateArgs];
-    if (gps) {
-      // Evaluate sequence in the same INSERT as duplicate prevention, not a read-then-write check.
-      condition += " AND ?=COALESCE((SELECT CASE WHEN loai='vao' THEN 'ra' ELSE 'vao' END FROM cham WHERE ma=? AND huy=0 AND t>=? AND t<=? ORDER BY t DESC,id DESC LIMIT 1),'vao')";
-      args.push(loai, s.nv.ma, vnDayStart(now), now);
+    if (supplement) {
+      // A snapshot of the first OUT makes deliberate supplementation distinct from a retry.
+      condition = '(' + condition + ' OR ?=(' + lastSql + '))';
+      args.push(body.ra_sau, s.nv.ma, start, now);
+      condition += " AND ?< ? AND ?=(SELECT t FROM cham WHERE ma=? AND huy=0 AND loai='ra' AND t>=? AND t<=? ORDER BY t DESC,id DESC LIMIT 1) AND ?=(" + lastSql + ") AND (" + outCountSql + ")=1";
+      args.push(body.ra_sau, now, body.ra_sau, s.nv.ma, start, now, body.ra_sau, s.nv.ma, start, now, s.nv.ma, start, now);
+      if (gps) {
+        condition += " AND EXISTS(SELECT 1 FROM cham WHERE ma=? AND huy=0 AND loai='vao' AND t>=? AND t<=?)";
+        args.push(s.nv.ma, start, body.ra_sau);
+      }
+    }
+    if (loai === 'ra') {
+      condition += ' AND (' + outCountSql + ')<2'; args.push(s.nv.ma, start, now);
+    }
+    if (gps && !supplement) {
+      // A second OUT can follow the first OUT, provided a valid IN exists today.
+      condition += " AND (?=COALESCE((SELECT CASE WHEN loai='vao' THEN 'ra' ELSE 'vao' END FROM cham WHERE ma=? AND huy=0 AND t>=? AND t<=? ORDER BY t DESC,id DESC LIMIT 1),'vao') OR (?='ra' AND EXISTS(SELECT 1 FROM cham WHERE ma=? AND huy=0 AND loai='vao' AND t>=? AND t<?)))";
+      args.push(loai, s.nv.ma, start, now, loai, s.nv.ma, start, now);
     }
     const result = await db.prepare('INSERT INTO cham (ma,t,loai,cach,ip,wifi,tb,may' + columns + ') SELECT ' + values.map(() => '?').join(',') + ' WHERE ' + condition).bind(...args).run();
     if (!result.meta.changes) {
       const lastArgs = [s.nv.ma, now]; if (gps) lastArgs.push(vnDayStart(now));
       const last = await db.prepare('SELECT t,loai,cach FROM cham WHERE ma=? AND huy=0 AND t<=?' + dayFilter + ' ORDER BY t DESC,id DESC LIMIT 1').bind(...lastArgs).first();
+      if (loai === 'ra') {
+        const count = await db.prepare(outCountSql).bind(s.nv.ma, start, now).first();
+        if (count.n >= 2) return json({ok:false,loi:'Đã hoàn tất chấm công trong ngày: tối đa 2 lượt Ra ca.',next:'done'},409);
+        if (gps && supplement && !await db.prepare("SELECT 1 FROM cham WHERE ma=? AND huy=0 AND loai='vao' AND t>=? AND t<=? LIMIT 1").bind(s.nv.ma, start, body.ra_sau).first()) return json({ok:false,loi:'Bạn chưa có lượt Vào ca hợp lệ trong ngày. Vui lòng chấm Vào ca trước.',next:'vao'},409);
+        if (supplement) return json({ok:false,loi:'Trạng thái chấm công đã thay đổi. Vui lòng kiểm tra lại lịch sử trước khi chấm bổ sung.'},409);
+      }
       if (gps && (!last || last.loai !== loai || last.t <= now-DUP_MS)) {
         const next = last?.loai === 'vao' ? 'ra' : 'vao';
         const reason = !last && loai === 'ra' ? 'Bạn chưa có lượt Vào ca hợp lệ trong ngày. Vui lòng chấm Vào ca trước.' : 'Không ghi nhận: lượt hợp lệ gần nhất là ' + (last?.loai === 'vao' ? 'Vào ca' : 'Ra ca') + '. Lượt kế tiếp là ' + (next === 'vao' ? 'Vào ca.' : 'Ra ca.');
