@@ -1959,6 +1959,13 @@ button.op:hover{background:var(--surface-2);border-color:var(--line)}
 .bc-mk.wait{background:var(--warn-soft);border-color:var(--warn)}.bc-mk.hol{background:#EEEBFB}.bc-mk.rest{background:var(--surface-2)}
 .bc-q{background:var(--danger-soft)!important;color:var(--danger)!important}
 .bc-wrap{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+/* Attendance only: reserve a visible scrollbar and constrain wide tables to their panel. */
+#bArea.bc-area{min-width:0;max-width:100%;width:100%}
+#bArea.bc-area .bc-wrap,#bArea.bc-area .tbl-wrap{min-width:0;max-width:100%;width:100%;overflow-x:scroll;overflow-y:auto;scrollbar-width:auto}
+#bArea.bc-area .bc-wrap::-webkit-scrollbar,#bArea.bc-area .tbl-wrap::-webkit-scrollbar{width:14px;height:14px}
+#bArea.bc-area .bc-wrap::-webkit-scrollbar-track,#bArea.bc-area .tbl-wrap::-webkit-scrollbar-track{background:var(--surface-2)}
+#bArea.bc-area .bc-wrap::-webkit-scrollbar-thumb,#bArea.bc-area .tbl-wrap::-webkit-scrollbar-thumb{background:var(--muted);border:3px solid var(--surface-2);border-radius:8px}
+#bArea.bc-area table.bc,#bArea.bc-area table.tbl{width:max-content;min-width:100%}
 table.bc{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
 table.bc th,table.bc td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;text-align:center;background:var(--surface)}
 table.bc thead th{position:sticky;top:0;z-index:2;background:var(--surface-2);font-weight:600;color:var(--ink-2)}
@@ -4440,7 +4447,7 @@ var XW = (function () {
       r = g0;
     }
     top = r + 1;
-    rows.push('<row r="' + top + '">' + cols.map(function (c, i) { return cell(col(i) + top, hdBal(c.t, c.w), c.hl ? 7 : 2); }).join('') + '</row>');
+    rows.push('<row r="' + top + '">' + cols.map(function (c, i) { return cell(col(i) + top, sh.mergeHeaderRows && sh.groups && sh.groups.length && !gAt[i] ? '' : hdBal(c.t, c.w), c.hl ? 7 : 2); }).join('') + '</row>');
     r = top;
     sh.rows.forEach(function (row, ri) { r++; var bold = sh.bold && sh.bold.indexOf(ri) >= 0; rows.push('<row r="' + r + '">' + row.map(function (v, i) { var num = typeof v === 'number', hl = cols[i] && cols[i].hl; return cell(col(i) + r, v, hl ? (num ? 8 : 9) : bold ? (num ? 10 : 11) : 0); }).join('') + '</row>'); }); // 0.4.1: cột tô màu (hl), dòng đậm (sh.bold)
     var last = col(Math.max(0, cols.length - 1)) + Math.max(top, r);
@@ -6121,8 +6128,10 @@ if (typeof module !== 'undefined') module.exports = XW;
   ACTS['tb-more'] = function (a, id) { TB[id].limit += 500; if (REFRESH) REFRESH(); };
   ACTS['tb-export'] = function (a, id) { var c = TB[id] && TB[id].cur; if (!c) return; exportRows(c.title || 'Du lieu', c.cols, c.list, c.note); };
   function exportValue(c, r) { var v = c.x ? c.x(r) : c.f(r); if (c.sens && S.settings.maskExport) v = HR.maskValue(v); if (isIso(v)) return vn(v); return v === undefined ? null : v; }
-  function exportRows(title, cols, list, note) {
-    var sheet = { name: title.slice(0, 31), title: title.toUpperCase(), note: (note ? note + ' · ' : '') + 'Xuất lúc ' + nowVn() + (S.settings.maskExport ? ' · đã che số CCCD, sổ BHXH, tài khoản' : ''), cols: cols.filter(function (c) { return !c.noExport; }).map(function (c) { return { t: c.xt || c.t.replace(/<[^>]+>/g, '') }; }), rows: [] };
+  function exportRows(title, cols, list, note, options) {
+    options = options || {};
+    var sheet = { name: title.slice(0, 31), title: title.toUpperCase(), note: (note ? note + ' · ' : '') + 'Xuất lúc ' + nowVn() + (S.settings.maskExport ? ' · đã che số CCCD, sổ BHXH, tài khoản' : ''), cols: cols.filter(function (c) { return !c.noExport; }).map(function (c) { return { t: c.xt || c.t.replace(/<[^>]+>/g, ''), ...(options.groups && c.w ? { w: c.w } : {}) }; }), rows: [] };
+    if (options.groups) { sheet.groups = options.groups; sheet.mergeHeaderRows = !!options.mergeHeaderRows; }
     var ec = cols.filter(function (c) { return !c.noExport; });
     sheet.rows = list.map(function (r) { return ec.map(function (c) { return exportValue(c, r); }); });
     saveXlsx([sheet], fileName(title));
@@ -11127,7 +11136,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var kpi = '<div class="bc-kp"><span>Số người <b>' + T.n + '</b></span><span>Ngày công <b>' + bcNum(T.work) + '</b></span><span>Nghỉ hưởng lương (phép, lễ) <b>' + bcNum(T.paid) + '</b></span><span>Tăng ca được tính <b>' + (T.ot ? bcNum(T.ot) : 0) + ' giờ</b></span>' + (T.hours ? '<span>Giờ làm (tính lương theo giờ) <b>' + bcNum(T.hours) + ' giờ</b></span>' : '') + (T.night ? '<span>Giờ làm đêm <b>' + bcNum(T.night) + ' giờ</b></span>' : '') +
       (otMode || T.otWait ? '<span class="' + (T.otWait ? 'k-warn' : '') + '">Tăng ca chờ xác nhận <b>' + (T.otWait ? bcNum(T.otWait) : 0) + ' giờ</b></span>' : '') + '<span class="' + (T.issues ? 'k-bad' : '') + '">Ô cần xử lý <b>' + T.issues + '</b></span><span>Ô sửa tay <b>' + T.manual + '</b></span></div>';
     return pageHead('Tổng hợp công', 'Tự tính theo Thiết lập chấm công (<a href="#tlvp">khối văn phòng</a>, <a href="#tlsx">khối sản xuất</a>) · ' + esc(src)) + tool + lockBar + vtabs + kpi +
-      '<div id="bArea"></div>';
+      '<div id="bArea" class="bc-area"></div>';
   };
   ACTS['bc-view'] = function (a, id) { PS.bc.view = id; render(); };
   ACTS['bc-u'] = function (a, id) { PS.bc.u = id; PS.bc.dept = ''; bcResetPages(); render(); };
@@ -11179,15 +11188,16 @@ if (typeof module !== 'undefined') module.exports = XW;
   }
   ACTS['bc-export'] = function () {
     var f = PS.bc, rows = bcRows(), days = bcDays(f.m);
-    var cols = (isMulti() ? [{ t: 'Đơn vị', f: function (x) { return x.u.name; } }] : []).concat([{ t: 'Mã NV', f: function (x) { return x.p.id; } }, { t: 'Họ và tên', f: function (x) { return x.p.name; } }, { t: 'Phòng ban', f: function (x) { return x.p.dept; } }, { t: 'Ca', f: function (x) { return x.p.sh ? x.p.sh.id : ''; } }])
-      .concat(days.reduce(function (cols, iso) {
-        cols.push({ t: iso.slice(8, 10), f: function (x) { var c = x.p.days[iso.slice(8, 10)]; return c.src === 'out' ? '' : (c.hours != null ? ccNum(c.hours) + 'h' : c.k) + (c.otRaw ? ' +' + ccNum(c.otRaw) + 'h' : ''); } });
-        ['tin', 'tout'].forEach(function (key) { cols.push({ t: iso.slice(8, 10) + ' · ' + (key === 'tin' ? 'Giờ vào' : 'Giờ ra'), f: function (x) { return bcActualTimes(x.p.days[iso.slice(8, 10)])[key]; } }); });
-        return cols;
-      }, []))
+    var leading = (isMulti() ? [{ t: 'Đơn vị', w: 26, f: function (x) { return x.u.name; } }] : []).concat([{ t: 'Mã NV', w: 12, f: function (x) { return x.p.id; } }, { t: 'Họ và tên', w: 30, f: function (x) { return x.p.name; } }, { t: 'Phòng ban', w: 24, f: function (x) { return x.p.dept; } }, { t: 'Ca', w: 12, f: function (x) { return x.p.sh ? x.p.sh.id : ''; } }]);
+    var groups = [], cols = leading.concat(days.reduce(function (cols, iso) {
+      var from = leading.length + cols.length;
+      groups.push({ t: iso.slice(8, 10), from: from, to: from + 1 });
+      ['tin', 'tout'].forEach(function (key) { cols.push({ t: key === 'tin' ? 'Giờ vào' : 'Giờ ra', w: 12, f: function (x) { return bcActualTimes(x.p.days[iso.slice(8, 10)])[key]; } }); });
+      return cols;
+    }, []))
       .concat([{ t: 'Công chuẩn', f: function (x) { return x.p.sum.std; } }, { t: 'Ngày công', f: function (x) { return x.p.sum.work; } }, { t: 'Giờ làm (theo giờ)', f: function (x) { return x.p.exc.hr ? Math.round(x.p.sum.hours * 100) / 100 : ''; } }, { t: 'Loại lao động', f: function (x) { return x.p.e ? ldOf(x.p.e) : ''; } }, { t: 'Nghỉ phép, việc riêng', f: function (x) { return x.p.sum.paid; } }, { t: 'Lễ, tết', f: function (x) { return x.p.sum.hol; } }, { t: 'Tổng công hưởng lương', f: function (x) { return x.p.sum.salary; } }, { t: 'BHXH (ốm, thai sản)', f: function (x) { return x.p.sum.bh; } }, { t: 'Không lương', f: function (x) { return x.p.sum.unpaid; } },
         { t: 'Đi muộn (lần)', f: function (x) { return x.p.sum.late; } }, { t: 'Đi muộn (phút)', f: function (x) { return x.p.sum.lateMin; } }, { t: 'Tăng ca ngày thường (giờ)', f: function (x) { return x.p.sum.otN; } }, { t: 'Tăng ca nghỉ tuần (giờ)', f: function (x) { return x.p.sum.otR; } }, { t: 'Tăng ca lễ tết (giờ)', f: function (x) { return x.p.sum.otH; } }, { t: 'Tăng ca quy đổi (giờ lương)', f: function (x) { return Math.round(x.p.sum.otPay * 100) / 100; } }, { t: 'Tăng ca chờ xác nhận (giờ)', f: function (x) { return x.p.sum.otWait; } }, { t: 'Giờ làm ban đêm (giờ)', f: function (x) { return Math.round(x.p.sum.night * 100) / 100; } }, { t: 'Tăng ca ban đêm (giờ)', f: function (x) { return Math.round(x.p.sum.otNtH * 100) / 100; } }]);
-    exportRows('Bang cong ' + HR.ymLabel(f.m), cols, rows, 'Ký hiệu theo Thiết lập chấm công · "+2h" = giờ tăng ca');
+    exportRows('Bang cong ' + HR.ymLabel(f.m), cols, rows, 'Giờ vào/ra thực tế theo giờ Việt Nam · Giờ ra là lượt hợp lệ cuối cùng', {groups: groups, mergeHeaderRows: true});
   };
   function bcSum(rows) {
     if (rows.length && rows.every(function (x) { return x.p.exc.sch; })) return bcSumSx(rows);
