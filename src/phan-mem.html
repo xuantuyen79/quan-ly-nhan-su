@@ -19658,7 +19658,7 @@ if (typeof module !== 'undefined') module.exports = XW;
        - Hồ sơ: tab riêng "Thiết bị, tài sản" trước tab Cảnh báo · nhắc thu hồi khi nghỉ việc · app nhân viên: mục Thiết bị, tài sản
      Lưu trong đơn vị: u.ts = { v, ds: [tài sản], pg: [phiếu], nhom: [nhóm], so: { giao, thu } } · ảnh lưu ở kho file (kho 'ts', ref = id tài sản hoặc số phiếu)
      ===================================================================== */
-  var TS_TT = ['Sử dụng tốt', 'Hỏng cần sửa', 'Hỏng không dùng được', 'Mất', 'Thanh lý'], TS_PCT = { 'Sử dụng tốt': 100, 'Hỏng cần sửa': 50 };
+  var TS_TT = ['Chờ đối chiếu', 'Sử dụng tốt', 'Hỏng cần sửa', 'Hỏng không dùng được', 'Mất', 'Thanh lý'], TS_PCT = { 'Sử dụng tốt': 100, 'Hỏng cần sửa': 50 };
   var TS_TTD = ['Đang dùng', 'Tạm ngưng', 'Đã hủy']; // tài sản điện tử
   var TS_OLD = { 'Tốt': 'Sử dụng tốt', 'Đang sửa': 'Hỏng cần sửa', 'Hỏng': 'Hỏng không dùng được' };
   var TS_KY = [['thang', 'Hằng tháng', 12], ['quy', 'Hằng quý', 4], ['6thang', '6 tháng', 2], ['nam', 'Hằng năm', 1], ['1lan', 'Trả 1 lần', 0]];
@@ -19670,11 +19670,11 @@ if (typeof module !== 'undefined') module.exports = XW;
   function tsOf(u) {
     var T = u.ts || (u.ts = { v: 0 }); T.ds = T.ds || []; T.pg = T.pg || []; T.nhom = T.nhom || TS_NHOM0.slice(); T.so = T.so || { giao: 0, thu: 0 };
     if (u.source === 'sample' && !T.mau2) { T.ds = T.ds.filter(function (x) { return !x.mau; }); tsSample(u, T); }
-    T.ds.forEach(function (x) { if (!x.loai) x.loai = 'vl'; if (TS_OLD[x.tt]) x.tt = TS_OLD[x.tt]; if (x.loai === 'vl' && x.pct == null) x.pct = tsPctDef(x.tt); });
+    T.ds.forEach(function (x) { if (!x.loai) x.loai = 'vl'; if (TS_OLD[x.tt]) x.tt = TS_OLD[x.tt]; if (x.loai === 'vl' && x.pct == null && x.tt !== 'Chờ đối chiếu') x.pct = tsPctDef(x.tt); });
     return T;
   }
   function tsPctDef(tt) { return TS_PCT[tt] != null ? TS_PCT[tt] : 0; }
-  function tsGt(x) { return x.loai === 'dt' ? 0 : Math.round((+x.gia || 0) * (x.pct == null ? tsPctDef(x.tt) : +x.pct) / 100); }
+  function tsGt(x) { if (x.tt === 'Chờ đối chiếu' && x.pct == null) return null; return x.loai === 'dt' ? 0 : Math.round((+x.gia || 0) * (x.pct == null ? tsPctDef(x.tt) : +x.pct) / 100); }
   function tsSave(u, txt) { var T = tsOf(u); T.v++; u.ver = (u.ver || 0) + 1; saveUnits(); if (txt) log('Thiết bị, tài sản (' + shortUnit(u.name) + '): ' + txt); tsRedraw(); }
   function tsRedraw() { try { if (drawer && drawer._u && drawer._tab) drawProfile(drawer._u, drawer._id, drawer._tab); } catch (e) { } }
   function tsId() { return 'ts' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -19748,7 +19748,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var head = pageHead('Thiết bị, tài sản', 'Tài sản vật lý và tài sản điện tử (phần mềm trả phí) · bàn giao – thu hồi theo phiếu có ảnh hiện trạng · ghi vào hồ sơ từng người · nhắc thu hồi khi nghỉ việc' + (T.mau ? ' · <b>dữ liệu mẫu</b>' : '') + '.',
       '<button class="btn" data-act="ts-xl">' + ic('nhap', 15) + 'Nhập từ Excel</button><button class="btn" data-act="ts-thu-mo">Lập phiếu thu hồi</button><button class="btn" data-act="ts-giao-mo">Lập phiếu bàn giao</button><button class="btn btn-primary" data-act="ts-add">+ Thêm tài sản</button>');
     var pick = us.length > 1 ? '<div class="seg" style="margin-bottom:12px">' + us.map(function (x) { return '<button class="' + (x.id === u.id ? 'on' : '') + '" data-act="ts-u" data-id="' + x.id + '">' + esc(shortUnit(x.name)) + '</button>'; }).join('') + '</div>' : '';
-    var kpi = '<div class="ts-kpi"><div class="ts-kg"><h4>' + ic('taisan', 15) + 'Tài sản vật lý</h4><div><b>' + V.length + '</b><span>tài sản</span></div><div><b>' + money(ng) + '</b><span>nguyên giá (đ)</span></div><div><b>' + money(gt) + '</b><span>giá trị hiện tại ước tính (đ)</span></div><div class="' + (hu ? 'k-warn' : '') + '"><b>' + hu + '</b><span>hỏng, mất</span></div></div>' +
+    var kpi = '<div class="ts-kpi"><div class="ts-kg"><h4>' + ic('taisan', 15) + 'Tài sản vật lý</h4><div><b>' + V.length + '</b><span>tài sản</span></div><div><b>' + money(ng) + '</b><span>nguyên giá (đ)</span></div><div><b>' + (V.some(function (x) { return tsGt(x) === null; }) ? 'Chưa xác nhận' : money(gt)) + '</b><span>giá trị hiện tại ước tính (đ)</span></div><div class="' + (hu ? 'k-warn' : '') + '"><b>' + hu + '</b><span>hỏng, mất</span></div></div>' +
       '<div class="ts-kg"><h4>' + ic('xuat', 15) + 'Tài sản điện tử</h4><div><b>' + D.length + '</b><span>phần mềm, tài khoản</span></div><div><b>' + money(nam) + '</b><span>chi phí quy đổi 1 năm (đ)</span></div><div class="' + (ghQ ? 'k-bad' : ghS ? 'k-warn' : '') + '"><b>' + (ghS + ghQ) + '</b><span>gia hạn trong ' + NH + ' ngày' + (ghQ ? ' · ' + ghQ + ' quá hạn' : '') + '</span></div></div>' +
       '<div class="ts-kg"><h4>' + ic('nv', 15) + 'Bàn giao</h4><div><b>' + giao + '</b><span>đang giao cho nhân sự</span></div><div class="' + (CT.length ? 'k-bad' : '') + '"><b>' + CT.length + '</b><span>người cần thu hồi</span></div></div></div>';
     var warn = CT.length ? '<div class="notice bad">' + ic('info') + '<div><b>Cần thu hồi tài sản</b> – người đã hoặc sắp nghỉ việc vẫn đang sử dụng:<ul style="margin:6px 0 0 18px;padding:0">' + CT.map(function (o) { return '<li style="margin:4px 0">' + personLink(u, o.ma, o.L.e ? o.L.e['Họ và tên'] : o.ma) + ' – ' + (o.L.t === 'da' ? 'đã nghỉ từ ' : o.L.t === 'sap' ? 'nghỉ ngày ' : 'không còn trong danh sách nhân sự') + (o.L.ngay ? tsVn(o.L.ngay) : '') + ': <b>' + o.ds.length + ' tài sản</b> (' + esc(o.ds.map(function (x) { return x.ten; }).join(', ')) + ') <button class="btn btn-sm" data-act="ts-thu-mo" data-id="' + esc(o.ma) + '">Lập phiếu thu hồi</button></li>'; }).join('') + '</ul></div></div>' : '';
@@ -19758,7 +19758,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var flt = f.tab === 'pg' ? '' : '<div class="filters card card-pad">' + searchBox('tsQ', f.q, f.tab === 'ng' ? 'Tên, mã NV…' : f.lo === 'dt' ? 'Phần mềm, tài khoản, gói, người sử dụng…' : 'Mã, tên, cấu hình, người sử dụng…') +
       (f.tab === 'ng' ? selectBox('tsPb', 'Phòng ban', [['', 'Tất cả phòng ban']].concat(pbs.map(function (x) { return [x, x]; })), f.pb, 190) + selectBox('tsNs', 'Tình trạng nhân sự', [['', 'Tất cả'], ['lam', 'Đang làm'], ['sap', 'Sắp nghỉ việc (30 ngày)'], ['da', 'Đã nghỉ việc'], ['thu', 'Cần thu hồi (sắp + đã nghỉ)']], f.ns, 200) : '') +
       (f.tab === 'ds' ? selectBox('tsNhom', 'Nhóm', [['', 'Tất cả nhóm']].concat(tsNhoms(u, f.lo).map(function (x) { return [x, x]; })), f.nhom, 170) +
-        selectBox('tsSt', 'Trạng thái', [['', 'Đang quản lý'], ['kho', 'Chưa bàn giao'], ['giao', 'Đang bàn giao'], ['thu', 'Cần thu hồi']].concat(f.lo === 'dt' ? [['Tạm ngưng', 'Tạm ngưng'], ['het', 'Đã hủy']] : [['Hỏng cần sửa', 'Hỏng cần sửa'], ['Hỏng không dùng được', 'Hỏng không dùng được'], ['Mất', 'Mất'], ['het', 'Đã thanh lý']]), f.st, 180) +
+        selectBox('tsSt', 'Trạng thái', [['', 'Đang quản lý'], ['kho', 'Chưa bàn giao'], ['giao', 'Đang bàn giao'], ['thu', 'Cần thu hồi']].concat(f.lo === 'dt' ? [['Tạm ngưng', 'Tạm ngưng'], ['het', 'Đã hủy']] : [['Chờ đối chiếu', 'Chờ đối chiếu'], ['Hỏng cần sửa', 'Hỏng cần sửa'], ['Hỏng không dùng được', 'Hỏng không dùng được'], ['Mất', 'Mất'], ['het', 'Đã thanh lý']]), f.st, 180) +
         (f.lo === 'dt' ? selectBox('tsGh', 'Gia hạn', [['', 'Tất cả'], ['qua', 'Đã quá hạn'], ['7', 'Trong 7 ngày tới'], ['nhac', 'Trong ' + NH + ' ngày tới (mức nhắc)'], ['60', 'Trong 60 ngày tới'], ['90', 'Trong 90 ngày tới'], ['kh', 'Chọn khoảng ngày…']], f.gh, 200) +
           (f.gh === 'kh' ? '<div class="field"><label for="tsGhA">Từ ngày</label><input class="input" type="date" id="tsGhA" value="' + esc(f.ghA) + '"></div><div class="field"><label for="tsGhB">Đến ngày</label><input class="input" type="date" id="tsGhB" value="' + esc(f.ghB) + '"></div>' : '') +
           '<div class="field ts-nh"><label for="tsNh">Nhắc trước hạn gia hạn</label><span class="tl-qi"><input class="input" type="number" id="tsNh" min="1" max="180" value="' + NH + '" style="width:76px"><span>ngày</span></span></div>' : '') : '') + '</div>';
@@ -19769,14 +19769,14 @@ if (typeof module !== 'undefined') module.exports = XW;
   ACTS['ts-lo'] = function (a, id) { PS.ts.lo = id; PS.ts.nhom = ''; PS.ts.st = ''; PS.ts.sort = null; render(); };
   function tsNhoms(u, lo) { var T = tsOf(u), o = {}; T.ds.forEach(function (x) { if ((x.loai || 'vl') === lo && x.nhom) o[x.nhom] = 1; }); (lo === 'dt' ? TS_NHOM0.slice(7, 10) : TS_NHOM0.slice(0, 7)).forEach(function (n) { o[n] = 1; }); return Object.keys(o); }
   function tsU() { var f = PS.ts || {}; return unitById(f.u) || selUnits()[0]; }
-  function tsTtTag(x) { if (!tsLive(x)) return '<span class="tag tag-mute">' + esc(x.tt === 'Đã hủy' ? 'Đã hủy' : 'Đã thanh lý') + '</span>'; var c = x.tt === 'Sử dụng tốt' || x.tt === 'Đang dùng' ? 'tag-ok' : x.tt === 'Hỏng cần sửa' || x.tt === 'Tạm ngưng' ? 'tag-warn' : 'tag-bad'; return '<span class="tag ' + c + '">' + esc(x.tt) + '</span>'; }
+  function tsTtTag(x) { if (!tsLive(x)) return '<span class="tag tag-mute">' + esc(x.tt === 'Đã hủy' ? 'Đã hủy' : 'Đã thanh lý') + '</span>'; var c = x.tt === 'Sử dụng tốt' || x.tt === 'Đang dùng' ? 'tag-ok' : x.tt === 'Hỏng cần sửa' || x.tt === 'Tạm ngưng' || x.tt === 'Chờ đối chiếu' ? 'tag-warn' : 'tag-bad'; return '<span class="tag ' + c + '">' + esc(x.tt) + '</span>'; }
   function tsGhTag(x) { var g = tsGh(x); if (g === null) return x.gh ? tsVn(x.gh) : ''; return tsVn(x.gh) + (g < 0 ? ' <span class="tag tag-bad">quá ' + (-g) + ' ngày</span>' : g <= 30 ? ' <span class="tag tag-warn">còn ' + g + ' ngày</span>' : ''); }
   /* ---- bảng danh mục: chọn cột, kéo độ rộng ---- */
   function tsCols(u) {
     var nv = nvIndex(u);
     return [{ id: 'ma', t: 'Mã', w: 84, f: function (x) { return x.ma; }, h: function (x) { return '<span class="mono">' + esc(x.ma) + '</span>'; }, fix: 1 },
       { id: 'loai', t: 'Loại', w: 92, xo: 1, f: function (x) { return x.loai === 'dt' ? 'Điện tử' : 'Vật lý'; }, h: function (x) { return '<span class="tag ' + (x.loai === 'dt' ? 'tag-info' : 'tag-mute') + '">' + (x.loai === 'dt' ? 'Điện tử' : 'Vật lý') + '</span>'; } },
-      { id: 'ten', t: PS.ts && PS.ts.lo === 'dt' ? 'Phần mềm, ứng dụng' : 'Tên tài sản, thiết bị', w: 250, f: function (x) { return x.ten; }, h: function (x) { return '<b>' + esc(x.ten) + '</b>' + (x.loai === 'dt' && x.link ? ' <a href="' + esc(x.link) + '" target="_blank" rel="noopener" class="ts-lk" title="Mở trang truy cập">↗</a>' : ''); }, fix: 1 },
+      { id: 'ten', t: PS.ts && PS.ts.lo === 'dt' ? 'Phần mềm, ứng dụng' : 'Tên tài sản', w: 250, f: function (x) { return x.ten; }, h: function (x) { return '<b>' + esc(x.ten) + '</b>' + (x.loai === 'dt' && x.link ? ' <a href="' + esc(x.link) + '" target="_blank" rel="noopener" class="ts-lk" title="Mở trang truy cập">↗</a>' : ''); }, fix: 1 },
       { id: 'nhom', t: 'Nhóm', w: 140, f: function (x) { return x.nhom || ''; } },
       { id: 'ghi', t: 'Cấu hình, ghi chú', w: 190, f: function (x) { return x.ghi || ''; }, off: 1 },
       { id: 'tk', t: 'Tên tài khoản', w: 190, f: function (x) { return x.tk || ''; }, dt: 1 },
@@ -19786,9 +19786,9 @@ if (typeof module !== 'undefined') module.exports = XW;
       { id: 'phi', t: 'Chi phí/kỳ (đ)', w: 120, r: 1, f: function (x) { return x.loai === 'dt' ? +x.phi || 0 : ''; }, h: function (x) { return x.loai === 'dt' ? money(+x.phi || 0) : ''; }, dt: 1 },
       { id: 'gh', t: 'Gia hạn tiếp theo', w: 170, f: function (x) { return x.gh || ''; }, h: tsGhTag, dt: 1 },
       { id: 'ngay', t: 'Ngày mua', w: 100, f: function (x) { return x.ngay || ''; }, h: function (x) { return tsVn(x.ngay); } },
-      { id: 'gia', t: 'Nguyên giá (đ)', w: 120, r: 1, f: function (x) { return x.loai === 'dt' ? '' : +x.gia || 0; }, h: function (x) { return x.loai === 'dt' ? '' : money(+x.gia || 0); }, vl: 1 },
-      { id: 'pct', t: '% còn lại', w: 84, r: 1, f: function (x) { return x.loai === 'dt' ? '' : x.pct; }, h: function (x) { return x.loai === 'dt' ? '' : x.pct + '%'; }, vl: 1, off: 1 },
-      { id: 'gt', t: 'Giá trị hiện tại (đ)', w: 140, r: 1, f: function (x) { return x.loai === 'dt' ? '' : tsGt(x); }, h: function (x) { return x.loai === 'dt' ? '' : money(tsGt(x)) + ' <small class="faint">' + x.pct + '%</small>'; }, vl: 1 },
+      { id: 'gia', t: 'Nguyên giá (đ)', w: 120, r: 1, f: function (x) { return x.loai === 'dt' || x.gia == null ? '' : +x.gia || 0; }, h: function (x) { return x.loai === 'dt' || x.gia == null ? '' : money(+x.gia || 0); }, vl: 1 },
+      { id: 'pct', t: '% còn lại', w: 84, r: 1, f: function (x) { return x.loai === 'dt' ? '' : x.pct; }, h: function (x) { return x.loai === 'dt' || x.pct == null ? '' : x.pct + '%'; }, vl: 1, off: 1 },
+      { id: 'gt', t: 'Giá trị hiện tại (đ)', w: 140, r: 1, f: function (x) { return x.loai === 'dt' ? '' : tsGt(x); }, h: function (x) { return x.loai === 'dt' ? '' : tsGt(x) === null ? '<span class="faint">Chưa xác nhận</span>' : money(tsGt(x)) + ' <small class="faint">' + x.pct + '%</small>'; }, vl: 1 },
       { id: 'tt', t: 'Tình trạng', w: 170, f: function (x) { return x.tt; }, h: function (x) { return tsTtTag(x) + (x.giu && tsLeave(u, x.giu).t ? ' <span class="tag tag-bad">Cần thu hồi</span>' : '') + (x.ttGhi ? '<small class="faint" style="display:block">' + esc(x.ttGhi) + '</small>' : ''); } },
       { id: 'nsd', t: 'Người sử dụng', w: 180, f: function (x) { return x.giu ? ((nv[x.giu] || {})['Họ và tên'] || x.giu) : ''; }, h: function (x) { return x.giu ? personLink(u, x.giu, (nv[x.giu] || {})['Họ và tên'] || x.giu) + '<small class="faint" style="display:block">từ ' + tsVn(x.giuTu) + '</small>' : '<span class="faint">Chưa bàn giao</span>'; } }];
   }
@@ -19816,15 +19816,15 @@ if (typeof module !== 'undefined') module.exports = XW;
     $('#tcOk', m).addEventListener('click', function () { var keep = (S.settings.tsCols || tsCols(u).filter(function (c) { return !c.off; }).map(function (c) { return c.id; })).filter(function (id) { return !C.some(function (c) { return c.id === id; }); }); S.settings.tsCols = keep.concat($$('input[type=checkbox]', m).filter(function (c) { return c.checked; }).map(function (c) { return c.value; })); saveSettings(); m.close(); REFRESH(); });
     $('#tcRs', m).addEventListener('click', function () { delete S.settings.tsCols; delete S.settings.tsW; saveSettings(); m.close(); REFRESH(); });
   };
-  ACTS['ts-exp'] = function () { var u = tsU(), lo = PS.ts.lo, C = tsCols(u).filter(function (c) { return !(lo === 'vl' && c.dt) && !(lo === 'dt' && c.vl); }); exportRows((lo === 'dt' ? 'Tai san dien tu ' : 'Tai san vat ly ') + shortUnit(u.name), C.map(function (c) { return { t: c.t, f: c.f }; }).concat([{ t: 'Ghi chú tình trạng', f: function (x) { return x.ttGhi || ''; } }, { t: 'Mã NV người sử dụng', f: function (x) { return x.giu || ''; } }]), tsFilter(u)); };
+  ACTS['ts-exp'] = function () { var u = tsU(), lo = PS.ts.lo, C = tsCols(u).filter(function (c) { return !(lo === 'vl' && c.dt) && !(lo === 'dt' && c.vl); }); exportRows((lo === 'dt' ? 'Tai san dien tu ' : 'Tai san vat ly ') + shortUnit(u.name), C.map(function (c) { return { t: c.t, f: c.f }; }).concat((lo === 'dt' ? [] : TS_EXTRA).map(function (f) { return { t: f[1], f: function (x) { return x[f[0]] == null ? '' : x[f[0]]; } }; }), [{ t: 'Ghi chú tình trạng', f: function (x) { return x.ttGhi || ''; } }, { t: 'Mã NV người sử dụng', f: function (x) { return x.giu || ''; } }]), tsFilter(u)); };
   function tsFilter(u) {
     var f = PS.ts, T = tsOf(u), nv = nvIndex(u), q = norm(f.q);
     return T.ds.filter(function (x) {
       if (f.st === 'het' ? tsLive(x) : !tsLive(x)) return false; if (f.lo && x.loai !== f.lo) return false; if (f.nhom && x.nhom !== f.nhom) return false;
-      if (f.st === 'kho' && x.giu) return false; if (f.st === 'giao' && !x.giu) return false; if (f.st === 'thu' && !(x.giu && tsLeave(u, x.giu).t)) return false;
+      if (f.st === 'kho' && (x.giu || x.tt === 'Chờ đối chiếu')) return false; if (f.st === 'giao' && !x.giu) return false; if (f.st === 'thu' && !(x.giu && tsLeave(u, x.giu).t)) return false;
       if (f.lo === 'dt' && f.gh) { var g = tsGh(x), N = tsNhac(u); if (g === null) return false; if (f.gh === 'qua' ? g >= 0 : f.gh === 'kh' ? ((f.ghA && x.gh < f.ghA) || (f.ghB && x.gh > f.ghB)) : (g < 0 || g > (f.gh === 'nhac' ? N : +f.gh))) return false; }
-      if (f.st === 'Tạm ngưng' && x.tt !== 'Tạm ngưng') return false; if (['Hỏng cần sửa', 'Hỏng không dùng được', 'Mất'].indexOf(f.st) >= 0 && x.tt !== f.st) return false;
-      return !q || norm([x.ma, x.ten, x.ghi, x.tk, x.goi, x.ttGhi, x.giu, (nv[x.giu] || {})['Họ và tên']].join(' ')).indexOf(q) >= 0;
+      if (f.st === 'Tạm ngưng' && x.tt !== 'Tạm ngưng') return false; if (['Chờ đối chiếu', 'Hỏng cần sửa', 'Hỏng không dùng được', 'Mất'].indexOf(f.st) >= 0 && x.tt !== f.st) return false;
+      return !q || norm([x.ma, x.ten, x.thuongHieu, x.model, x.serial, x.ncc, x.viTri, x.ghi, x.tk, x.goi, x.ttGhi, x.giu, (nv[x.giu] || {})['Họ và tên']].join(' ')).indexOf(q) >= 0;
     });
   }
   BINDS.taisan = function () {
@@ -19858,38 +19858,46 @@ if (typeof module !== 'undefined') module.exports = XW;
 
   /* ---------------- Thêm / sửa tài sản ---------------- */
   function tsNextMa(T, pre) { var n = 1, m; do { m = pre + String(n++).padStart(3, '0'); } while (T.ds.some(function (z) { return z.ma === m; })); return m; }
+  var TS_EXTRA = [['thuongHieu','Thương hiệu','text'],['model','Model','text'],['serial','Số serial','text'],['ncc','Nhà cung cấp','text'],['khNam','Thời gian khấu hao (năm)','number'],['baoHanh','Hạn bảo hành','date'],['baoTri','Ngày bảo trì tiếp theo','date'],['viTri','Vị trí ghi tại nguồn','text'],['taoNguon','Thời điểm tạo tại nguồn','text']];
+  function tsExtraForm(x) {
+    var info = x.qltsImport ? '<div class="field vl-o span2" data-qlts-import><small class="faint">Nguồn QLTS: ' + esc(x.qltsImport.status) + ' · chưa gán nhân viên. Xác nhận công ty và hiện trạng trước khi bàn giao; tình trạng nguồn không phải phiếu bàn giao QLNS.</small></div>' : '';
+    return info + TS_EXTRA.map(function (f) { return '<div class="field vl-o"><label for="tfX-' + f[0] + '">' + f[1] + '</label><input class="input" id="tfX-' + f[0] + '" type="' + f[2] + '"' + (f[0] === 'taoNguon' ? ' readonly' : '') + (f[2] === 'number' ? ' min="0" step="any"' : '') + ' value="' + esc(x[f[0]] == null ? '' : x[f[0]]) + '"></div>'; }).join('');
+  }
   function tsForm(u, x) {
     var T = tsOf(u), lo0 = (PS.ts && PS.ts.lo) === 'dt' ? 'dt' : 'vl'; x = x || { loai: lo0, ma: tsNextMa(T, lo0 === 'dt' ? 'PM' : 'TS'), ten: '', nhom: lo0 === 'dt' ? 'Phần mềm văn phòng' : 'Máy tính', link: '', tk: '', goi: '', phi: '', gh: '', gia: '', ngay: refDate(), tt: 'Sử dụng tốt', pct: 100, ghi: '', ttGhi: '', ky: 'nam' };
     var o = function (v, t, cur) { return '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(t) + '</option>'; }, dt = x.loai === 'dt';
     return '<div class="form-grid ts-form" data-lo="' + (dt ? 'dt' : 'vl') + '"><div class="field"><label for="tfLo">Loại tài sản</label><select class="input" id="tfLo">' + o('vl', 'Tài sản vật lý', x.loai) + o('dt', 'Tài sản điện tử (phần mềm trả phí)', x.loai) + '</select></div><div class="field"><label for="tfMa">Mã tài sản</label><input class="input" id="tfMa" value="' + esc(x.ma) + '" maxlength="30"></div>' +
-      '<div class="field span2"><label for="tfTen"><span class="vl-o">Tên tài sản, thiết bị</span><span class="dt-o">Phần mềm, ứng dụng</span></label><input class="input" id="tfTen" value="' + esc(x.ten) + '" maxlength="160" placeholder="Ví dụ: Laptop Dell Latitude 5440 · Microsoft 365"></div>' +
+      '<div class="field span2"><label for="tfTen"><span class="vl-o">Tên tài sản, thiết bị</span><span class="dt-o">Phần mềm, ứng dụng</span></label><input class="input" id="tfTen" value="' + esc(x.ten) + '" placeholder="Ví dụ: Laptop Dell Latitude 5440 · Microsoft 365"></div>' +
       '<div class="field dt-o span2"><label for="tfLink">Link truy cập</label><input class="input" id="tfLink" type="url" value="' + esc(x.link || '') + '" placeholder="https://…" maxlength="300"></div>' +
       '<div class="field dt-o"><label for="tfTk">Tên tài khoản</label><input class="input" id="tfTk" value="' + esc(x.tk || '') + '" maxlength="120" placeholder="email hoặc tên đăng nhập – không ghi mật khẩu"></div><div class="field dt-o"><label for="tfGoi">Gói</label><input class="input" id="tfGoi" value="' + esc(x.goi || '') + '" maxlength="120" placeholder="Ví dụ: Business Standard · 10 người"></div>' +
       '<div class="field"><label for="tfNhom">Nhóm</label><input class="input" id="tfNhom" value="' + esc(x.nhom || '') + '" maxlength="60" autocomplete="off" placeholder="Tự nhập hoặc chọn gợi ý bên dưới"><div class="ts-chips" id="tfNhomC"></div></div><div class="field"><label for="tfNgay">Ngày mua</label><input class="input" type="date" id="tfNgay" value="' + esc(x.ngay || '') + '"></div>' +
       '<div class="field dt-o"><label for="tfKy">Kỳ trả phí</label><select class="input" id="tfKy">' + TS_KY.map(function (k) { return o(k[0], k[1], x.ky || 'nam'); }).join('') + '</select></div><div class="field dt-o"><label for="tfPhi">Chi phí mỗi kỳ (đồng)</label><input class="input" id="tfPhi" inputmode="numeric" value="' + (x.phi ? money(+x.phi) : '') + '"></div>' +
       '<div class="field dt-o"><label for="tfGh">Ngày gia hạn tiếp theo</label><input class="input" type="date" id="tfGh" value="' + esc(x.gh || '') + '"></div><div class="field dt-o"><label for="tfTtd">Tình trạng</label><select class="input" id="tfTtd">' + TS_TTD.map(function (t) { return o(t, t, dt ? x.tt : 'Đang dùng'); }).join('') + '</select></div>' +
       '<div class="field vl-o"><label for="tfGia">Nguyên giá (đồng)</label><input class="input" id="tfGia" inputmode="numeric" value="' + (x.gia === '' || x.gia == null ? '' : money(+x.gia || 0)) + '"></div><div class="field vl-o"><label for="tfTt">Tình trạng</label><select class="input" id="tfTt">' + TS_TT.map(function (t) { return o(t, t, dt ? 'Sử dụng tốt' : x.tt); }).join('') + '</select></div>' +
-      '<div class="field vl-o"><label for="tfPct">Ước tính % giá trị còn lại</label><span class="tl-qi"><input class="input" id="tfPct" type="number" min="0" max="100" step="5" value="' + (x.pct == null ? tsPctDef(x.tt) : x.pct) + '" style="width:90px"><span>%</span></span><small class="faint" id="tfPctH">Gợi ý theo tình trạng: tốt 100%, hỏng cần sửa 50%, còn lại 0% – sửa tay được</small></div>' +
+      '<div class="field vl-o"><label for="tfPct">Ước tính % giá trị còn lại</label><span class="tl-qi"><input class="input" id="tfPct" type="number" min="0" max="100" step="5" value="' + (x.pct == null ? (x.tt === 'Chờ đối chiếu' ? '' : tsPctDef(x.tt)) : x.pct) + '" style="width:90px"><span>%</span></span><small class="faint" id="tfPctH">Gợi ý theo tình trạng: tốt 100%, hỏng cần sửa 50%, còn lại 0% – sửa tay được</small></div>' +
       '<div class="field vl-o"><label for="tfGt">Giá trị hiện tại (đồng)</label><input class="input" id="tfGt" readonly value=""></div>' +
-      '<div class="field span2"><label for="tfGhi"><span class="vl-o">Cấu hình, số serial, nơi đặt</span><span class="dt-o">Ghi chú (số người dùng, ai quản lý mật khẩu…)</span></label><input class="input" id="tfGhi" value="' + esc(x.ghi || '') + '" maxlength="200"></div>' +
+      '<div class="field span2"><label for="tfGhi"><span class="vl-o">Cấu hình, số serial, nơi đặt</span><span class="dt-o">Ghi chú (số người dùng, ai quản lý mật khẩu…)</span></label><textarea class="input" id="tfGhi" rows="2">' + esc(x.ghi || '') + '</textarea></div>' +
       '<div class="field span2"><label for="tfTg">Ghi chú tình trạng</label><input class="input" id="tfTg" value="' + esc(x.ttGhi || '') + '" maxlength="200" placeholder="Ví dụ: trầy góc máy, pin còn 85%"></div>' +
-      '<div class="field span2"><label>Ảnh thiết bị</label>' + tsImgBox('tfImg', 'Tải ảnh thiết bị') + '</div></div>';
+      tsExtraForm(x) + '<div class="field span2"><label>Ảnh thiết bị</label>' + tsImgBox('tfImg', 'Tải ảnh thiết bị') + '</div></div>';
   }
   function tsFormBind(m, x) {
     var lo = $('#tfLo', m), fm = $('.ts-form', m), pct = $('#tfPct', m), touched = x && x.pct != null && x.pct !== tsPctDef(x.tt);
     function num(id) { return +String($(id, m).value).replace(/[^\d]/g, '') || 0; }
-    function gt() { $('#tfGt', m).value = money(Math.round(num('#tfGia') * (+pct.value || 0) / 100)); }
+    function gt() { $('#tfGt', m).value = pct.value === '' ? '' : money(Math.round(num('#tfGia') * (+pct.value || 0) / 100)); }
     function chips() { var v = lo.value, ns = tsNhoms(tsU(), v); $('#tfNhomC', m).innerHTML = ns.map(function (n) { return '<button type="button" data-nh="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); $$('[data-nh]', m).forEach(function (b) { b.onclick = function () { $('#tfNhom', m).value = b.getAttribute('data-nh'); }; }); } chips();
     lo.addEventListener('change', function () { fm.setAttribute('data-lo', lo.value); chips(); if (!x && /^TS\d+$|^PM\d+$/.test($('#tfMa', m).value)) $('#tfMa', m).value = tsNextMa(tsOf(tsU()), lo.value === 'dt' ? 'PM' : 'TS'); if (!x && lo.value === 'dt' && TS_NHOM0.indexOf($('#tfNhom', m).value) < 7) $('#tfNhom', m).value = 'Phần mềm văn phòng'; });
     $('#tfTt', m).addEventListener('change', function () { if (!touched) pct.value = tsPctDef($('#tfTt', m).value); gt(); });
     pct.addEventListener('input', function () { touched = true; gt(); }); $('#tfGia', m).addEventListener('input', gt);
     ['#tfGia', '#tfPhi'].forEach(function (id) { var el = $(id, m); el.addEventListener('blur', function () { var v = num(id); el.value = v ? money(v) : ''; }); });
+    if (x && x.qltsImport) { m.dataset.qltsGia = JSON.stringify(x.gia == null ? null : x.gia); $('#tfGia', m).addEventListener('input', function () { m.dataset.qltsGiaDirty = '1'; }); }
     gt(); return tsImgBind(m, '#tfImg', (x && x.anh ? x.anh : []).map(function (id) { return { id: id }; }));
   }
   function tsRead(m) {
     var num = function (id) { return +String($(id, m).value).replace(/[^\d]/g, '') || 0; }, lo = $('#tfLo', m).value, v = { loai: lo, ma: $('#tfMa', m).value.trim(), ten: $('#tfTen', m).value.trim(), nhom: $('#tfNhom', m).value.trim() || 'Khác', ngay: $('#tfNgay', m).value, ghi: $('#tfGhi', m).value.trim(), ttGhi: $('#tfTg', m).value.trim() };
     if (lo === 'dt') Object.assign(v, { link: $('#tfLink', m).value.trim(), tk: $('#tfTk', m).value.trim(), goi: $('#tfGoi', m).value.trim(), ky: $('#tfKy', m).value, phi: num('#tfPhi'), gh: $('#tfGh', m).value, tt: $('#tfTtd', m).value, gia: 0, pct: null });
-    else Object.assign(v, { gia: num('#tfGia'), tt: $('#tfTt', m).value, pct: Math.max(0, Math.min(100, Math.round(+$('#tfPct', m).value || 0))) });
+    else Object.assign(v, { gia: $('[data-qlts-import]', m) && $('#tfGia', m).value === '' ? null : num('#tfGia'), tt: $('#tfTt', m).value, pct: $('#tfPct', m).value === '' && $('#tfTt', m).value === 'Chờ đối chiếu' ? null : Math.max(0, Math.min(100, Math.round(+$('#tfPct', m).value || 0))) });
+    if (lo !== 'dt' && m.dataset.qltsGia !== undefined && !m.dataset.qltsGiaDirty) v.gia = JSON.parse(m.dataset.qltsGia);
+    if (lo !== 'dt') TS_EXTRA.forEach(function (f) { var value = $('#tfX-' + f[0], m).value; v[f[0]] = f[2] === 'number' ? (value === '' ? null : +value) : value; });
     if (v.link && !/^https?:\/\//i.test(v.link)) v.link = 'https://' + v.link;
     return v;
   }
