@@ -1,15 +1,16 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {createRequire} from 'node:module';
-import {tableUIRuntime,withTableUI} from '../src/ksb-table-ui.js';
+import {withTableUI} from '../src/ksb-table-ui.js';
+const TABLE_UI_SCRIPT=await readFile(new URL('../src/ksb-table-ui-runtime.txt',import.meta.url),'utf8');
 const html=await readFile(new URL('../src/phan-mem.html',import.meta.url),'utf8');
 const css=[...html.slice(0,html.indexOf('</head>')).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m=>m[1]).join('\n');
 const cut=(a,b)=>html.slice(html.indexOf(a),html.indexOf(b,html.indexOf(a)));
-test('shared enhancement is injected as inline UI only, without a network dependency',()=>{const s=withTableUI('<html><body>App</body></html>');assert.ok(s.includes('window.KSBTableUI'));assert.equal((s.match(/<script>/g)||[]).length,1);assert.doesNotMatch(tableUIRuntime.toString(),/fetch\(|localStorage|\/api\//);});
+test('shared enhancement is injected as inline UI only, without a network dependency',()=>{const s=withTableUI('<html><body>App</body></html>',TABLE_UI_SCRIPT);assert.ok(s.includes('window.KSBTableUI'));assert.equal((s.match(/<script>/g)||[]).length,1);assert.doesNotMatch(TABLE_UI_SCRIPT,/fetch\(|localStorage|\/api\//);});
 test('Chrome: all page sizes, 20/160/500 rows, pinning merged headers, mobile, modals and retained export DOM',{skip:!process.env.KSB_PLAYWRIGHT_MODULE},async()=>{
  const {chromium}=createRequire(process.env.KSB_PLAYWRIGHT_MODULE)('playwright');const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,ignoreDefaultArgs:['--hide-scrollbars'],args:['--no-sandbox']});
  try{
  const page=await browser.newPage({viewport:{width:1440,height:950}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+css+'</style></head><body><main id="page" style="padding:20px;min-width:0"><input id="filter" aria-label="Tìm kiếm"><div id="fixture"></div></main></body></html>');
- await page.addScriptTag({content:'('+tableUIRuntime.toString()+')();'});
+ await page.addScriptTag({content:TABLE_UI_SCRIPT});
  const build=async(n,kind='attendance')=>{
  await page.evaluate(({n,kind})=>{
  const days=Array.from({length:31},(_,i)=>'<th colspan="2">'+String(i+1).padStart(2,'0')+'</th>').join('');
@@ -48,7 +49,7 @@ test('actual KSB table/gxTable/bcGrid renderers keep full export, paging, merged
  await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+css+'</style></head><body><main id="testarea" style="padding:20px;min-width:0"></main></body></html>');
  await page.addScriptTag({content:'var fixtureData='+JSON.stringify(f)+';var g=('+globals.toString()+')(fixtureData);delete g.document;Object.assign(window,g);S.units=fixtureData.units;S.settings={gxW:{}};PS.bc.m="2026-01";var __exports=[];window.exportRows=(title,cols,list)=>__exports.push(list.length);window.$=(q)=>document.querySelector(q);window.$$=(q)=>Array.from(document.querySelectorAll(q));window.bcMonth=(u,m)=>({u,s:fixtureData.s,ppl:u.people});'});
  await page.addScriptTag({content:tableCode+attendanceCode+cut('  function gxStyle(', '  // độ rộng cột theo dữ liệu:')+cut('  function gxMinW(', '  // ghim tiêu đề:')+'\nwindow.drawAttendance=function(){document.querySelector("#testarea").innerHTML="<h2>Bảng Công tháng 01/2026 — dữ liệu giả lập</h2>"+bcGrid(fixtureData.units[0].people.map(p=>({u:fixtureData.units[0],p,s:fixtureData.s})));};window.REFRESH=drawAttendance;drawAttendance();'});
- await page.addScriptTag({content:'('+tableUIRuntime.toString()+')();'});await page.waitForTimeout(120);
+ await page.addScriptTag({content:TABLE_UI_SCRIPT});await page.waitForTimeout(120);
  assert.equal(await page.locator('.bc tbody>tr').count(),20);await page.selectOption('#ccPageSize-bc-grid','100');await page.waitForTimeout(80);assert.equal(await page.locator('.bc tbody>tr').count(),100);await page.locator('[data-cc-page-table="bc-grid"][aria-label="Trang sau"]').click();await page.waitForTimeout(80);assert.match(await page.locator('.bc tbody>tr').first().innerText(),/KSB0101/);
  await page.locator('.bc-wrap').evaluate(w=>w.scrollLeft=w.scrollWidth);assert.ok(await page.locator('.bc tbody .ksb-pin').count()>0);assert.match(await page.locator('.bc thead').innerText(),/31/);await page.screenshot({path:new URL('../../../outputs/ksb-table-attendance-actual.png',import.meta.url).pathname,fullPage:true});
  await page.evaluate(()=>{gxStyle();const cols=[{id:'stt',t:'STT',w:45},{id:'ma',t:'Mã NV',w:100},{id:'ten',t:'Họ và tên',w:210},...Array.from({length:14},(_,i)=>({id:'pay'+i,t:'Khoản lương '+i,g:i<7?'Thu nhập':'Khấu trừ',w:120})),{id:'net',t:'Thực lĩnh',w:130}];window.payRows=fixtureData.units[0].people.map((p,i)=>({at:' data-row="'+p.id+'"',cells:[{h:i+1},{h:p.id},{h:p.name},...Array.from({length:14},()=>({h:'1.000.000'})),{h:'25.000.000'}]}));document.querySelector('#testarea').innerHTML='<h2>Bảng lương — dựng bằng gxTable hiện tại, dữ liệu giả lập</h2>'+gxTable({id:'blG',cols,rows:payRows,fz:3,foot:[{h:'Tổng cộng 500 người',span:3},...Array.from({length:15},()=>({h:'500.000.000'}))]});KSBTableUI.refresh();});await page.waitForTimeout(100);

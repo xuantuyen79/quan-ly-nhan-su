@@ -10,7 +10,8 @@ import { sendKsbFeedback } from './ksb-feedback.js';
 import { reportsAPI } from './ksb-reports.js';
 import APP_SOURCE from './app.html';
 import { withTableUI } from './ksb-table-ui.js';
-const APP_HTML = withTableUI(APP_SOURCE);
+import TABLE_UI_SCRIPT from './ksb-table-ui-runtime.txt';
+const APP_HTML = withTableUI(APP_SOURCE, TABLE_UI_SCRIPT);
 import { ICON_PNG_B64, ICON_SVG } from './icon.js';
 import { DEMO, DEMO_PIN } from './demo-data.js';
 import { DEMO_HN } from './demo-hoinhap.js';
@@ -19,7 +20,7 @@ import { TAY_LATIN, TAY_VI } from './font-tay.js'; // 12/11: phông viết tay c
 import { OG_QL_B64, OG_NV_B64 } from './og-anh.js'; // 08/11: ảnh chia sẻ Facebook/Zalo cho bản chạy thử
 import HRM_SOURCE from './phan-mem.html'; // 08/11: Phần mềm quản lý nhân sự toàn diện bản xem trước (build/index.html chép sang khi node build.js)
 
-const HRM_HTML = withTableUI(HRM_SOURCE);
+const HRM_HTML = withTableUI(HRM_SOURCE, TABLE_UI_SCRIPT);
 
 const VER = '1.0.2-ksb.2';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
 // trước: VER '0.4.1'  // 07/11/2026: nối Phần mềm quản lý nhân sự toàn diện (đồng bộ nhân viên, lượt chấm, đơn nghỉ, xác nhận công)

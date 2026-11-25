@@ -13487,6 +13487,8 @@ if (typeof module !== 'undefined') module.exports = XW;
     var cols = opt.cols, fz = window.innerWidth < 760 ? 0 : opt.fz || 0, hasG = cols.some(function (c) { return c.g; }), left = [], x = 0;
     cols.forEach(function (c) { if (typeof XW !== 'undefined' && XW.join) { c.t = XW.join(c.t); if (c.g) c.g = XW.join(c.g); } c.w = Math.max(c.w || 0, gxMinW(c)); }); // 10/11 anh: tiêu đề không vỡ chữ giữa từ, ô đơn vị đủ chỗ cho nút chọn
     var SW = (S.settings.gxW || {})[opt.id] || {}; cols.forEach(function (c) { if (c.id && SW[c.id]) c.w = Math.max(40, SW[c.id]); }); // độ rộng người dùng kéo (14:49 10/11)
+    // KSB: keep the full identifier readable on the two detailed salary/structure grids.
+    if (opt.id === 'ccuG' || opt.id === 'blG') cols.forEach(function (c) { if (c.id === 'ma') c.w = Math.max(c.w, 100); if (c.id === 'ten') c.w = Math.max(c.w, 200); });
     var rz = function (c) { return c.id ? '<span class="gx-rz" data-rz="' + esc(c.id) + '" title="Kéo để đổi độ rộng · bấm đúp: về mặc định"></span>' : ''; };
     cols.forEach(function (c, i) { left.push(x); x += c.w; });
     var fzA = function (i, extra) { return i < fz ? ' fz' + (i === fz - 1 ? ' fz-l' : '') + '" style="left:' + left[i] + 'px' + (extra || '') : (extra ? '" style="' + extra.replace(/^;/, '') : ''); };
