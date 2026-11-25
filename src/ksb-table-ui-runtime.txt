@@ -13,14 +13,19 @@
 
 .ksb-table-host{min-width:0;max-width:100%}
 .ksb-table-scroll{max-width:100%;min-width:0;overflow-x:auto!important;position:relative;isolation:isolate;scrollbar-width:auto;scrollbar-color:#82998c #edf2ee}
-.ksb-table-scroll::-webkit-scrollbar{height:0!important;width:12px}.ksb-table-scroll::-webkit-scrollbar-thumb{background:#82998c;border:3px solid #edf2ee;border-radius:8px}.ksb-table-scroll::-webkit-scrollbar-track{background:#edf2ee}
-.ksb-hscroll{display:flex;flex:0 0 32px;align-items:center;box-sizing:border-box;max-width:100%;height:32px;padding:3px 2px;background:var(--surface,#fff);border:1px solid var(--line,#c5d3cb);border-radius:7px;margin:3px 0 0}
+.ksb-table-scroll::-webkit-scrollbar{height:14px;width:12px}.ksb-table-scroll::-webkit-scrollbar-thumb{background:#82998c;border:3px solid #edf2ee;border-radius:8px}.ksb-table-scroll::-webkit-scrollbar-track{background:#edf2ee}
+/* A non-auto standard scrollbar color overrides WebKit scrollbar sizing. Scope the reset to tables with a visible custom bar. */
+.ksb-table-scroll.ksb-hscroll-ready{scrollbar-color:auto!important;scrollbar-width:auto!important}
+.ksb-table-scroll.ksb-hscroll-ready::-webkit-scrollbar{height:0!important}
+.ksb-table-scroll.ksb-hscroll-ready::-webkit-scrollbar:horizontal{display:none!important;height:0!important}
+.ksb-table-scroll.ksb-native-x-mask{clip-path:inset(0 0 var(--ksb-native-x) 0);margin-bottom:calc(0px - var(--ksb-native-x))}
+.ksb-hscroll{display:flex;flex:0 0 12px;align-items:center;box-sizing:border-box;max-width:100%;height:12px;padding:0 1px;background:transparent;border:0;border-radius:6px;margin:4px 0}
 .ksb-hscroll[hidden]{display:none!important}
-.ksb-hscroll input{appearance:none;-webkit-appearance:none;display:block;width:100%;min-width:0;height:24px;padding:0;margin:0;background:transparent;cursor:ew-resize;touch-action:pan-y;border:0}
-.ksb-hscroll input::-webkit-slider-runnable-track{height:12px;border:1px solid #bacbc0;border-radius:7px;background:#e5ede8}
-.ksb-hscroll input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:var(--ksb-thumb,36px);height:20px;margin-top:-5px;border:1px solid #3e604b;border-radius:7px;background:#718e7b;box-shadow:0 1px 2px #0002}
-.ksb-hscroll input::-moz-range-track{height:10px;border:1px solid #bacbc0;border-radius:7px;background:#e5ede8}
-.ksb-hscroll input::-moz-range-thumb{width:var(--ksb-thumb,36px);height:20px;border:1px solid #3e604b;border-radius:7px;background:#718e7b}
+.ksb-hscroll input{appearance:none;-webkit-appearance:none;display:block;width:100%;min-width:0;height:12px;padding:0;margin:0;background:transparent;cursor:ew-resize;touch-action:pan-y;border:0}
+.ksb-hscroll input::-webkit-slider-runnable-track{height:8px;box-sizing:border-box;border:1px solid #bacbc0;border-radius:7px;background:#e5ede8}
+.ksb-hscroll input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:var(--ksb-thumb,36px);height:12px;box-sizing:border-box;margin-top:-3px;border:1px solid #3e604b;border-radius:7px;background:#718e7b;box-shadow:none}
+.ksb-hscroll input::-moz-range-track{height:8px;box-sizing:border-box;border:1px solid #bacbc0;border-radius:7px;background:#e5ede8}
+.ksb-hscroll input::-moz-range-thumb{width:var(--ksb-thumb,36px);height:12px;box-sizing:border-box;border:1px solid #3e604b;border-radius:7px;background:#718e7b}
 .ksb-hscroll input:focus-visible{outline:2px solid var(--pri,#3e604b);outline-offset:1px;border-radius:7px}
 .ksb-table-scroll>table{min-width:100%}.ksb-table-scroll .ksb-pin{position:sticky!important;left:var(--ksb-left)!important;z-index:3!important;background:var(--ksb-bg,var(--surface,#fff))!important;background-clip:padding-box;overflow-wrap:anywhere}
 .ksb-table-scroll thead .ksb-pin,.ksb-table-scroll tfoot .ksb-pin{z-index:6!important}.ksb-table-scroll .ksb-pin-edge{box-shadow:2px 0 0 #c5d3cb,5px 0 7px -5px #52675a}
@@ -148,6 +153,10 @@
         if(!w.isConnected){st.observer?.disconnect();return;}
         const max=Math.max(0,w.scrollWidth-w.clientWidth),visible=w.clientWidth>0&&max>2;
         bar.hidden=!visible;range.max=String(max);range.disabled=!visible;
+        w.classList.toggle('ksb-hscroll-ready',visible);
+        // Axis-specific CSS is unavailable in some engines. Clip only a measured remaining horizontal gutter, preserving the vertical track and scrolling.
+        const css=getComputedStyle(w),nativeX=visible?Math.max(0,Math.round(w.offsetHeight-w.clientHeight-parseFloat(css.borderTopWidth||0)-parseFloat(css.borderBottomWidth||0))):0;
+        w.classList.toggle('ksb-native-x-mask',nativeX>0);w.style.setProperty('--ksb-native-x',nativeX+'px');
         bar.style.width=w.getBoundingClientRect().width+'px';
         range.style.setProperty('--ksb-thumb',Math.max(24,(w.clientWidth-6)*w.clientWidth/Math.max(1,w.scrollWidth))+'px');
         st.sync();
