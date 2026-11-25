@@ -1,0 +1,141 @@
+// Presentation only: no network, persistence, data mutation or export handling.
+export function tableUIRuntime() {
+  'use strict';
+  if (window.KSBTableUI) return;
+  const sizes = [10, 20, 30, 50, 100], states = new WeakMap(), remembered = new Map();
+  const style = document.createElement('style');
+  style.textContent = `
+.ksb-table-host{min-width:0;max-width:100%}
+.ksb-table-scroll{max-width:100%;min-width:0;overflow-x:auto!important;position:relative;isolation:isolate;scrollbar-width:auto;scrollbar-color:#82998c #edf2ee}
+.ksb-table-scroll::-webkit-scrollbar{height:14px;width:12px}.ksb-table-scroll::-webkit-scrollbar-thumb{background:#82998c;border:3px solid #edf2ee;border-radius:8px}.ksb-table-scroll::-webkit-scrollbar-track{background:#edf2ee}
+.ksb-table-scroll>table{min-width:100%}.ksb-table-scroll .ksb-pin{position:sticky!important;left:var(--ksb-left)!important;z-index:3!important;background:var(--ksb-bg,var(--surface,#fff))!important;background-clip:padding-box;overflow-wrap:anywhere}
+.ksb-table-scroll thead .ksb-pin,.ksb-table-scroll tfoot .ksb-pin{z-index:6!important}.ksb-table-scroll .ksb-pin-edge{box-shadow:2px 0 0 #c5d3cb,5px 0 7px -5px #52675a}
+.ksb-table-scroll .ksb-unpin{position:static!important;left:auto!important;box-shadow:none!important}
+.ksb-page-hidden{display:none!important}.ksb-ui-pager{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:12px 4px;font:13px/1.4 system-ui;color:var(--ink,#234);max-width:100%}.ksb-ui-pager label{display:flex;align-items:center;gap:6px}.ksb-ui-pager select,.ksb-ui-pager button{font:inherit;padding:6px 9px;border:1px solid #bdcbc3;border-radius:7px;background:var(--surface,#fff);color:inherit;min-height:34px}.ksb-ui-pager nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.ksb-ui-pager button[aria-current]{background:#e1efe5;font-weight:700}.ksb-ui-pager button:disabled{opacity:.45}.ksb-ui-pager [role=status]{font-variant-numeric:tabular-nums}
+@media print{.ksb-ui-pager{display:none!important}.ksb-page-hidden{display:table-row!important}tr[hidden]{display:none!important}.ksb-table-scroll{overflow:visible!important;max-height:none!important}.ksb-table-scroll .ksb-pin{position:static!important;box-shadow:none!important}}
+`;
+  document.head.appendChild(style);
+  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/đ/g, 'd').replace(/[▲▼↕↑↓]/g, '').replace(/\s+/g, ' ').trim();
+  const ownRows = t => Array.from(t.tBodies).flatMap(b => Array.from(b.rows));
+  function grid(section) {
+    const matrix = [], cells = [];
+    Array.from(section?.rows || []).forEach((r, y) => {
+      matrix[y] ||= []; let x = 0;
+      Array.from(r.cells).forEach(cell => {
+        while (matrix[y][x]) x++;
+        const span = cell.colSpan || 1, rs = cell.rowSpan || 1;
+        cells.push({cell, x, span, y});
+        for (let dy = 0; dy < rs; dy++) { matrix[y + dy] ||= []; for (let dx = 0; dx < span; dx++) matrix[y + dy][x + dx] = cell; }
+        x += span;
+      });
+    });
+    return {matrix, cells};
+  }
+  function excluded(t) {
+    return !!t.closest('[contenteditable],.ProseMirror,.tpe,.print-page,.print-document,.print-sheet,.tpl-preview,[data-ksb-table-skip]') || !t.tHead || !t.tBodies.length || t.closest('table') !== t;
+  }
+  function wrap(t) {
+    let w = t.parentElement;
+    if (w.tagName !== 'DIV' && w.tagName !== 'SECTION') { const n = document.createElement('div'); w.insertBefore(n, t); n.appendChild(t); w = n; }
+    // Existing wrappers retain their max-height and all listeners.
+    w.classList.add('ksb-table-scroll');
+    for (let p=w.parentElement; p && p!==document.body; p=p.parentElement) { if(p.matches('.card,.panel,.gx-card,.report-visual-grid,.main,main'))p.classList.add('ksb-table-host'); }
+    return w;
+  }
+  function clearPins(t) {
+    t.querySelectorAll('.ksb-pin,.ksb-pin-edge,.ksb-unpin').forEach(c => { c.classList.remove('ksb-pin','ksb-pin-edge','ksb-unpin'); c.style.removeProperty('--ksb-left'); c.style.removeProperty('--ksb-bg'); });
+  }
+  function pin(t, w) {
+    clearPins(t);
+    const head = grid(t.tHead), last = head.matrix.at(-1) || [];
+    if (t.getBoundingClientRect().width <= w.clientWidth + 2) return;
+    const labels = last.map((_,i) => [...new Set(head.matrix.map(r => norm(r[i]?.textContent)).filter(Boolean))].join(' ')), candidates = [];
+    const code = /^(ma (nv|nhan vien|ung vien|uv|don|tai san|ts)|so (hd|hop dong|don)|ma)$/;
+    const name = /^(ho( va)? ten|ho ten.*|ho va ten.*|nhan su|nhan vien|ung vien|ten ung vien|ten tai san|tai san|ten nhan vien|nguoi lao dong)$/;
+    labels.forEach((s,i) => { if (code.test(s) || name.test(s)) candidates.push(i); });
+    if (!candidates.length) {
+      const i = labels.findIndex(s => /^(cong ty|don vi|phong ban|ten phong ban|ten cong ty|noi dung|chi tieu|ten|loai giay to|giay to|ten chung chi|van bang|so hd|ngay|thoi gian|ma tren may|ban ghi|file|muc|ten dang nhap|ip)$/.test(s));
+      if (i >= 0) candidates.push(i);
+    }
+    if (!candidates.length) return;
+    let selected = [...new Set(candidates)].slice(0, 2);
+    const mobile = w.clientWidth < 600;
+    if (mobile) selected = [selected.find(i => name.test(labels[i])) ?? selected[0]];
+    if (!mobile && selected[0] > 0 && selected[0] <= 2) {
+      const prefix=Array.from({length:selected[0]},(_,i)=>i);
+      if(prefix.every(i=>/^(stt|#|chon)?$/.test(labels[i]) && (head.cells.find(c=>c.x===i&&c.span===1)?.cell.getBoundingClientRect().width||999)<=64)) selected=prefix.concat(selected);
+    }
+    const widths = {};
+    selected.forEach(i => { const h = head.cells.find(c => c.x === i && c.span === 1); widths[i] = h?.cell.getBoundingClientRect().width || 0; });
+    // Do not pin a full-width description at the expense of the scrollable data.
+    while (selected.length > 1 && selected.reduce((s,i) => s + widths[i],0) > w.clientWidth * .55) selected.shift();
+    if (mobile && widths[selected[0]] > w.clientWidth * .55) {
+      const compact=candidates.find(i=>code.test(labels[i]) && (head.cells.find(c=>c.x===i&&c.span===1)?.cell.getBoundingClientRect().width||999)<=w.clientWidth*.5);
+      if(compact!==undefined){selected=[compact];widths[compact]=head.cells.find(c=>c.x===compact&&c.span===1).cell.getBoundingClientRect().width;}
+    }
+    if (!widths[selected[0]] || widths[selected[0]] > w.clientWidth * .72) return;
+    const offsets = {}; let left = 0;
+    selected.forEach(i => { offsets[i] = left; left += widths[i]; });
+    // Disable only legacy horizontal pins not chosen for the mobile/desktop layout.
+    t.querySelectorAll('.fz,.bc-nm,.stickycol').forEach(c => c.classList.add('ksb-unpin'));
+    const parts = [head, ...Array.from(t.tBodies).map(grid), grid(t.tFoot)];
+    parts.forEach(part => part.cells.forEach(({cell,x,span}) => {
+      if (!selected.includes(x) || !Array.from({length:span},(_,i)=>x+i).every(i=>selected.includes(i))) return;
+      cell.classList.remove('ksb-unpin'); cell.classList.add('ksb-pin');
+      if (x + span - 1 === selected.at(-1)) cell.classList.add('ksb-pin-edge');
+      cell.style.setProperty('--ksb-left',offsets[x]+'px');
+      let bg = getComputedStyle(cell).backgroundColor;
+      if (bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') bg = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#fff';
+      cell.style.setProperty('--ksb-bg',bg);
+    }));
+  }
+  function pager(t,w) {
+    // Model pagination already supplies all data to exports; never paginate twice.
+    if (t.hasAttribute('data-ksb-model-page') || w.nextElementSibling?.matches('.nv-pagination,.ksb-model-pager')) return;
+    const all = ownRows(t), eligible = all.filter(r => !r.hidden && r.style.display !== 'none');
+    // Body rowspans/group rows must remain together; don't split a grouped/editor table.
+    if (all.some(r => Array.from(r.cells).some(c => c.rowSpan > 1)) || (t.closest('.nd-wrap') && t.querySelector('tbody input,tbody select,tbody textarea')) || t.querySelector('tbody [contenteditable]')) return;
+    let st = states.get(t);
+    if (!st && eligible.length <= 20) return;
+    if (!st) {
+      const key=w.id ? location.hash+':'+w.id : '';
+      const prev=key && remembered.get(key);
+      st = {key,page:prev?.page||1,size:prev?.size||20,signature:prev?.signature||'',bar:document.createElement('div')}; states.set(t,st);
+      if(key){remembered.set(key,{page:st.page,size:st.size,signature:st.signature});if(remembered.size>100)remembered.delete(remembered.keys().next().value);}
+      st.bar.className='ksb-ui-pager'; w.after(st.bar);
+      st.bar.addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b&&!b.disabled){st.page=+b.dataset.page;draw();pin(t,w);}});
+      st.bar.addEventListener('change',e=>{if(e.target.matches('select')){st.size=+e.target.value;st.page=1;draw();pin(t,w);}});
+    }
+    const signature = eligible.map(r=>r.getAttribute('data-row') || r.getAttribute('data-id') || Array.from(r.cells).slice(0,2).map(c=>c.textContent).join('|')).join('\u001f');
+    if (st.signature !== signature) {st.signature=signature;st.page=1;}
+    function draw() {
+      ownRows(t).forEach(r=>{if(r.hidden||r.style.display==='none')r.classList.remove('ksb-page-hidden');});
+      const rows = ownRows(t).filter(r=>!r.hidden&&r.style.display!=='none'), n=rows.length, pages=Math.max(1,Math.ceil(n/st.size));
+      st.page=Math.min(Math.max(1,st.page),pages); if(st.key)remembered.set(st.key,{page:st.page,size:st.size,signature:st.signature}); const start=(st.page-1)*st.size;
+      rows.forEach((r,i)=>r.classList.toggle('ksb-page-hidden',i<start||i>=start+st.size));
+      const b=(p,label,current=false,disabled=false)=>`<button type="button" data-page="${p}" ${current?'aria-current="page"':''} ${disabled?'disabled':''}>${label}</button>`;
+      const nums=[1,...Array.from({length:5},(_,i)=>st.page-2+i),pages].filter((x,i,a)=>x>=1&&x<=pages&&a.indexOf(x)===i).sort((a,b)=>a-b);
+      st.bar.innerHTML='<label>Số dòng/trang <select aria-label="Số dòng mỗi trang">'+sizes.map(s=>`<option ${s===st.size?'selected':''}>${s}</option>`).join('')+'</select></label>'+`<span role="status" aria-live="polite">Hiển thị ${n?start+1:0}–${Math.min(n,start+st.size)} / ${n} bản ghi</span>`+(pages>1?'<nav aria-label="Phân trang bảng">'+b(st.page-1,'‹ Trước',false,st.page===1)+nums.map((p,i)=>(i&&p-nums[i-1]>1?' … ':'')+b(p,p,p===st.page)).join('')+b(st.page+1,'Sau ›',false,st.page===pages)+'</nav>':'');
+    }
+    draw();
+  }
+  function enhance(t) { if(excluded(t))return; const w=wrap(t); pager(t,w); pin(t,w); }
+  let pending=false;
+  function refresh() { pending=false; document.querySelectorAll('table').forEach(enhance); }
+  function schedule() { if(!pending){pending=true;requestAnimationFrame(refresh);} }
+  const observer = new MutationObserver(ms=>{
+    if(ms.some(m=>m.type==='attributes' ? ['TR','COL'].includes(m.target.tagName) : !m.target.closest?.('.ksb-ui-pager') && Array.from(m.addedNodes).some(n=>n.nodeType===1&&!n.matches?.('.ksb-ui-pager,style')))) schedule();
+  });
+  function start(){observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','style']});schedule();}
+  window.KSBTableUI={refresh,schedule,grid};
+  window.addEventListener('resize',schedule);
+  // Existing filters/sorts keep their own data logic; only reset the display page.
+  document.addEventListener('input',e=>{if(!e.target.closest('.ksb-ui-pager,.nv-pagination')&&!e.target.closest('tbody')){remembered.forEach(st=>st.page=1);document.querySelectorAll('table').forEach(t=>{const st=states.get(t);if(st)st.page=1;});schedule();}});
+  document.addEventListener('change',e=>{if(!e.target.closest('.ksb-ui-pager,.nv-pagination')&&!e.target.closest('tbody')){remembered.forEach(st=>st.page=1);document.querySelectorAll('table').forEach(t=>{const st=states.get(t);if(st)st.page=1;});schedule();}});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+}
+export function withTableUI(html) {
+  const at = html.lastIndexOf('</body>');
+  if (at < 0) return html;
+  return html.slice(0, at) + '<script>(' + tableUIRuntime.toString() + ')();</script>' + html.slice(at);
+}

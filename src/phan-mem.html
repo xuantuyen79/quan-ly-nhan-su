@@ -6087,6 +6087,10 @@ if (typeof module !== 'undefined') module.exports = XW;
       h += '<nav class="nv-page-nav" aria-label="' + (opts.ccPaginationId ? 'Phân trang bảng chấm công' : 'Phân trang danh sách nhân sự') + '">' + button(st.page - 1, '‹ Trước', 'Trang trước', st.page === 1) + nvPageNumbers(st.page, pg.pages).map(function (n) { return n === '…' ? '<span class="muted" aria-hidden="true">…</span>' : button(n, n); }).join('') + button(st.page + 1, 'Sau ›', 'Trang sau', st.page === pg.pages) + '</nav>';
     } return h;
   }
+  function tbFilterKey(rows) {
+    // Stable membership without serializing a company object once for every employee.
+    return rows.map(function (r) { if (!r || typeof r !== 'object') return String(r); return Object.keys(r).map(function (k) { var v = r[k]; if (v == null || typeof v !== 'object') return k + ':' + String(v); return k + ':' + String(v.id || v.ma || v['Mã NV'] || v['Số hợp đồng'] || v['Số đơn'] || ''); }).join('|'); }).join('\u001f');
+  }
   function table(id, cols, rows, opts) {
     opts = opts || {};
     var st = TB[id] = TB[id] || { sort: null, limit: opts.limit || 200 };
@@ -6094,9 +6098,11 @@ if (typeof module !== 'undefined') module.exports = XW;
     var list = rows.slice(), all = cols; cols = cols.filter(function (c) { return !c.hide; }); // hide: chỉ xuất Excel, không hiện
     if (st.sort && cols[st.sort.i]) { var c0 = cols[st.sort.i], sv = c0.s || c0.f; list.sort(function (a, b) { return cmp(sv(a), sv(b)) * st.sort.dir; }); }
     st.cur = { cols: all, list: list, title: opts.title || '', note: opts.note || '' };
-    var nvPage = opts.nvPagination ? nvPageSlice(list, st, opts.nvFilterKey) : null;
+    // Keep existing NV/attendance controls; use the same pager for other shared tables.
+    if (!opts.nvPagination) { opts = Object.assign({}, opts, { nvPagination: true, ccPaginationId: id, pageUnit: 'bản ghi', nvFilterKey: tbFilterKey(rows), ksbSharedPaging: true }); }
+    var nvPage = nvPageSlice(list, st, opts.nvFilterKey);
     var shown = nvPage ? nvPage.rows : list.slice(0, st.limit);
-    var h = '<div class="tbl-wrap"' + (opts.tall ? ' style="max-height:70vh"' : '') + '><table class="tbl' + (opts.cls ? ' ' + opts.cls : '') + '"><thead><tr>' + cols.map(function (c, i) {
+    var h = '<div class="tbl-wrap"' + (opts.tall ? ' style="max-height:70vh"' : '') + '><table data-ksb-model-page class="tbl' + (opts.cls ? ' ' + opts.cls : '') + '"><thead><tr>' + cols.map(function (c, i) {
       var arrow = st.sort && st.sort.i === i ? (st.sort.dir > 0 ? ' ▲' : ' ▼') : '';
       return '<th class="' + (c.r ? 'r ' : '') + (c.nosort ? '' : 'sortable') + '"' + (c.nosort ? '' : ' data-tb-sort="' + id + '|' + i + '"') + (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + c.t + arrow + '</th>';
     }).join('') + '</tr></thead><tbody>' + (shown.length ? shown.map(function (r) {
@@ -6106,25 +6112,30 @@ if (typeof module !== 'undefined') module.exports = XW;
     else h += '<div class="tb-foot"><span class="muted">' + fmtInt(list.length) + ' dòng' + (list.length > shown.length ? ', đang hiện ' + fmtInt(shown.length) : '') + '</span>' +
       (list.length > shown.length ? '<button class="btn btn-sm" data-act="tb-more" data-id="' + id + '">Hiện thêm ' + fmtInt(Math.min(500, list.length - shown.length)) + ' dòng</button>' : '') +
       (opts.noExport ? '' : '<button class="btn btn-sm" data-act="tb-export" data-id="' + id + '">' + ic('xuat') + 'Xuất Excel</button>') + '</div>';
+    if (opts.ksbSharedPaging) { st.redraw = function () { var box = document.querySelector('[data-ksb-shared-table="' + id + '"]'); if (box) box.outerHTML = table(id, all, rows, opts); }; h = '<div data-ksb-shared-table="' + esc(id) + '">' + h + '</div>'; }
     return h;
+  }
+  function tbRefreshUi(st, control) {
+    if (st.redraw && (control.closest('.modal-bg,.drawer') || !REFRESH)) st.redraw();
+    else if (REFRESH) REFRESH();
   }
   document.addEventListener('click', function (e) {
     var th = e.target.closest('[data-tb-sort]'); if (!th) return;
     var p = th.getAttribute('data-tb-sort').split('|'), st = TB[p[0]], i = +p[1];
     st.sort = st.sort && st.sort.i === i ? (st.sort.dir > 0 ? { i: i, dir: -1 } : null) : { i: i, dir: 1 };
-    if (REFRESH) REFRESH();
+    tbRefreshUi(st, th);
   });
   document.addEventListener('change', function (e) {
     var id = e.target.getAttribute('data-cc-page-table');
     if (e.target.tagName !== 'SELECT' || !id || !TB[id]) return;
     TB[id].pageSize = +e.target.value; TB[id].page = 1;
-    if (REFRESH) REFRESH();
+    tbRefreshUi(TB[id], e.target);
   });
   document.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-cc-page-table][data-nv-page]');
     if (!b || b.disabled) return;
     var st = TB[b.getAttribute('data-cc-page-table')]; if (!st) return;
-    st.page = +b.getAttribute('data-nv-page'); if (REFRESH) REFRESH();
+    st.page = +b.getAttribute('data-nv-page'); tbRefreshUi(st, b);
   });
   ACTS['tb-more'] = function (a, id) { TB[id].limit += 500; if (REFRESH) REFRESH(); };
   ACTS['tb-export'] = function (a, id) { var c = TB[id] && TB[id].cur; if (!c) return; exportRows(c.title || 'Du lieu', c.cols, c.list, c.note); };
