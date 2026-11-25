@@ -2006,7 +2006,7 @@ table.bc td.today button{background:color-mix(in srgb,var(--dom,#F2A93B) 12%,tra
 .np-si.wait{background:var(--warn-soft)}.np-si em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--warn)}
 .np-btns{display:inline-flex;gap:6px}.np-base{height:30px;width:64px;padding:0 6px}.np-low{color:var(--warn)}
 .tl-tabs+.filters{margin-top:0}
-/* 0.3.1 – bước 4: Chấm công Wi‑Fi */
+/* 0.3.1 – bước 4: Bảng Chấm công */
 .wf-demo{margin:0 0 14px;background:linear-gradient(120deg,var(--pri-soft),var(--surface))}.wf-demo-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}.wf-demo-h svg{color:var(--pri);flex:none;margin-top:2px}.wf-demo h3{margin:0 0 4px}.wf-demo p{margin:0;color:var(--ink-2);font-size:13.5px}
 .wf-card{margin:0 0 14px}.wf-card.on{border-color:color-mix(in srgb,var(--pri) 35%,var(--line))}
 .wf-f{grid-template-columns:2fr 1fr;gap:10px}
@@ -4330,7 +4330,7 @@ var HRR = (function (HR) {
     // 0.3.2: nhân viên báo sai công tháng đã chốt (trang chấm công trên điện thoại → Báo sai)
     var wcong = unit.wf && unit.wf.cong;
     if (wcong) Object.keys(wcong).sort().forEach(function (ym) { var c = wcong[ym] || {}; Object.keys(c).forEach(function (ma) { var x = c[ma]; if (!x || x.xn !== 2) return;
-      push('cong_sai', 'gap', ma, 'Báo sai công tháng ' + HR.ymLabel(ym) + (x.ph ? ': "' + String(x.ph).slice(0, 120) + '"' : ''), 'Nhân viên bấm "Báo sai" khi xem công trên điện thoại' + (x.at ? ' lúc ' + x.at : '') + '. Kiểm tra ô công trên Tổng hợp công, sửa tay nếu sai (ghi lý do), rồi gửi lại công cho nhân viên xác nhận.', { k: ym + '|' + (x.at || ''), ym: ym, sources: ['Chấm công Wi‑Fi', 'Tổng hợp công ' + HR.ymLabel(ym)] });
+      push('cong_sai', 'gap', ma, 'Báo sai công tháng ' + HR.ymLabel(ym) + (x.ph ? ': "' + String(x.ph).slice(0, 120) + '"' : ''), 'Nhân viên bấm "Báo sai" khi xem công trên điện thoại' + (x.at ? ' lúc ' + x.at : '') + '. Kiểm tra ô công trên Tổng hợp công, sửa tay nếu sai (ghi lý do), rồi gửi lại công cho nhân viên xác nhận.', { k: ym + '|' + (x.at || ''), ym: ym, sources: ['Bảng Chấm công', 'Tổng hợp công ' + HR.ymLabel(ym)] });
     }); });
     // 16: lưu trữ hồ sơ người đã nghỉ (Luật BVDLCN 2025)
     var lefts = Object.keys(left).map(function (k) { return left[k]; });
@@ -4570,7 +4570,7 @@ if (typeof module !== 'undefined') module.exports = XW;
 
   /* Bản rút gọn (chính thức, không máy chủ): các phần cần máy chủ riêng chỉ có ở bản đầy đủ */
   var FULL_ONLY = {
-    ccwifi: ['Chấm công Wi‑Fi', 'Nhân viên chấm công bằng điện thoại khi kết nối Wi‑Fi văn phòng hoặc quét mã QR động; lượt chấm tự về Tổng hợp công.'],
+    ccwifi: ['Bảng Chấm công', 'Nhân viên chấm công bằng WiFi, GPS hoặc mã QR trên điện thoại; lượt chấm tự về Tổng hợp công.'],
     appnv: ['Ứng dụng nhân viên', 'Mỗi nhân viên có tài khoản trên app: chấm công, gửi đơn nghỉ, đi muộn – về sớm, xem công, phiếu lương, học khóa đào tạo, nhận thông báo.'],
     phanquyen: ['Phân quyền tài khoản', 'Nhiều người cùng quản trị: trưởng phòng, kế toán, nhân sự – mỗi người một tài khoản, chỉ thấy phần được giao.'],
     bcdk: ['Gửi báo cáo định kỳ', 'Máy chủ tự gửi báo cáo tóm tắt hằng ngày, tuần, tháng tới chuông thông báo của người nhận.']
@@ -4706,7 +4706,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     { id: 'hoso', g: 'ns', t: 'Hồ sơ nhân sự', st: 'ok', k: 'giay to bang cap ly lich' },
     { id: 'hd', g: 'ns', t: 'Hợp đồng', st: 'ok', k: 'hop dong lao dong het han' },
     { id: 'cc', g: 'tg', t: 'Tổng hợp công', st: 'ok', k: 'cham cong bang cong' },
-    { id: 'ccwifi', g: 'tg', t: 'Chấm công Wi‑Fi', st: 'ok', k: 'cham cong wifi qr dien thoai' },
+    { id: 'ccwifi', g: 'tg', t: 'Bảng Chấm công', st: 'ok', k: 'cham cong wifi qr dien thoai' },
     { id: 'np', g: 'tg', t: 'Nghỉ phép', st: 'ok', k: 'don nghi phep quy phep' },
     { id: 'thietlapcc', g: 'tg', t: 'Thiết lập chấm công', st: 'ok', k: 'ca lam gio vao ra di muon', par: 1 }, // 11/11 09:12 anh: 3 module con
     { id: 'tlchung', g: 'tg', p: 'thietlapcc', t: 'Thiết lập chung', st: 'ok', k: 'thiet lap chung ky hieu cong lich nghi le tet' },
@@ -4828,7 +4828,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       '<div class="link-row" style="margin-top:22px"><button class="btn btn-primary" data-act="feedback">Góp ý cho phần này</button></div></div>' +
       '<div class="soon-side">' + now + '<div class="card"><h3>Lộ trình xây dựng</h3>' + roadHtml(m.st) + '</div></div></div>';
   }
-  // 08/11: bỏ trang Chấm công Wi‑Fi cũ (bản thử 0.2.1, có 'Lộ trình xây dựng', 'Khi ghép vào phần mềm') – trang mới ở chamcong.js
+  // 08/11: bỏ trang Bảng Chấm công cũ (bản thử 0.2.1, có 'Lộ trình xây dựng', 'Khi ghép vào phần mềm') – trang mới ở chamcong.js
 
   /* ---------------- Tìm nhanh (Ctrl K) ---------------- */
   var cmdEl = null;
@@ -6053,7 +6053,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   var TB = {};
   function cmp(a, b) { if (a === b) return 0; if (a === null || a === undefined || a === '') return 1; if (b === null || b === undefined || b === '') return -1; if (typeof a === 'number' && typeof b === 'number') return a - b; return String(a).localeCompare(String(b), 'vi', { numeric: true }); }
   function cellText(c, r) { var v = c.f(r); if (c.sens && !S.showSens) v = HR.maskValue(v); if (isIso(v)) return vn(v); return v === null || v === undefined ? '' : nfmt(v); }
-  // Opt-in pagination for Danh sách nhân sự; exports retain the complete sorted list.
+  // Opt-in pagination shared by personnel and attendance; exports retain the complete sorted list.
   function nvPageSlice(list, st, filterKey) {
     if ([10, 20, 30, 50, 100].indexOf(st.pageSize) < 0) st.pageSize = 20;
     if (st.filterKey !== filterKey) { st.page = 1; st.filterKey = filterKey; }
@@ -6068,12 +6068,15 @@ if (typeof module !== 'undefined') module.exports = XW;
     if (numbers.indexOf(pages) < 0) numbers.push(pages);
     var out = []; numbers.forEach(function (n, i) { if (i && n - numbers[i - 1] > 1) out.push('…'); out.push(n); }); return out;
   }
-  function nvPagerHtml(st, pg) {
-    var h = '<label class="nv-page-size">Số dòng/trang <select class="input" id="nvPageSize" aria-label="Số dòng mỗi trang">' + [10, 20, 30, 50, 100].map(function (n) { return '<option value="' + n + '"' + (st.pageSize === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label>' +
-      '<span class="muted" role="status" aria-live="polite">Hiển thị ' + fmtInt(pg.start) + '–' + fmtInt(pg.end) + ' / ' + fmtInt(pg.total) + ' nhân viên</span>';
+  function nvPagerHtml(st, pg, opts) {
+    opts = opts || {};
+    var tableAttr = opts.ccPaginationId ? ' data-cc-page-table="' + esc(opts.ccPaginationId) + '"' : '';
+    var sizeId = opts.ccPaginationId ? 'ccPageSize-' + opts.ccPaginationId : 'nvPageSize';
+    var h = '<label class="nv-page-size">Số dòng/trang <select class="input" id="' + esc(sizeId) + '"' + tableAttr + ' aria-label="Số dòng mỗi trang">' + [10, 20, 30, 50, 100].map(function (n) { return '<option value="' + n + '"' + (st.pageSize === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label>' +
+      '<span class="muted" role="status" aria-live="polite">Hiển thị ' + fmtInt(pg.start) + '–' + fmtInt(pg.end) + ' / ' + fmtInt(pg.total) + ' ' + esc(opts.pageUnit || 'nhân viên') + '</span>';
     if (pg.pages > 1) {
-      var button = function (n, text, label, disabled) { return '<button type="button" class="btn btn-sm' + (n === st.page && !label ? ' btn-primary' : '') + '" data-nv-page="' + n + '" aria-label="' + (label || 'Trang ' + n) + '"' + (n === st.page && !label ? ' aria-current="page"' : '') + (disabled ? ' disabled' : '') + '>' + text + '</button>'; };
-      h += '<nav class="nv-page-nav" aria-label="Phân trang danh sách nhân sự">' + button(st.page - 1, '‹ Trước', 'Trang trước', st.page === 1) + nvPageNumbers(st.page, pg.pages).map(function (n) { return n === '…' ? '<span class="muted" aria-hidden="true">…</span>' : button(n, n); }).join('') + button(st.page + 1, 'Sau ›', 'Trang sau', st.page === pg.pages) + '</nav>';
+      var button = function (n, text, label, disabled) { return '<button type="button" class="btn btn-sm' + (n === st.page && !label ? ' btn-primary' : '') + '"' + tableAttr + ' data-nv-page="' + n + '" aria-label="' + (label || 'Trang ' + n) + '"' + (n === st.page && !label ? ' aria-current="page"' : '') + (disabled ? ' disabled' : '') + '>' + text + '</button>'; };
+      h += '<nav class="nv-page-nav" aria-label="' + (opts.ccPaginationId ? 'Phân trang bảng chấm công' : 'Phân trang danh sách nhân sự') + '">' + button(st.page - 1, '‹ Trước', 'Trang trước', st.page === 1) + nvPageNumbers(st.page, pg.pages).map(function (n) { return n === '…' ? '<span class="muted" aria-hidden="true">…</span>' : button(n, n); }).join('') + button(st.page + 1, 'Sau ›', 'Trang sau', st.page === pg.pages) + '</nav>';
     } return h;
   }
   function table(id, cols, rows, opts) {
@@ -6091,7 +6094,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     }).join('') + '</tr></thead><tbody>' + (shown.length ? shown.map(function (r) {
       return '<tr' + (opts.rowAttr ? opts.rowAttr(r) : '') + '>' + cols.map(function (c) { return '<td class="' + (c.r ? 'r ' : '') + (c.mono ? 'mono ' : '') + (c.wrap ? 'wrap ' : '') + (c.cls || '') + '">' + (c.h ? c.h(r) : esc(cellText(c, r))) + '</td>'; }).join('') + '</tr>';
     }).join('') : '<tr><td colspan="' + cols.length + '" class="muted">' + (opts.empty || 'Không có dòng nào.') + '</td></tr>') + '</tbody></table></div>';
-    if (nvPage) h += '<div class="tb-foot nv-pagination">' + nvPagerHtml(st, nvPage) + (opts.noExport ? '' : '<button class="btn btn-sm" data-act="tb-export" data-id="' + id + '">' + ic('xuat') + 'Xuất Excel</button>') + '</div>';
+    if (nvPage) h += '<div class="tb-foot nv-pagination">' + nvPagerHtml(st, nvPage, opts) + (opts.noExport ? '' : '<button class="btn btn-sm" data-act="tb-export" data-id="' + id + '">' + ic('xuat') + 'Xuất Excel</button>') + '</div>';
     else h += '<div class="tb-foot"><span class="muted">' + fmtInt(list.length) + ' dòng' + (list.length > shown.length ? ', đang hiện ' + fmtInt(shown.length) : '') + '</span>' +
       (list.length > shown.length ? '<button class="btn btn-sm" data-act="tb-more" data-id="' + id + '">Hiện thêm ' + fmtInt(Math.min(500, list.length - shown.length)) + ' dòng</button>' : '') +
       (opts.noExport ? '' : '<button class="btn btn-sm" data-act="tb-export" data-id="' + id + '">' + ic('xuat') + 'Xuất Excel</button>') + '</div>';
@@ -6102,6 +6105,18 @@ if (typeof module !== 'undefined') module.exports = XW;
     var p = th.getAttribute('data-tb-sort').split('|'), st = TB[p[0]], i = +p[1];
     st.sort = st.sort && st.sort.i === i ? (st.sort.dir > 0 ? { i: i, dir: -1 } : null) : { i: i, dir: 1 };
     if (REFRESH) REFRESH();
+  });
+  document.addEventListener('change', function (e) {
+    var id = e.target.getAttribute('data-cc-page-table');
+    if (e.target.tagName !== 'SELECT' || !id || !TB[id]) return;
+    TB[id].pageSize = +e.target.value; TB[id].page = 1;
+    if (REFRESH) REFRESH();
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-cc-page-table][data-nv-page]');
+    if (!b || b.disabled) return;
+    var st = TB[b.getAttribute('data-cc-page-table')]; if (!st) return;
+    st.page = +b.getAttribute('data-nv-page'); if (REFRESH) REFRESH();
   });
   ACTS['tb-more'] = function (a, id) { TB[id].limit += 500; if (REFRESH) REFRESH(); };
   ACTS['tb-export'] = function (a, id) { var c = TB[id] && TB[id].cur; if (!c) return; exportRows(c.title || 'Du lieu', c.cols, c.list, c.note); };
@@ -6126,7 +6141,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     Object.keys(map).forEach(function (id) {
       var el = $('#' + id); if (!el) return;
       var ev = el.tagName === 'INPUT' && el.type !== 'checkbox' ? 'input' : 'change';
-      el.addEventListener(ev, function () { PS[page][map[id]] = el.type === 'checkbox' ? el.checked : el.value; Object.keys(TB).forEach(function (k) { if (k.indexOf(page) === 0) TB[k].limit = 200; }); refresh(); });
+      el.addEventListener(ev, function () { PS[page][map[id]] = el.type === 'checkbox' ? el.checked : el.value; Object.keys(TB).forEach(function (k) { if (k.indexOf(page) === 0) TB[k].limit = 200; }); if (page === 'bc') bcResetPages(); refresh(); });
     });
   }
   function pageHead(t, sub, right) { return '<div class="page-head"><div><h1>' + t + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (right ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + right + '</div>' : '') + '</div>'; }
@@ -7998,7 +8013,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       st === 'on' ? '<button class="btn" data-ac="reset">Đặt lại PIN</button><button class="btn" data-ac="lock">Khóa tài khoản</button>' :
         (left ? '' : '<button class="btn" data-ac="unlock">Mở khóa</button><button class="btn" data-ac="reset">Đặt lại PIN</button>');
     var m = modal('Tài khoản nhân viên – ' + e['Họ và tên'], isMulti() ? shortUnit(u.name) : '',
-      '<div class="notice">' + ic('appnv') + '<div>Nhân viên đăng nhập <b>trang chấm công trên điện thoại</b> (<a href="#ccwifi">Chấm công Wi‑Fi</a>) bằng <b>Mã NV + mã PIN 6 số</b> để chấm công, xem và xác nhận công, gửi đơn nghỉ. Phiếu lương sẽ có khi làm xong Module Lương.' + (wfOn(u) ? '' : '<br><b>Công ty chưa kết nối máy chủ chấm công:</b> PIN chỉ lưu trong phần mềm. Kết nối xong, bấm <b>Đặt lại PIN</b> để gửi PIN mới lên máy chủ.') + (ccExc(ccOf(u), id, e['Phòng ban']).nc ? '<br><b>' + esc(shortName(e['Họ và tên'])) + ' thuộc diện không cần chấm công</b> (Thiết lập chấm công → Ngoại lệ): vẫn dùng tài khoản để xem công, phiếu lương, gửi đơn; không bắt buộc bấm Vào ca / Ra ca.' : '') + '</div></div>' + info +
+      '<div class="notice">' + ic('appnv') + '<div>Nhân viên đăng nhập <b>trang chấm công trên điện thoại</b> (<a href="#ccwifi">Bảng Chấm công</a>) bằng <b>Mã NV + mã PIN 6 số</b> để chấm công, xem và xác nhận công, gửi đơn nghỉ. Phiếu lương sẽ có khi làm xong Module Lương.' + (wfOn(u) ? '' : '<br><b>Công ty chưa kết nối máy chủ chấm công:</b> PIN chỉ lưu trong phần mềm. Kết nối xong, bấm <b>Đặt lại PIN</b> để gửi PIN mới lên máy chủ.') + (ccExc(ccOf(u), id, e['Phòng ban']).nc ? '<br><b>' + esc(shortName(e['Họ và tên'])) + ' thuộc diện không cần chấm công</b> (Thiết lập chấm công → Ngoại lệ): vẫn dùng tài khoản để xem công, phiếu lương, gửi đơn; không bắt buộc bấm Vào ca / Ra ca.' : '') + '</div></div>' + info +
       '<div id="pinOut"></div><div class="link-row" style="justify-content:flex-end">' + btns + '<button class="btn" data-close>Đóng</button></div>', true);
     function save(msg) { u.acc = u.acc || {}; saveUnits(); log('Tài khoản ' + id + ' (' + u.name + '): ' + msg); }
     m.addEventListener('click', function (ev) {
@@ -8064,7 +8079,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       var stt = real ? (err ? '<span class="tag tag-bad">Chưa kết nối được máy chủ</span>' : '<span class="tag tag-ok">Đã kết nối máy chủ</span>') : g.us[0].source === 'sample' ? '<span class="tag tag-info">Bản thử – máy chủ dùng chung</span>' : '<span class="tag tag-warn">Chưa có máy chủ chấm công</span>';
       var names = g.us.map(function (u) { return esc(shortUnit(u.name)); }).join(' · ');
       return '<div class="anv-co">' + (link ? '<img class="anv-qr" alt="Mã QR mở app nhân viên" src="' + esc(real ? link + '/qr-app.svg' : WF_DEMO + '/api/demo/qr?u=nv') + '" onerror="this.style.visibility=\'hidden\'">' : '<div class="anv-qr ph">' + ic('appnv', 30) + '</div>') +
-        '<div class="anv-ci"><b>' + names + '</b> ' + stt + (g.us.length > 1 ? ' <span class="faint" style="font-size:12px">dùng chung một đường dẫn</span>' : '') + (link ? '<div class="anv-link"><span class="mono">' + esc(link.replace(/^https?:\/\//, '')) + '</span><button class="btn btn-sm" data-act="anv-copy" data-id="' + esc(link) + '">' + ic('td_copy', 14) + 'Sao chép</button><a class="btn btn-sm" href="' + esc(link) + '" target="_blank" rel="noopener">Mở thử</a></div><p>Nhân viên mở đường dẫn hoặc quét mã QR trên điện thoại, đăng nhập bằng <b>Mã NV + mã PIN</b>. Có thể thêm ra màn hình chính như một ứng dụng.</p>' : '<p>Công ty chưa kết nối máy chủ chấm công nên nhân viên chưa đăng nhập được – tài khoản cấp ở đây sẽ dùng được ngay khi kết nối (Chấm công → Chấm công Wi‑Fi).</p>') +
+        '<div class="anv-ci"><b>' + names + '</b> ' + stt + (g.us.length > 1 ? ' <span class="faint" style="font-size:12px">dùng chung một đường dẫn</span>' : '') + (link ? '<div class="anv-link"><span class="mono">' + esc(link.replace(/^https?:\/\//, '')) + '</span><button class="btn btn-sm" data-act="anv-copy" data-id="' + esc(link) + '">' + ic('td_copy', 14) + 'Sao chép</button><a class="btn btn-sm" href="' + esc(link) + '" target="_blank" rel="noopener">Mở thử</a></div><p>Nhân viên mở đường dẫn hoặc quét mã QR trên điện thoại, đăng nhập bằng <b>Mã NV + mã PIN</b>. Có thể thêm ra màn hình chính như một ứng dụng.</p>' : '<p>Công ty chưa kết nối máy chủ chấm công nên nhân viên chưa đăng nhập được – tài khoản cấp ở đây sẽ dùng được ngay khi kết nối (Chấm công → Bảng Chấm công).</p>') +
         (err ? '<p class="down" style="font-size:12.5px">' + esc(err) + '</p>' : '') + '</div></div>';
     }).join('');
     var tiles = [['all', rows.length, 'tài khoản & người chưa cấp', ''], ['on', n.on, 'đang dùng', 'ok'], ['off', n.off, 'chưa cấp tài khoản', n.off ? 'warn' : ''], ['lock', n.lock, 'đã khóa', ''], ['never', n.never, 'chưa đăng nhập lần nào', n.never ? 'info' : ''], ['leftOn', n.leftOn, 'đã nghỉ việc còn mở', n.leftOn ? 'bad' : '']];
@@ -8499,7 +8514,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   function ksbPrintHtml(u, e, today) {
     var id = e['Mã NV'], degrees = ksbQtRows(u, id, 'Học vấn'), certs = ksbQtRows(u, id, 'Chứng chỉ'), jobs = ksbQtRows(u, id, 'Công tác trước').slice().sort(function (a, b) { return cmp(b['Đến ngày'] || ymKey(b['Đến tháng']) || '', a['Đến ngày'] || ymKey(a['Đến tháng']) || ''); });
     var html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Hồ sơ ' + esc(id) + '</title><style>' +
-      '@page{size:A4;margin:14mm 15mm}*{box-sizing:border-box}body{margin:0;color:#182c43;font:10pt/1.35 Arial,sans-serif;background:#fff}header{border-bottom:2px solid #195ba4;padding-bottom:9px;display:flex;align-items:center;gap:18px}.logo{max-width:52mm;min-width:25mm;font-size:11pt;font-weight:700;color:#195ba4}.logo img{display:block;width:38mm;height:18mm;object-fit:contain;object-position:left center}.company{font-weight:700;font-size:10pt}.internal{font-size:8pt;letter-spacing:1px;color:#5e7186;margin-top:3px}.title{text-align:center;margin:10px 0}.title h1{font-size:17pt;color:#174e80;margin:4px 0 8px}.title p{margin:0;color:#526b84;font-size:9pt}h2{font-size:11pt;color:#174e80;border-bottom:1px solid #9bb8d5;padding-bottom:5px;margin:10px 0 5px;break-after:avoid-page}h3{font-size:10pt;margin:9px 0 5px;break-after:avoid-page}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:9pt;margin-bottom:7px}th,td{border:1px solid #cedae5;padding:4px 6px;vertical-align:top;overflow-wrap:anywhere;white-space:pre-wrap}th{background:#edf3f8;color:#355674;font-weight:700;text-align:left}thead{display:table-header-group}tr{break-inside:avoid-page;page-break-inside:avoid}tbody tr{orphans:2;widows:2}.kv th{width:19%}.kv td{width:31%;font-weight:600}.empty{color:#65778a;margin:6px 0 9px;font-size:9pt}p{orphans:3;widows:3}.sign{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;align-content:start;margin-top:14px;break-inside:avoid-page;page-break-inside:avoid;min-height:150px;padding-bottom:70px;border-bottom:1px solid #d2dce6;text-align:center}.sign .sign-date{grid-column:2;grid-row:1;font-size:9pt}.sign .sign-person{grid-column:1;grid-row:2}.sign .sign-reviewer{grid-column:2;grid-row:2}.sign b{font-size:9pt}.sign p{font-size:9pt;margin:5px 0}footer{border-top:1px solid #d2dce6;padding-top:6px;color:#64778c;font-size:8pt;margin-top:10px}@media screen{body{max-width:210mm;padding:14mm 15mm;margin:auto;box-shadow:0 1px 15px #ccd4df}}@media print{body{padding:0;box-shadow:none}}</style></head><body>' +
+      '@page{size:A4;margin:14mm 15mm}*{box-sizing:border-box}body{margin:0;color:#182c43;font:10pt/1.35 Arial,sans-serif;background:#fff}header{border-bottom:2px solid #195ba4;padding-bottom:9px;display:flex;align-items:center;gap:18px}.logo{max-width:52mm;min-width:25mm;font-size:11pt;font-weight:700;color:#195ba4}.logo img{display:block;width:38mm;height:18mm;object-fit:contain;object-position:left center}.company{font-weight:700;font-size:10pt}.internal{font-size:8pt;letter-spacing:1px;color:#5e7186;margin-top:3px}.title{text-align:center;margin:10px 0}.title h1{font-size:17pt;color:#174e80;margin:4px 0 8px}.title p{margin:0;color:#526b84;font-size:9pt}h2{font-size:11pt;color:#174e80;border-bottom:1px solid #9bb8d5;padding-bottom:5px;margin:10px 0 5px;break-after:avoid-page}h3{font-size:10pt;margin:9px 0 5px;break-after:avoid-page}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:9pt;margin-bottom:7px}th,td{border:1px solid #cedae5;padding:4px 6px;vertical-align:top;overflow-wrap:anywhere;white-space:pre-wrap}th{background:#edf3f8;color:#355674;font-weight:700;text-align:left}thead{display:table-header-group}tr{break-inside:avoid-page;page-break-inside:avoid}tbody tr{orphans:2;widows:2}.kv th{width:19%}.kv td{width:31%;font-weight:600}.empty{color:#65778a;margin:6px 0 9px;font-size:9pt}p{orphans:3;widows:3}.sign{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;align-content:start;margin-top:14px;break-inside:avoid-page;page-break-inside:avoid;min-height:240px;padding-bottom:160px;border-bottom:1px solid #d2dce6;text-align:center}.sign .sign-date{grid-column:2;grid-row:1;font-size:9pt}.sign .sign-person{grid-column:1;grid-row:2}.sign .sign-reviewer{grid-column:2;grid-row:2}.sign b{font-size:9pt}.sign p{font-size:9pt;margin:5px 0}footer{border-top:1px solid #d2dce6;padding-top:6px;color:#64778c;font-size:8pt;margin-top:10px}@media screen{body{max-width:210mm;padding:14mm 15mm;margin:auto;box-shadow:0 1px 15px #ccd4df}}@media print{body{padding:0;box-shadow:none}}</style></head><body>' +
       '<header><div class="logo">' + (uLogoOf(u) ? '<img src="' + esc(uLogoOf(u)) + '" alt="Logo công ty">' : esc(u.name)) + '</div><div><div class="company">' + esc(u.name) + '</div><div class="internal">TÀI LIỆU NỘI BỘ · HỒ SƠ CÁN BỘ, NHÂN VIÊN</div></div></header><div class="title"><h1>HỒ SƠ NHÂN SỰ TỔNG HỢP</h1></div>';
     function table(headers, rows) { if (!rows.length) return '<p class="empty">Chưa có dữ liệu.</p>'; return '<table><thead><tr>' + headers.map(function (x) { return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (row) { return '<tr>' + row.map(function (x) { return '<td>' + esc(x == null || x === '' ? '—' : x) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>'; }
     function kv(pairs) { var rows = []; for (var i = 0; i < pairs.length; i += 2) { var a = pairs[i], b = pairs[i + 1] || ['', '']; rows.push('<tr><th>' + esc(a[0]) + '</th><td>' + esc(a[1] == null || a[1] === '' ? '—' : a[1]) + '</td><th>' + esc(b[0]) + '</th><td>' + esc(b[1] == null || b[1] === '' ? '—' : b[1]) + '</td></tr>'); } return '<table class="kv"><tbody>' + rows.join('') + '</tbody></table>'; }
@@ -8507,7 +8522,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     html += '<h2>I. Thông tin chung</h2>' + kv([['Mã nhân viên', id], ['Họ và tên', e['Họ và tên']], ['Công ty', u.name], ['Phòng ban', e['Phòng ban']], ['Chức vụ', e['Chức vụ']], ['Chức danh', e['Chức danh công việc']], ['Ngày vào làm', vn(e['Ngày vào làm'])], ['Thâm niên', ksbTenure(e, today)], ['Trạng thái làm việc', ST_TXT[st] || e['Trạng thái']], ['Ngày nghỉ việc', vn(e['Ngày nghỉ việc'])], ['Ngày sinh', vn(e['Ngày sinh'])], ['Giới tính', e['Giới tính']], ['Điện thoại', e['Số điện thoại']], ['Email', e['Email công ty']], ['Địa chỉ thường trú', e['Địa chỉ thường trú']], ['Quê quán', e['Quê quán']], ['Dân tộc', e['Dân tộc']], ['Tình trạng hôn nhân', e['Tình trạng hôn nhân']], ['Số người phụ thuộc', e['Số người phụ thuộc']], ['Số con ≤ 6 tuổi', e['Số con từ 6 tuổi trở xuống']]].filter(function (x) { return ['Địa chỉ thường trú', 'Quê quán', 'Dân tộc', 'Tình trạng hôn nhân'].indexOf(x[0]) < 0 || x[1]; })) + '<h3>Thông tin khác</h3>' + kv(ksbOtherPairs(e));
     var contracts = (u.data.HD || []).filter(function (x) { return x['Mã NV'] === id; });
     html += '<h2>II. Hợp đồng lao động</h2>' + table(['Số hợp đồng', 'Loại hợp đồng', 'Ngày hiệu lực', 'Ngày hết hạn', 'Trạng thái'], contracts.map(function (x) { return [x['Số hợp đồng'], x['Loại hợp đồng'], vn(x['Ngày hiệu lực']), vn(x['Ngày hết hạn']), HRR.contractState(x, HR.dnum(today))]; }));
-    html += '<section class="qualifications"><h2>III. Quá trình công tác</h2><p class="empty">Tổng kinh nghiệm ghi nhận (đã gộp khoảng trùng): ' + esc(ksbDuration(ksbUnionDays(jobs))) + '</p>' + table(['Thời gian', 'Đơn vị công tác', 'Vị trí việc làm'], jobs.map(function (x) { return [ksbJobTime(x), x['Đơn vị công tác'] || x['Nơi'], x['Vị trí việc làm'] || x['Nội dung']]; }));
+    html += '<section class="qualifications"><h2>III. Quá trình công tác</h2>' + table(['Thời gian', 'Đơn vị công tác', 'Vị trí việc làm'], jobs.map(function (x) { return [ksbJobTime(x), x['Đơn vị công tác'] || x['Nơi'], x['Vị trí việc làm'] || x['Nội dung']]; }));
     var moves = dcList(u, id);
     if (moves.length) html += '<h3>Điều chuyển, bổ nhiệm tại công ty</h3>' + table(['Ngày hiệu lực', 'Phòng ban', 'Chức danh'], moves.map(function (x) { return [vn(x.ngay), x.pbMoi, x.cdMoi]; }));
     html += '<h2>IV. Trình độ chuyên môn</h2>' + table(['Trình độ', 'Chuyên ngành', 'Đơn vị đào tạo', 'Năm tốt nghiệp'], degrees.map(function (x) { return [x['Trình độ'] || x['Nội dung'], x['Chuyên ngành đào tạo'], x['Đơn vị đào tạo'] || x['Nơi'], x['Năm tốt nghiệp']]; }));
@@ -11115,8 +11130,8 @@ if (typeof module !== 'undefined') module.exports = XW;
       '<div id="bArea"></div>';
   };
   ACTS['bc-view'] = function (a, id) { PS.bc.view = id; render(); };
-  ACTS['bc-u'] = function (a, id) { PS.bc.u = id; PS.bc.dept = ''; render(); };
-  ACTS['bc-k'] = function (a, id) { PS.bc.k = id; PS.bc.dept = ''; render(); };
+  ACTS['bc-u'] = function (a, id) { PS.bc.u = id; PS.bc.dept = ''; bcResetPages(); render(); };
+  ACTS['bc-k'] = function (a, id) { PS.bc.k = id; PS.bc.dept = ''; bcResetPages(); render(); };
   function bcUnit() { var f = PS.bc || {}, us = selUnits(); return us.filter(function (x) { return x.id === f.u; })[0] || us[0]; }
   function bcInK(p, k) { return !k || k === 'all' || (k === 'sx') === !!p.exc.sch; }
   var BC_SFX = '';
@@ -11126,6 +11141,16 @@ if (typeof module !== 'undefined') module.exports = XW;
     [bcUnit()].forEach(function (u) { bcMonth(u, f.m).ppl.forEach(function (p) { if (bcInK(p, f.k) && (!f.dept || p.dept === f.dept) && (!q || norm(p.id + ' ' + p.name).indexOf(q) >= 0)) out.push({ u: u, p: p, s: ccOf(u) }); }); });
     return out;
   }
+  function bcResetPages() { Object.keys(TB).forEach(function (id) { if (id.indexOf('bc-') === 0) TB[id].page = 1; }); }
+  function bcPageFilterKey() {
+    return JSON.stringify([selUnits().map(function (u) { return u.id; }), PS.bc]);
+  }
+  function bcTable(id, cols, rows, opts) {
+    return table(id, cols, rows, Object.assign({}, opts, {
+      nvPagination: true, nvFilterKey: bcPageFilterKey(), ccPaginationId: id,
+      pageUnit: /^bc-(s|ssx)(-sx)?$/.test(id) ? 'nhân viên' : 'bản ghi'
+    }));
+  }
   // Recorded times only: never substitute a scheduled shift or generated sample.
   function bcActualTimes(c) {
     var source = c.manual || c.wifi || c.file || {};
@@ -11133,9 +11158,10 @@ if (typeof module !== 'undefined') module.exports = XW;
     return { tin: hm(source.tin), tout: hm(source.tout) };
   }
   function bcGrid(rows) {
+    var pageId = 'bc-grid' + BC_SFX, pageState = TB[pageId] = TB[pageId] || {}, page = nvPageSlice(rows, pageState, bcPageFilterKey());
     var f = PS.bc, days = bcDays(f.m), s0 = rows.length ? rows[0].s : ccOf(selUnits()[0]), sh0 = ccShiftOf(s0, '');
     var head = '<tr><th class="bc-nm">Nhân sự</th>' + days.map(function (iso) { var K = bcKind(s0, sh0, iso); return '<th class="bc-d k-' + K.k + (iso === refDate() ? ' today' : '') + '" title="' + esc(HR.vnDate(iso) + ' · ' + ccDowT(iso) + (K.h ? ' · ' + K.h.t : '')) + '"><b>' + iso.slice(8, 10) + '</b><small>' + ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][ccDow(iso)] + '</small>' + (iso === refDate() ? '<em>' + (iso === HR.isoToday() ? 'Hôm nay' : 'Tính đến') + '</em>' : '') + '</th>'; }).join('') + '<th class="bc-t">Công</th><th class="bc-t">Nghỉ<br>hưởng lương</th><th class="bc-t" title="Tổng số phút đi muộn trong tháng · số lần">Đi muộn</th><th class="bc-t">Tăng ca</th></tr>';
-    var body = rows.map(function (x) {
+    var body = page.rows.map(function (x) {
       var p = x.p, S0 = p.sum;
       return '<tr><td class="bc-nm"><b>' + personLink(x.u, p.id, p.name) + '</b><small>' + esc(p.id + (p.lc || p.exc.sch ? '' : ' · ca ' + (p.sh ? p.sh.id : ''))) + (p.exc.sch ? ' · <span class="bc-tag">' + (p.exc.hrf ? 'lương theo giờ' : 'lương tháng') + ' · công theo giờ</span>' : p.exc.hrf ? ' · <span class="bc-tag">lương theo giờ</span>' : p.exc.hr ? ' · <span class="bc-tag">' + (p.exc.ctv ? 'CTV · ' : 'bán thời gian · ') + 'theo giờ</span>' : p.exc.nc ? ' · <span class="bc-tag">miễn chấm công</span>' : p.exc.no ? ' · <span class="bc-tag">không tính tăng ca</span>' : '') + '</small></td>' +
         days.map(function (iso) {
@@ -11148,6 +11174,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var codes = s0.codes.map(function (c) { return '<span><span class="code ' + (CC_TYPE_CLS[c.type] || '') + '">' + esc(c.k) + '</span>' + esc(c.t.replace(/\s*\(.*\)$/, '')) + '</span>'; }).join('');
     return '<div class="legend bc-leg">' + codes + '<span><span class="code bc-q">?</span>Cần xử lý</span><span><i class="bc-mk man"></i>Sửa tay</span><span><i class="bc-mk wait"></i>Tăng ca chờ xác nhận</span><span><i class="bc-mk hol"></i>Lễ, tết</span><span><i class="bc-mk rest"></i>Nghỉ hằng tuần</span></div>' +
       '<div class="bc-wrap"><table class="bc">' + '<thead>' + head + '</thead><tbody>' + (body || '<tr><td colspan="' + (days.length + 5) + '" class="muted">Không có người nào.</td></tr>') + '</tbody></table></div>' +
+      '<div class="tb-foot nv-pagination">' + nvPagerHtml(pageState, page, {ccPaginationId: pageId}) + '</div>' +
       '<div class="tb-foot"><span class="muted">Bấm vào ô để xem chi tiết, sửa tay' + (s0.rule.otMode === 'confirm' ? ', xác nhận tăng ca' : '') + '. Giờ vào / Giờ ra là giờ chấm thực tế; số vàng = giờ tăng ca.</span><button class="btn btn-sm" data-act="bc-export">' + ic('xuat') + 'Xuất bảng công Excel</button></div>';
   }
   ACTS['bc-export'] = function () {
@@ -11176,7 +11203,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       { t: 'Chờ xác nhận', f: function (x) { return x.p.sum.otWait; }, r: 1, h: function (x) { return x.p.sum.otWait ? '<span class="tag tag-warn">' + nfmt(x.p.sum.otWait) + '</span>' : '<span class="faint">0</span>'; } },
       { t: 'Giờ đêm', f: function (x) { return Math.round(x.p.sum.night * 100) / 100; }, r: 1, title: 'Giờ làm việc ban đêm 22:00–06:00 trong giờ làm bình thường – trả thêm ít nhất 30% (BLLĐ Điều 98.2, 106)' }, { t: 'TC theo file', f: function (x) { return x.p.sum.fileOt; }, r: 1, title: 'Giờ tăng ca ghi trong file chấm công – để đối chiếu với số tự tính' },
       { t: 'Cần xử lý', f: function (x) { return x.p.sum.issues; }, r: 1, h: function (x) { return x.p.sum.issues ? '<span class="tag tag-bad">' + x.p.sum.issues + '</span>' : '<span class="faint">0</span>'; } }, { t: 'Sửa tay', f: function (x) { return x.p.sum.manual; }, r: 1 }]);
-    return table('bc-s' + BC_SFX, c, rows, { title: 'Tong hop cong ' + HR.ymLabel(PS.bc.m) });
+    return bcTable('bc-s' + BC_SFX, c, rows, { title: 'Tong hop cong ' + HR.ymLabel(PS.bc.m) });
   }
   function bcCellsOf(rows, fn) { var out = []; rows.forEach(function (x) { Object.keys(x.p.days).sort().forEach(function (dd) { var c = x.p.days[dd]; if (fn(c, x)) out.push({ u: x.u, p: x.p, s: x.s, c: c }); }); }); return out; }
   // 11/11 09:56: khối sản xuất – tổng hợp theo giờ, tăng ca = tổng giờ − giờ tiêu chuẩn tháng
@@ -11191,13 +11218,13 @@ if (typeof module !== 'undefined') module.exports = XW;
       { t: 'Làm ngày lễ', f: function (x) { return r2(x.p.sum.otH); }, r: 1 }, { t: 'Nghỉ có lương (giờ)', f: function (x) { return r2(x.p.sum.hPaid); }, r: 1 }, { t: 'Không lương (ngày)', f: function (x) { return x.p.sum.unpaid; }, r: 1 },
       { t: 'Giờ đêm', f: function (x) { return r2(x.p.sum.night); }, r: 1 }, { t: 'Đi muộn', f: function (x) { return x.p.sum.late; }, r: 1, h: function (x) { return x.p.sum.late ? x.p.sum.late + '<small class="faint"> · ' + x.p.sum.lateMin + 'p</small>' : '0'; } }, { t: 'Về sớm', f: function (x) { return x.p.sum.early; }, r: 1 },
       { t: 'Chờ xác nhận (giờ)', f: function (x) { return x.p.sum.otWait; }, r: 1 }, { t: 'Cần xử lý', f: function (x) { return x.p.sum.issues; }, r: 1, h: function (x) { return x.p.sum.issues ? '<span class="tag tag-bad">' + x.p.sum.issues + '</span>' : '<span class="faint">0</span>'; } }, { t: 'Sửa tay', f: function (x) { return x.p.sum.manual; }, r: 1 }];
-    return table('bc-ssx' + BC_SFX, c, rows, { title: 'Tong hop cong khoi san xuat ' + HR.ymLabel(PS.bc.m) });
+    return bcTable('bc-ssx' + BC_SFX, c, rows, { title: 'Tong hop cong khoi san xuat ' + HR.ymLabel(PS.bc.m) });
   }
   function bcOt(rows) {
     var list = bcCellsOf(rows, function (c) { return c.otRaw > 0; }), conf = rows.some(function (x) { return x.s.rule.otMode === 'confirm'; }), wait = list.filter(function (y) { return y.c.otWait; }).length;
     return (conf ? '<div class="notice" style="margin-bottom:12px">' + ic('info') + '<div>Công ty đang đặt <b>Không mặc định tính tăng ca</b>: giờ làm thêm chỉ được cộng khi bấm <b>Xác nhận</b>. Tích các dòng rồi bấm Xác nhận, hoặc bấm vào ô trên Bảng công.</div></div>' : '<div class="notice" style="margin-bottom:12px">' + ic('info') + '<div>Công ty đang đặt <b>Mặc định tính tăng ca</b>. Muốn duyệt từng lượt trước khi tính: Thiết lập chấm công → Quy định tính công → Làm thêm giờ.</div></div>') +
-      (conf && wait ? '<div class="bc-otbar"><label class="tl-ro"><input type="checkbox" id="otAll"><span>Chọn tất cả ' + wait + ' lượt chờ xác nhận</span></label><button class="btn btn-primary btn-sm" data-act="bc-okmany">Xác nhận đã chọn</button></div>' : '') +
-      table('bc-ot' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
+      (conf && wait ? '<div class="bc-otbar"><label class="tl-ro"><input type="checkbox" data-bc-ot-all><span>Chọn các lượt chờ đang hiển thị</span></label><button class="btn btn-primary btn-sm" data-act="bc-okmany">Xác nhận đã chọn</button></div>' : '') +
+      bcTable('bc-ot' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
         { t: '', nosort: 1, noExport: 1, f: function () { return ''; }, h: function (y) { return y.c.otWait ? '<input type="checkbox" class="ot-ck" data-k="' + y.u.id + '|' + esc(y.p.id) + '|' + y.c.dd + '" aria-label="Chọn">' : ''; } },
         { t: 'Ngày', f: function (y) { return y.c.iso; } }, { t: 'Thứ', f: function (y) { return ccDowT(y.c.iso); } }, { t: 'Loại ngày', f: function (y) { return BC_DAYK[y.c.kind]; } }, { t: 'Mã NV', f: function (y) { return y.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (y) { return y.p.name; }, h: function (y) { return personLink(y.u, y.p.id, y.p.name); } },
         { t: 'Giờ vào', f: function (y) { return y.c.tin; } }, { t: 'Giờ ra', f: function (y) { return y.c.tout; } }, { t: 'Giờ làm thêm', f: function (y) { return y.c.otRaw; }, r: 1 }, { t: 'Mức trả', f: function (y) { return y.c.otRate + '%'; }, r: 1 },
@@ -11231,15 +11258,15 @@ if (typeof module !== 'undefined') module.exports = XW;
     // 1) theo phòng ban / cá nhân
     var by = {}; ev.forEach(function (e) { var k = G === 'pb' ? (e.p.dept || '(Chưa có phòng ban)') : e.u.id + '|' + e.p.id; (by[k] = by[k] || { k: k, p: e.p, u: e.u, ev: [] }).ev.push(e); });
     var gr = Object.keys(by).map(function (k) { var o = by[k]; o.a = xmAgg(o.ev); return o; }).sort(function (a, b) { return b.a.n - a.a.n; });
-    h += '<h3 style="font-size:15px;margin:4px 0 8px">Theo ' + (G === 'pb' ? 'phòng ban' : 'cá nhân') + '</h3>' + table('bc-xm-' + G, (G === 'pb' ? [{ t: 'Phòng ban', f: function (r) { return r.k; }, cls: 'nowrap' }, { t: 'Số người', f: function (r) { return r.a.nP; }, r: 1 }] : [{ t: 'Mã NV', f: function (r) { return r.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (r) { return r.p.name; }, h: function (r) { return personLink(r.u, r.p.id, r.p.name); }, cls: 'nowrap' }, { t: 'Phòng ban', f: function (r) { return r.p.dept; } }]).concat(xmCols()), gr, { title: 'Di muon ve som theo ' + (G === 'pb' ? 'phong ban' : 'ca nhan') + ' ' + lbl });
+    h += '<h3 style="font-size:15px;margin:4px 0 8px">Theo ' + (G === 'pb' ? 'phòng ban' : 'cá nhân') + '</h3>' + bcTable('bc-xm-' + G, (G === 'pb' ? [{ t: 'Phòng ban', f: function (r) { return r.k; }, cls: 'nowrap' }, { t: 'Số người', f: function (r) { return r.a.nP; }, r: 1 }] : [{ t: 'Mã NV', f: function (r) { return r.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (r) { return r.p.name; }, h: function (r) { return personLink(r.u, r.p.id, r.p.name); }, cls: 'nowrap' }, { t: 'Phòng ban', f: function (r) { return r.p.dept; } }]).concat(xmCols()), gr, { title: 'Di muon ve som theo ' + (G === 'pb' ? 'phong ban' : 'ca nhan') + ' ' + lbl });
     // 2) diễn biến: tháng → từng ngày · năm → từng tháng · ngày → từng lượt
-    if (P === 'ngay') h += '<h3 style="font-size:15px;margin:18px 0 8px">Chi tiết từng lượt</h3>' + table('bc-xm-d', [{ t: 'Mã NV', f: function (e) { return e.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (e) { return e.p.name; }, h: function (e) { return personLink(e.u, e.p.id, e.p.name); }, cls: 'nowrap' }, { t: 'Phòng ban', f: function (e) { return e.p.dept; } }, { t: 'Loại', f: function (e) { return e.k === 'som' ? 'Về sớm' : 'Đi muộn'; } }, { t: 'Giờ chấm', f: function (e) { return e.k === 'som' ? e.c.tout : e.c.tin; } }, { t: 'Số phút', f: function (e) { return e.min; }, r: 1 },
+    if (P === 'ngay') h += '<h3 style="font-size:15px;margin:18px 0 8px">Chi tiết từng lượt</h3>' + bcTable('bc-xm-d', [{ t: 'Mã NV', f: function (e) { return e.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (e) { return e.p.name; }, h: function (e) { return personLink(e.u, e.p.id, e.p.name); }, cls: 'nowrap' }, { t: 'Phòng ban', f: function (e) { return e.p.dept; } }, { t: 'Loại', f: function (e) { return e.k === 'som' ? 'Về sớm' : 'Đi muộn'; } }, { t: 'Giờ chấm', f: function (e) { return e.k === 'som' ? e.c.tout : e.c.tin; } }, { t: 'Số phút', f: function (e) { return e.min; }, r: 1 },
       { t: 'Trạng thái', f: function (e) { return XM_ST[e.st]; }, h: function (e) { return '<span class="tag ' + (e.st === 'duyet' ? 'tag-ok' : e.st === 'khong' || e.st === 'tuchoi' ? 'tag-bad' : 'tag-warn') + '">' + XM_ST[e.st] + '</span>'; } }, { t: 'Số đơn', f: function (e) { return e.so; }, mono: 1 }, { t: '', nosort: 1, noExport: 1, f: function () { return ''; }, h: function (e) { return '<button class="btn btn-sm" data-act="bc-cell" data-id="' + e.u.id + '|' + esc(e.p.id) + '|' + e.c.dd + '">Xem ô công</button>'; } }], ev, { title: 'Di muon ve som ' + lbl });
     else { var tb = {}; ev.forEach(function (e) { var k = P === 'nam' ? e.iso.slice(0, 7) : e.iso; (tb[k] = tb[k] || { k: k, ev: [] }).ev.push(e); }); var tl = Object.keys(tb).sort().map(function (k) { tb[k].a = xmAgg(tb[k].ev); return tb[k]; });
-      h += '<h3 style="font-size:15px;margin:18px 0 8px">Theo ' + (P === 'nam' ? 'tháng' : 'ngày') + '</h3>' + table('bc-xm-t' + P, [{ t: P === 'nam' ? 'Tháng' : 'Ngày', f: function (r) { return r.k; }, h: function (r) { return P === 'nam' ? 'Tháng ' + HR.ymLabel(r.k) : HR.vnDate(r.k) + ' <small class="faint">' + CC_DOW.filter(function (d) { return d[0] === ccDow(r.k); })[0][1] + '</small>'; }, cls: 'nowrap' }, { t: 'Số người', f: function (r) { return r.a.nP; }, r: 1 }].concat(xmCols()), tl, { title: 'Di muon ve som theo ' + (P === 'nam' ? 'thang' : 'ngay') + ' ' + lbl }); }
+      h += '<h3 style="font-size:15px;margin:18px 0 8px">Theo ' + (P === 'nam' ? 'tháng' : 'ngày') + '</h3>' + bcTable('bc-xm-t' + P, [{ t: P === 'nam' ? 'Tháng' : 'Ngày', f: function (r) { return r.k; }, h: function (r) { return P === 'nam' ? 'Tháng ' + HR.ymLabel(r.k) : HR.vnDate(r.k) + ' <small class="faint">' + CC_DOW.filter(function (d) { return d[0] === ccDow(r.k); })[0][1] + '</small>'; }, cls: 'nowrap' }, { t: 'Số người', f: function (r) { return r.a.nP; }, r: 1 }].concat(xmCols()), tl, { title: 'Di muon ve som theo ' + (P === 'nam' ? 'thang' : 'ngay') + ' ' + lbl }); }
     return h;
   }
-  ACTS['xm-p'] = function (a, id) { PS.bc.xp = id; render(); };
+  ACTS['xm-p'] = function (a, id) { PS.bc.xp = id; bcResetPages(); render(); };
   /* 16/11 12:16 (anh): báo cáo đi muộn, về sớm trong module Xuất báo cáo – 1 file nhiều sheet: tháng báo cáo + lũy kế từ đầu năm */
   function xmExport(ym) {
     var us = selUnits(), y = ym.slice(0, 4), TD = HR.isoToday(), last = Math.min(+ym.slice(5, 7), y === TD.slice(0, 4) ? +TD.slice(5, 7) : 12), F = { k: 'all', dept: '', q: '' }, evM = [], evY = [];
@@ -11261,7 +11288,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     sheets.push({ name: 'Chi tiet tung luot', title: 'CHI TIẾT TỪNG LƯỢT ĐI MUỘN, VỀ SỚM – ' + tY.toUpperCase(), note: 'Xuất lúc ' + nowVn(), cols: det.map(function (c) { return { t: c.t }; }), rows: evY.slice().sort(function (a, b) { return a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : 0; }).map(function (e) { return det.map(function (c) { return c.f(e); }); }) });
     saveXlsx(sheets, fileName('Bao cao di muon ve som ' + ym)); log('Xuất báo cáo đi muộn, về sớm ' + tM + ' (' + evM.length + ' lượt tháng, ' + evY.length + ' lượt năm)');
   }
-  ACTS['xm-g'] = function (a, id) { PS.bc.xg = id; render(); };
+  ACTS['xm-g'] = function (a, id) { PS.bc.xg = id; bcResetPages(); render(); };
   /* 09/11 (anh 12:50): báo cáo ĐI MUỘN – tổng hợp theo người + chi tiết từng lượt */
   function bcLate(rows) {
     var lateA = function (c) { return c.manual && c.auto ? (c.manual.lateAuto != null ? +c.manual.lateAuto : +c.auto.late || 0) : 0; };
@@ -11272,13 +11299,13 @@ if (typeof module !== 'undefined') module.exports = XW;
     if (!list.length) return '<div class="card card-pad"><p class="muted">Tháng ' + HR.ymLabel(PS.bc.m) + ' không có lượt đi muộn nào (theo giờ chấm và Quy định tính công).</p></div>';
     return '<div class="org-kpi"><div><b>' + list.length + '</b><span>lượt đi muộn</span></div><div><b>' + ppl.length + '</b><span>người đi muộn</span></div><div><b>' + tot + '</b><span>tổng số phút</span></div><div><b>' + Math.round(tot / list.length) + '</b><span>phút trung bình / lượt</span></div><div class="' + (over ? 'k-warn' : '') + '"><b>' + over + '</b><span>người đi muộn từ ' + lim + ' lần</span></div></div>' +
       '<h3 style="font-size:15px;margin:4px 0 8px">Theo người</h3>' +
-      table('bc-lt1' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (o) { return shortUnit(o.u.name); } }] : []).concat([
+      bcTable('bc-lt1' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (o) { return shortUnit(o.u.name); } }] : []).concat([
         { t: 'Mã NV', f: function (o) { return o.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (o) { return o.p.name; }, h: function (o) { return personLink(o.u, o.p.id, o.p.name); }, cls: 'nowrap' }, { t: 'Phòng ban', f: function (o) { return o.p.dept; } },
         { t: 'Số lần', f: function (o) { return o.n; }, r: 1, h: function (o) { return o.n >= (+o.s.rule.lateTimes || 3) ? '<span class="tag tag-warn" title="Đạt ngưỡng ' + (+o.s.rule.lateTimes || 3) + ' lần ở Quy định tính công">' + o.n + '</span>' : String(o.n); } },
         { t: 'Tổng phút', f: function (o) { return o.min; }, r: 1, h: function (o) { return '<b>' + o.min + '</b>'; } }, { t: 'TB phút/lần', f: function (o) { return Math.round(o.min / o.n); }, r: 1 }, { t: 'Muộn nhất (phút)', f: function (o) { return o.max; }, r: 1 },
         { t: 'Các ngày (phút)', wrap: 1, f: function (o) { return o.days.join(', '); } }]), ppl, { title: 'Di muon theo nguoi ' + HR.ymLabel(PS.bc.m) }) +
       '<h3 style="font-size:15px;margin:16px 0 8px">Chi tiết từng lượt</h3>' +
-      table('bc-lt2' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
+      bcTable('bc-lt2' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
         { t: 'Ngày', f: function (y) { return y.c.iso; } }, { t: 'Thứ', f: function (y) { return ccDowT(y.c.iso); } }, { t: 'Mã NV', f: function (y) { return y.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (y) { return y.p.name; }, h: function (y) { return personLink(y.u, y.p.id, y.p.name); } },
         { t: 'Ca', f: function (y) { var q = y.c.sh || y.p.sh; return q ? q.id + ' (' + q.inT + (+q.preOn ? ', có mặt ' + ccHM(ccMin(q.inT) - q.preOn) : '') + ')' : ''; } }, { t: 'Giờ vào', f: function (y) { return y.c.tin; } }, { t: 'Phút muộn', f: function (y) { return y.c.late; }, r: 1, h: function (y) { var a = lateA(y.c); return (a > (y.c.late || 0) ? '<s class="faint" title="Theo giờ chấm">' + a + '</s> ' : '') + '<b style="color:var(--danger,#B42318)">' + (y.c.late || 0) + '</b>'; } },
         { t: 'Ký hiệu', f: function (y) { return y.c.k; } }, { t: 'Nguồn', f: function (y) { return y.c.manual ? 'Sửa tay' : y.c.src === 'calc' ? 'Giờ chấm' : 'File'; } }, { t: 'Ghi chú', wrap: 1, f: function (y) { return y.c.manual && lateA(y.c) > (y.c.late || 0) ? 'Sửa tay ' + lateA(y.c) + ' → ' + (y.c.late || 0) + ' phút' + (y.c.manual.why ? ': ' + y.c.manual.why : '') + ' (' + y.c.manual.by + ')' : y.c.file ? y.c.file.note || '' : ''; } },
@@ -11287,16 +11314,17 @@ if (typeof module !== 'undefined') module.exports = XW;
   }
   function bcIssue(rows) {
     var list = bcCellsOf(rows, function (c) { return !!c.issue; });
-    return table('bc-is' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
+    return bcTable('bc-is' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
       { t: 'Ngày', f: function (y) { return y.c.iso; } }, { t: 'Thứ', f: function (y) { return ccDowT(y.c.iso); } }, { t: 'Mã NV', f: function (y) { return y.p.id; }, mono: 1 }, { t: 'Họ và tên', f: function (y) { return y.p.name; }, h: function (y) { return personLink(y.u, y.p.id, y.p.name); } },
       { t: 'Việc cần xử lý', f: function (y) { return BC_ISSUE[y.c.issue]; }, h: function (y) { return '<span class="tag ' + (y.c.issue === 'thieu-don' ? 'tag-warn' : 'tag-bad') + '">' + BC_ISSUE[y.c.issue] + '</span>'; } },
       { t: 'Ký hiệu', f: function (y) { return y.c.k; } }, { t: 'Giờ vào – ra', f: function (y) { return y.c.tin || y.c.tout ? (y.c.tin || '?') + ' – ' + (y.c.tout || '?') : ''; } }, { t: 'Ghi chú trong file', wrap: 1, f: function (y) { return y.c.file ? y.c.file.note : ''; } },
       { t: '', nosort: 1, noExport: 1, f: function () { return ''; }, h: function (y) { return '<button class="btn btn-sm btn-primary" data-act="bc-cell" data-id="' + y.u.id + '|' + esc(y.p.id) + '|' + y.c.dd + '">Xử lý</button>'; } }]), list, { title: 'Cong can xu ly ' + HR.ymLabel(PS.bc.m), empty: 'Không có ô nào cần xử lý. Có thể chốt công.' });
   }
   function bcLog() {
-    var f = PS.bc, list = []; selUnits().forEach(function (u) { bcX(u).log.forEach(function (l) { if (l.ym === f.m) list.push({ u: u, l: l }); }); });
+    var f = PS.bc, list = [], q = norm(f.q), u = bcUnit(), nv = nvIndex(u);
+    bcX(u).log.forEach(function (l) { var e = nv[l.id] || {}, dept = e['Phòng ban'] || ''; if (l.ym === f.m && (!f.dept || dept === f.dept) && (!q || norm((l.id || '') + ' ' + (l.name || '')).indexOf(q) >= 0)) list.push({ u: u, l: l }); });
     list.sort(function (a, b) { return a.l.ts < b.l.ts ? 1 : -1; });
-    return table('bc-lg' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
+    return bcTable('bc-lg' + BC_SFX, (isMulti() ? [{ t: 'Đơn vị', f: function (y) { return shortUnit(y.u.name); } }] : []).concat([
       { t: 'Thời điểm', f: function (y) { return y.l.at; } }, { t: 'Người sửa', f: function (y) { return y.l.by; } }, { t: 'Việc', f: function (y) { return y.l.what; } }, { t: 'Nhân sự', f: function (y) { return y.l.name ? y.l.name + ' (' + y.l.id + ')' : ''; } }, { t: 'Ngày', f: function (y) { return y.l.iso || ''; } },
       { t: 'Trước', wrap: 1, f: function (y) { return y.l.old || ''; } }, { t: 'Sau', wrap: 1, f: function (y) { return y.l.nw || ''; } }, { t: 'Lý do', wrap: 1, f: function (y) { return y.l.why || ''; } },
       { t: 'Sau chốt', f: function (y) { return y.l.after ? 'Có' : ''; }, h: function (y) { return y.l.after ? '<span class="tag tag-warn">Sau chốt</span>' : ''; } }]), list, { title: 'Nhat ky sua cong ' + HR.ymLabel(f.m), empty: 'Tháng này chưa có lần sửa nào.' });
@@ -11311,11 +11339,11 @@ if (typeof module !== 'undefined') module.exports = XW;
       else if (f.k === 'all') { var a = rows.filter(function (x) { return !x.p.exc.sch; }), b = rows.filter(function (x) { return x.p.exc.sch; }); BC_SFX = ''; html = (a.length || !b.length ? H('vp', a) + V(a) : ''); BC_SFX = '-sx'; html += b.length ? '<div class="bc-sep"></div>' + H('sx', b) + V(b) : ''; BC_SFX = ''; }
       else { BC_SFX = f.k === 'sx' ? '-sx' : ''; html = H(f.k, rows) + V(rows); BC_SFX = ''; }
       $('#bArea').innerHTML = html;
-      var xd = $('#xmD'); if (xd) xd.addEventListener('change', function () { if (xd.value) { PS.bc.xd = xd.value; refresh(); } });
-      var all = $('#otAll'); if (all) all.addEventListener('change', function () { $$('.ot-ck').forEach(function (c) { c.checked = all.checked; }); });
+      var xd = $('#xmD'); if (xd) xd.addEventListener('change', function () { if (xd.value) { PS.bc.xd = xd.value; bcResetPages(); refresh(); } });
+      $$('[data-bc-ot-all]').forEach(function (all) { all.addEventListener('change', function () { $$('.ot-ck').forEach(function (c) { c.checked = all.checked; }); $$('[data-bc-ot-all]').forEach(function (b) { b.checked = all.checked; }); }); });
     }
     REFRESH = refresh; bindFilters('bc', { bQ: 'q', bDept: 'dept' }, refresh);
-    var bm = $('#bM'); if (bm) bm.addEventListener('change', function () { PS.bc.m = bm.value; render(); });
+    var bm = $('#bM'); if (bm) bm.addEventListener('change', function () { PS.bc.m = bm.value; bcResetPages(); render(); });
     refresh();
   };
 
@@ -11401,7 +11429,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       '<ul class="bc-chk"><li class="' + (iss ? 'bad' : 'ok') + '">' + (iss ? iss + ' ô cần xử lý (vắng chưa rõ, thiếu chấm, thiếu đơn…)' : 'Không còn ô cần xử lý') + '</li>' +
       '<li class="' + (wait ? 'warn' : 'ok') + '">' + (wait ? ccNum(wait) + ' giờ tăng ca chờ xác nhận – chốt thì phần này KHÔNG được tính' : 'Không có tăng ca chờ xác nhận') + '</li>' +
       (future ? '<li class="warn">Tháng chưa kết thúc (tính đến ' + HR.vnDate(refDate()) + ')</li>' : '') + '<li class="ok">' + n + ' người · ' + bcNum(r.ppl.reduce(function (t, p) { return t + p.sum.salary; }, 0)) + ' công hưởng lương</li></ul>' +
-      '<p class="faint" style="font-size:12.5px">Sau khi chốt: số liệu tháng này dùng để tính lương. ' + (r.s.rule.editAfterLock ? 'Vẫn sửa tay được – ô sửa sau chốt được đánh dấu để gửi nhân viên xác nhận lại.' : 'Không sửa được nữa cho đến khi Mở lại.') + ' Gửi từng nhân viên xác nhận công trên điện thoại sẽ có khi ghép Ứng dụng nhân viên (bước Chấm công Wi‑Fi).</p>' +
+      '<p class="faint" style="font-size:12.5px">Sau khi chốt: số liệu tháng này dùng để tính lương. ' + (r.s.rule.editAfterLock ? 'Vẫn sửa tay được – ô sửa sau chốt được đánh dấu để gửi nhân viên xác nhận lại.' : 'Không sửa được nữa cho đến khi Mở lại.') + ' Gửi từng nhân viên xác nhận công trên điện thoại sẽ có khi ghép Ứng dụng nhân viên (bước Bảng Chấm công).</p>' +
       bcWho() + '<p id="lkMsg" class="tl-msg"></p>' +
       '<div class="link-row" style="justify-content:flex-end"><button class="btn" data-close>Hủy</button><button class="btn btn-primary" id="lkGo">' + (iss || wait ? 'Vẫn chốt công' : 'Chốt công') + '</button></div>', true);
     $('#lkGo', m).addEventListener('click', function () {
@@ -11410,7 +11438,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       X.lock[ym] = { by: by, at: nowVn(), ts: Date.now(), issues: iss, wait: wait, sum: r.ppl.map(function (p) { return { id: p.id, name: p.name, work: p.sum.work, paid: p.sum.paid, hol: p.sum.hol, salary: p.sum.salary, bh: p.sum.bh, unpaid: p.sum.unpaid, otN: p.sum.otN, otR: p.sum.otR, otH: p.sum.otH, otPay: Math.round(p.sum.otPay * 100) / 100 }; }) };
       bcLogAdd(u, { ym: ym, what: 'Chốt công tháng', nw: n + ' người' + (iss ? ', còn ' + iss + ' ô cần xử lý' : '') + (wait ? ', ' + ccNum(wait) + 'h tăng ca chưa xác nhận' : ''), by: by }); X.log[X.log.length - 1].after = false;
       bcSaveX(u, 'chốt công ' + ym); m.close(); toast('Đã chốt công tháng ' + HR.ymLabel(ym), 'ok', wfOn(u) ? 'Đang gửi công từng người lên điện thoại để nhân viên xác nhận…' : ''); render();
-      if (wfOn(u)) wfSendCong(u, ym, false).then(function (k) { wfLog(u, 'Đã gửi công tháng ' + HR.ymLabel(ym) + ' cho ' + k + ' nhân viên xác nhận'); saveUnits(); toast('Đã gửi công tháng ' + HR.ymLabel(ym) + ' cho ' + k + ' nhân viên xác nhận', 'ok'); render(); }, function (er) { wfLog(u, 'Chưa gửi được công ' + ym + ': ' + er.message, false); saveUnits(); toast('Chưa gửi được công lên điện thoại', 'err', er.message + ' Bấm Đồng bộ ở trang Chấm công Wi‑Fi để gửi lại.'); });
+      if (wfOn(u)) wfSendCong(u, ym, false).then(function (k) { wfLog(u, 'Đã gửi công tháng ' + HR.ymLabel(ym) + ' cho ' + k + ' nhân viên xác nhận'); saveUnits(); toast('Đã gửi công tháng ' + HR.ymLabel(ym) + ' cho ' + k + ' nhân viên xác nhận', 'ok'); render(); }, function (er) { wfLog(u, 'Chưa gửi được công ' + ym + ': ' + er.message, false); saveUnits(); toast('Chưa gửi được công lên điện thoại', 'err', er.message + ' Bấm Đồng bộ ở trang Bảng Chấm công để gửi lại.'); });
     });
   };
   ACTS['bc-unlock'] = function (a, uid) {
@@ -11628,7 +11656,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       '<div class="field"><label for="nWhy">Lý do</label><input class="input" id="nWhy" maxlength="200"></div>' +
       '<label class="tl-ro"><input type="checkbox" id="nOk" checked><span>Duyệt luôn (người tạo đơn là quản lý)</span></label>' + bcWho() +
       '<p id="nMsg" class="tl-msg"></p><div class="link-row" style="justify-content:flex-end"><button type="button" class="btn" data-close>Hủy</button><button type="submit" class="btn btn-primary">Tạo đơn</button></div></form>';
-    var m = modal('Tạo đơn nghỉ', 'Nhập thay cho nhân viên. Nhân viên tự gửi trên điện thoại khi dùng Chấm công Wi‑Fi', body, true);
+    var m = modal('Tạo đơn nghỉ', 'Nhập thay cho nhân viên. Nhân viên tự gửi trên điện thoại khi dùng Bảng Chấm công', body, true);
     var iso = function (id) { return HR.parseVn($('#' + id, m).value.trim()) || ''; };
     var calc = function () {
       var t = NP_TYPES.filter(function (x) { return x[0] === $('#nType', m).value; })[0]; $('#nTypeH', m).textContent = t ? t[2] : '';
@@ -11762,7 +11790,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   function wfShared(u) { return !!(u && u.wf && u.wf.key && S.units.some(function (x) { return x !== u && x.wf && x.wf.key && x.wf.url && u.wf.url && x.wf.url.replace(/\/+$/, '') === u.wf.url.replace(/\/+$/, ''); })); }
   /* ----- 18/11/2026 1.0.2 (góp ý người dùng sau phát hành): TỰ ĐỘNG ĐỒNG BỘ – không cần bấm "Đồng bộ ngay".
      Công ty đã nối máy chủ: tự đồng bộ ngay khi mở phần mềm / vừa nối, ~15 giây sau mỗi thay đổi dữ liệu (tối đa 1 lần/phút),
-     và 5 phút một lần khi đang mở phần mềm. Chỉ chạy với tài khoản có quyền sửa Chấm công Wi‑Fi; lỗi mạng thì tự thử lại lần sau.
+     và 5 phút một lần khi đang mở phần mềm. Chỉ chạy với tài khoản có quyền sửa Bảng Chấm công; lỗi mạng thì tự thử lại lần sau.
      Nút "Đồng bộ ngay" vẫn giữ khi cần lấy dữ liệu tức thì. ----- */
   var WF_BUSY = 0, WF_AUTO = { dirty: 0, err: {} };
   function wfSync(u) {
@@ -11898,11 +11926,11 @@ if (typeof module !== 'undefined') module.exports = XW;
     var mates = S.units.filter(function (x) { return x !== u && wfOn(x) && x.wf.url.replace(/\/+$/, '') === location.origin; }), dup = [];
     var mine = wfMineIdx(u); mates.forEach(function (x) { (x.data.NV || []).forEach(function (e) { if (mine[String(e['Mã NV']).toUpperCase()]) dup.push(e['Mã NV'] + ' (' + shortUnit(x.name) + ')'); }); });
     confirmBox('Dùng chung máy chủ này cho ' + shortUnit(u.name) + '?', 'Công ty dùng chung Wi‑Fi văn phòng, app nhân viên và trang quản lý máy chủ ' + location.host + ' với ' + (mates.length ? mates.map(function (x) { return shortUnit(x.name); }).join(', ') : 'các công ty khác') + '. Dữ liệu trong phần mềm vẫn tách riêng từng công ty.' + (dup.length ? ' Lưu ý: ' + dup.length + ' Mã NV đang trùng (' + dup.slice(0, 5).join(', ') + (dup.length > 5 ? '…' : '') + ') – người trùng mã chưa cấp được tài khoản app cho đến khi đổi mã.' : ''), 'Dùng chung', function () {
-      u.wf = Object.assign(u.wf || {}, { url: location.origin, key: 'phien', since: Date.now(), chung: 1 }); saveUnits(); log('Chấm công Wi‑Fi: ' + u.name + ' dùng chung máy chủ ' + location.host);
+      u.wf = Object.assign(u.wf || {}, { url: location.origin, key: 'phien', since: Date.now(), chung: 1 }); saveUnits(); log('Bảng Chấm công: ' + u.name + ' dùng chung máy chủ ' + location.host);
       wfSync(u).then(function (r) { toast('Đã nối ' + shortUnit(u.name) + ' với máy chủ dùng chung', 'ok', r.txt); render(); }, function (er) { toast('Đã nối nhưng đồng bộ chưa xong', 'err', er.message); render(); });
     });
   };
-  /* ----- Trang Chấm công Wi‑Fi ----- */
+  /* ----- Trang Bảng Chấm công ----- */
   function wfCardReal(u) {
     var w = u.wf || {}, on = wfOn(u), ppl = wfPeople(u), noAcc = (u.data.NV || []).filter(function (e) { var ac = (u.acc || {})[e['Mã NV']]; return (!ac || ac.st === 'none') && HR.staffState(e, HR.isoToday(), HR.maternitySet(u.data, HR.isoToday())) !== 'left'; }).length;
     if (!on && SV) return wfChoiceCard(u);
@@ -11974,7 +12002,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   PAGES.ccwifi = function () {
     var web = /quantritute/.test(location.hostname), us = selUnits().length ? selUnits() : S.units;
     var smp = us.filter(wfDemoOn), real = us.filter(function (u) { return !wfDemoOn(u); }), demo = web || smp.length > 0, D = WF_DEMO;
-    var head = pageHead('Chấm công Wi‑Fi', 'Nhân viên chấm Vào ca / Ra ca trên điện thoại qua Wi‑Fi văn phòng hoặc mã QR; dữ liệu tự về <a href="#cc">Tổng hợp công</a>, <a href="#np">Nghỉ phép</a>.',
+    var head = pageHead('Bảng Chấm công', 'Nhân viên chấm Vào ca / Ra ca trên điện thoại qua WiFi, GPS hoặc mã QR; dữ liệu tự về <a href="#cc">Tổng hợp công</a>, <a href="#np">Nghỉ phép</a>.',
       '<button class="btn" data-act="wf-guide">' + ic('info', 15) + 'Hướng dẫn thiết lập riêng cho công ty</button>');
     var h = head;
     if (demo) {
@@ -11998,7 +12026,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var un = S.units.filter(function (u) { return u.source !== 'sample' && !wfOn(u); });
     var form = un.length ? un.map(function (u) { var w = u.wf || {}; return '<div class="wf-cf"><b>' + esc(shortUnit(u.name)) + '</b><div class="grid wf-f"><div class="field"><label for="wU_' + u.id + '">Địa chỉ máy chủ chấm công</label><input class="input" id="wU_' + u.id + '" placeholder="https://chamcong.tencongty.com" value="' + esc(w.url || '') + '"></div><div class="field"><label for="wK_' + u.id + '">Mã kết nối</label><input class="input mono" id="wK_' + u.id + '" placeholder="QTT-…" autocomplete="off"></div></div><p id="wM_' + u.id + '" class="tl-msg"></p><button class="btn btn-primary" data-act="wf-con" data-id="' + u.id + '">Kết nối</button></div>'; }).join('') : '<p class="faint">Ô nhập địa chỉ máy chủ và mã kết nối hiện ở đây khi phần mềm đã nạp dữ liệu nhân sự thật của công ty (không áp dụng cho dữ liệu mẫu).</p>';
     var st = [['Tạo tài khoản Cloudflare của công ty', 'Đăng ký miễn phí tại <span class="mono">cloudflare.com</span> bằng <b>email chung của công ty</b> (không dùng email cá nhân, để người phụ trách nghỉ việc công ty vẫn giữ được tài khoản). Máy chủ chấm công, dữ liệu, file hồ sơ đều nằm trong tài khoản này; Quản trị tử tế không giữ dữ liệu.', ''],
-      ['Tạo máy chủ chấm công riêng', 'Bấm nút <b>Cài đặt lên Cloudflare</b> trên quantritute.com (có khi phát hành bản đầy đủ), đăng nhập tài khoản Cloudflare của công ty rồi bấm Tạo – không phải gõ lệnh. Cách cài này dự kiến cần thêm một tài khoản GitHub miễn phí. Không tự làm được: Quản trị tử tế có dịch vụ <b>cài đặt hộ</b> (công ty mời vào tài khoản Cloudflare, cài xong gỡ quyền, có biên bản bàn giao). Chi phí máy chủ: xem bảng <b>Chi phí máy chủ dự kiến theo quy mô nhân sự</b> ở trang Chấm công Wi‑Fi.', ''],
+      ['Tạo máy chủ chấm công riêng', 'Bấm nút <b>Cài đặt lên Cloudflare</b> trên quantritute.com (có khi phát hành bản đầy đủ), đăng nhập tài khoản Cloudflare của công ty rồi bấm Tạo – không phải gõ lệnh. Cách cài này dự kiến cần thêm một tài khoản GitHub miễn phí. Không tự làm được: Quản trị tử tế có dịch vụ <b>cài đặt hộ</b> (công ty mời vào tài khoản Cloudflare, cài xong gỡ quyền, có biên bản bàn giao). Chi phí máy chủ: xem bảng <b>Chi phí máy chủ dự kiến theo quy mô nhân sự</b> ở trang Bảng Chấm công.', ''],
       ['Cài đặt lần đầu trên Trang quản lý', 'Mở <span class="mono">địa chỉ máy chủ/quan-ly</span>: đặt tên công ty, mã PIN quản lý (6–12 số, ghi nhớ – không lấy lại được). Trang quản lý có các tab Thiết lập mạng Wi‑Fi, Tổng hợp lượt chấm, Máy dùng chung, Nhân viên, Bị từ chối, Cài đặt.', img('ql', 'Trang quản lý của máy chủ chấm công')],
       ['Khai báo Wi‑Fi văn phòng', 'Đặt một thiết bị cố định ở văn phòng (máy tính, máy tính bảng, điện thoại cũ) mở trang <b>Mã QR chấm công</b> (<span class="mono">/tram</span>), nhập PIN quản lý để kích hoạt một lần. Màn hình tự báo IP Wi‑Fi văn phòng; router đổi IP thì tự cập nhật. Có thể thêm IP tay ở tab <b>Thiết lập mạng Wi‑Fi</b>.', img('ip', 'Tab Thiết lập mạng Wi‑Fi – IP được coi là Wi‑Fi văn phòng') + img('tram', 'Trang Mã QR chấm công: dùng khi điện thoại không bắt được Wi‑Fi văn phòng – mã đổi mỗi 30 giây')],
       ['Tạo mã kết nối', 'Trang quản lý → <b>Cài đặt</b> → <b>Kết nối Phần mềm quản lý nhân sự toàn diện</b> → <b>Tạo mã kết nối</b>. Chép ngay địa chỉ máy chủ và mã kết nối (mã chỉ hiện một lần).', img('key', 'Địa chỉ máy chủ và mã kết nối (ảnh minh họa, mã đã che)')],
@@ -12006,7 +12034,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       ['Cấp tài khoản, PIN cho nhân viên', 'Ở <a href="#nv" data-close>Danh sách nhân sự</a> → ô Tài khoản → Cấp tài khoản / Đặt lại PIN; PIN được gửi thẳng lên máy chủ. Nhân viên mở địa chỉ máy chủ trên điện thoại, đăng nhập bằng mã NV + PIN, ghim ra màn hình chính.', img('nv', 'Trang nhân viên trên điện thoại')],
       ['Hằng ngày, cuối tháng', 'Phần mềm <b>tự động đồng bộ</b> (khi mở, sau mỗi thay đổi và 5 phút/lần): danh sách nhân viên, tài khoản lên máy chủ và app nhân viên; lượt chấm, đơn nghỉ về Tổng hợp công, Nghỉ phép. Cần lấy ngay thì bấm <b>Đồng bộ ngay</b>. Chốt công tháng → phần mềm gửi công từng người lên điện thoại để nhân viên xác nhận hoặc báo sai.', '']];
     modal('Hướng dẫn thiết lập riêng cho công ty', 'Máy chủ chấm công trên tài khoản Cloudflare của công ty · 8 bước',
-      (ED_CT ? '' : '<div class="notice warn wf-only">' + ic('info') + '<div><b>Chỉ thực hiện khi phần mềm hoàn thiện và chính thức phát hành bản đầy đủ.</b> Hiện tại mời anh/chị trải nghiệm bằng bản thử (dữ liệu mẫu) ở trang Chấm công Wi‑Fi.</div></div>') +
+      (ED_CT ? '' : '<div class="notice warn wf-only">' + ic('info') + '<div><b>Chỉ thực hiện khi phần mềm hoàn thiện và chính thức phát hành bản đầy đủ.</b> Hiện tại mời anh/chị trải nghiệm bằng bản thử (dữ liệu mẫu) ở trang Bảng Chấm công.</div></div>') +
       '<ol class="guide-steps wf-gs">' + st.map(function (s, i) { return '<li><span class="gn">' + (i + 1) + '</span><div><h4>' + s[0] + '</h4><p>' + s[1] + '</p>' + s[2] + '</div></li>'; }).join('') + '</ol>' +
       '<div class="notice" style="margin-top:10px">' + ic('info') + '<div>Chấm công chỉ <b>phát hiện</b> chấm hộ (một điện thoại dùng cho nhiều người), không chụp ảnh, không lấy vị trí. Giờ chấm lấy theo đồng hồ máy chủ. Trước khi dùng thật cần có thông báo xử lý dữ liệu cá nhân cho nhân viên (Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15).</div></div>');
   };
@@ -12352,7 +12380,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   }
   ACTS['lc-ntf'] = function (a, key) {
     var u = lcUnit(), X = lcKyPpl(u, key), W = lcW(u); W.ntf[key] = { at: nowVn(), by: ccUser(), n: X.ppl.length }; lcLog(u, { what: 'Thông báo lịch kỳ ' + X.K.label + ' tới app nhân viên (' + X.ppl.length + ' người)' }); lcSave(u, 'thông báo lịch kỳ ' + X.K.label);
-    lcRerender(); if (!lcAppCall(u)) { toast('Đã ghi nhận thông báo lịch kỳ ' + X.K.label, 'info', 'Chưa kết nối máy chủ chấm công (Chấm công → Chấm công Wi‑Fi) nên chưa gửi lên app nhân viên – kết nối xong, lần đồng bộ sau sẽ gửi.'); return; }
+    lcRerender(); if (!lcAppCall(u)) { toast('Đã ghi nhận thông báo lịch kỳ ' + X.K.label, 'info', 'Chưa kết nối máy chủ chấm công (Chấm công → Bảng Chấm công) nên chưa gửi lên app nhân viên – kết nối xong, lần đồng bộ sau sẽ gửi.'); return; }
     lcAppPush(u, [key]).then(function (j) { if (u.wf) u.wf.lichSig = ''; toast('Đã gửi lịch kỳ ' + X.K.label + ' lên app nhân viên', 'ok', X.ppl.length + ' người xem được ở mục Lịch làm của tôi trên điện thoại.'); }, function (er) { toast('Chưa gửi được lịch lên app nhân viên', 'err', er.message + ' Lần đồng bộ sau sẽ gửi lại.'); });
   };
   ACTS['lc-duyet'] = function (a, key) {
@@ -14275,7 +14303,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var nQ = 0, nXem = 0, tot = 0;
     L.rows.forEach(function (r) { var b = P.by[r.id] || {}; nQ += (b.hoi || []).filter(function (x) { return !x.tl; }).length; if (b.xem) nXem++; tot += +r.pay || 0; });
     var kpi = gxKpi([{ l: 'Số phiếu', v: L.rows.length }, { l: 'Tổng thực lĩnh', v: lgMoney(tot), cls: 'ac' },
-      { l: 'Gửi lên điện thoại', v: on ? (P.sent ? 'Đã gửi' : 'Chưa gửi') : 'Chưa kết nối', d: on && P.sent ? esc(P.sent) + (dm ? ' · bản thử' : '') : on ? (dm ? 'qua máy chủ bản thử' : '') : 'kết nối ở <a href="#ccwifi">Chấm công Wi‑Fi</a>' },
+      { l: 'Gửi lên điện thoại', v: on ? (P.sent ? 'Đã gửi' : 'Chưa gửi') : 'Chưa kết nối', d: on && P.sent ? esc(P.sent) + (dm ? ' · bản thử' : '') : on ? (dm ? 'qua máy chủ bản thử' : '') : 'kết nối ở <a href="#ccwifi">Bảng Chấm công</a>' },
       { l: 'Nhân viên đã xem', v: on && P.sent ? nXem + '/' + L.rows.length : '—' }, { l: 'Câu hỏi chờ trả lời', v: nQ, cls: nQ ? 'wn' : '' }]);
     var pbs = []; L.rows.forEach(function (r) { if (r.dept && pbs.indexOf(r.dept) < 0) pbs.push(r.dept); });
     var bar = '<div class="gx-bar"><input class="input" id="plQ" placeholder="Tìm tên, mã NV" value="' + esc(f.q) + '" aria-label="Tìm"><select class="input" id="plPb" aria-label="Bộ phận"><option value="">Bộ phận</option>' + pbs.map(function (x) { return '<option' + (x === f.pb ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select><span class="gx-cnt" id="plCnt"></span><span class="gx-sp"></span>' +
@@ -16486,7 +16514,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     ['nv', 'Người mới', '#A76300']
   ];
   var HN_RN = {}; HN_ROLE.forEach(function (r) { HN_RN[r[0]] = r[1]; });
-  var HN_GO = [['', '— Không —'], ['tdmoi', 'Kết quả phỏng vấn (thư mời nhận việc)'], ['hd', 'Hợp đồng'], ['nv', 'Danh sách nhân sự (cấp tài khoản)'], ['hoso', 'Hồ sơ nhân sự'], ['tochuc', 'Sơ đồ tổ chức'], ['ccwifi', 'Chấm công Wi‑Fi'], ['np', 'Nghỉ phép']];
+  var HN_GO = [['', '— Không —'], ['tdmoi', 'Kết quả phỏng vấn (thư mời nhận việc)'], ['hd', 'Hợp đồng'], ['nv', 'Danh sách nhân sự (cấp tài khoản)'], ['hoso', 'Hồ sơ nhân sự'], ['tochuc', 'Sơ đồ tổ chức'], ['ccwifi', 'Bảng Chấm công'], ['np', 'Nghỉ phép']];
   var HN_GON = {}; HN_GO.forEach(function (g) { HN_GON[g[0]] = g[1]; });
 
   // Menu: Hội nhập thành nhóm riêng có 2 mục – Thiết lập hành trình (chạy) + Theo dõi người mới (sắp có, phần 2)
@@ -20071,7 +20099,7 @@ if (typeof module !== 'undefined') module.exports = XW;
   function vbCid(d) { return d.anh && d.anh.kid ? d.anh.kid : ''; } // 16/11 12:51: ảnh đại diện tài liệu (riêng với file)
   function vbAt(x) { x = String(x || ''); return /^\d{4}-\d\d-\d\dT/.test(x) ? vbVn(x.slice(0, 10)) + ' ' + x.slice(11, 16) : x; }
   function vbPush(u, quiet) {
-    var call = vbCall(u); if (!call) return Promise.reject(new Error('Công ty chưa kết nối máy chủ chấm công – kết nối ở Chấm công Wi‑Fi để nhân viên xem được trên app.'));
+    var call = vbCall(u); if (!call) return Promise.reject(new Error('Công ty chưa kết nối máy chủ chấm công – kết nối ở Bảng Chấm công để nhân viên xem được trên app.'));
     var V = vbOf(u), cty = vbCty(u), pub = V.ds.filter(function (d) { return vbTt(d) !== 'Dự thảo' && vbFid(d); });
     var meta = { cty: cty, nhom: V.nhom, ds: V.ds.map(function (d) { return { id: d.id, nhom: d.nhom, ten: d.ten, so: d.so || '', mota: d.mota || '', ngay: d.ngay || '', hl: d.hl || '', het: d.het || '', tt: vbTt(d), fid: vbFid(d), cv: vbCid(d), fname: d.file ? d.file.name : d.ten + ' (mẫu).jpg', ftype: d.file ? d.file.type : 'image/jpeg', fsize: d.file ? d.file.size : 120000, ver: d.ver || 1, at: d.at || '' }; }) };
     var js = JSON.stringify(meta), sig = js.length + ':' + js.split('').reduce(function (h, ch) { return (h * 31 + ch.charCodeAt(0)) >>> 0; }, 7);
@@ -20131,7 +20159,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       : pageHead('Gửi thông báo nội bộ', 'Gửi thông báo, popup tới app của nhân viên – toàn công ty, theo phòng ban hoặc từng người · nhân viên xem lại được ở mục Lưu trữ thông báo trên app' + (V.mau ? ' · <b>dữ liệu mẫu</b>' : '') + '.', '<button class="btn" data-go="thongtin">' + ic('thongtin', 15) + 'Kho văn bản chung</button>');
     var pick = us.length > 1 ? '<div class="seg" style="margin-bottom:12px">' + us.map(function (x) { return '<button class="' + (x.id === u.id ? 'on' : '') + '" data-act="vb-u" data-id="' + x.id + '">' + esc(shortUnit(x.name)) + '</button>'; }).join('') + '</div>' : '';
     var kpi = mode === 'kho' ? '<div class="org-kpi"><div><b>' + V.ds.length + '</b><span>tài liệu</span></div><div><b>' + n['Đang hiệu lực'] + '</b><span>đang hiệu lực</span></div><div><b>' + n['Dự thảo'] + '</b><span>dự thảo (chưa công bố)</span></div><div><b>' + (n['Hết hiệu lực'] || 0) + '</b><span>hết hiệu lực</span></div></div>' : '';
-    var warn = conn ? '' : '<div class="notice warn">' + ic('info') + '<div><b>Chưa kết nối máy chủ chấm công</b> – tài liệu, thông báo chỉ tới app nhân viên khi công ty đã kết nối (Chấm công → Chấm công Wi‑Fi).</div></div>';
+    var warn = conn ? '' : '<div class="notice warn">' + ic('info') + '<div><b>Chưa kết nối máy chủ chấm công</b> – tài liệu, thông báo chỉ tới app nhân viên khi công ty đã kết nối (Chấm công → Bảng Chấm công).</div></div>';
     var tabs = mode === 'kho' ? '' : '<div class="tl-tabs">' + [['gui', 'Soạn thông báo'], ['ds', 'Thông báo đã gửi (' + V.tb.length + ')']].map(function (t) { return '<button class="' + (f.tab === t[0] ? 'on' : '') + '" data-act="vb-tab" data-id="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
     if (f.tab === 'gui') return head + pick + warn + (conn ? '<div id="tbLuu"></div>' : '') + tabs + vbCompose(u);
     if (f.tab === 'ds') return head + pick + kpi + warn + (conn ? '<div id="tbLuu"></div>' : '') + tabs + '<div id="vbArea"></div>';
@@ -20300,7 +20328,7 @@ if (typeof module !== 'undefined') module.exports = XW;
       return vbPreview(u, o, n == null ? '?' : n).then(function (go) { if (!go) { toast('Chưa gửi thông báo', 'info', 'Tài liệu đã lưu. Gửi lại bằng nút Gửi thông báo ở dòng tài liệu.'); return; } return vbSend(u, o).then(function (r) { d.tbAt = nowVn(); vbSave(u); render(); return r; }); }); });
   }
   function vbSend(u, o) {
-    var call = vbCall(u); if (!call) { toast('Chưa kết nối máy chủ chấm công', 'err', 'Kết nối ở Chấm công → Chấm công Wi‑Fi để gửi thông báo tới app.'); return Promise.reject(new Error('Chưa kết nối')); }
+    var call = vbCall(u); if (!call) { toast('Chưa kết nối máy chủ chấm công', 'err', 'Kết nối ở Chấm công → Bảng Chấm công để gửi thông báo tới app.'); return Promise.reject(new Error('Chưa kết nối')); }
     o.cty = vbCty(u); o.nguoi = typeof ccUser === 'function' ? ccUser() : ''; o.id = 'tb' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     return call('tb', o).then(function (j) { var V = vbOf(u); V.tb.unshift({ id: j.id, tieu_de: o.tieu_de, noi_dung: o.noi_dung, co_anh: !!o.anh, popup: o.popup, den: o.den, loai: o.loai || 'tb', ref: o.ref || '', nguoi: o.nguoi, at: nowVn(), n: j.n }); if (V.tb.length > 300) V.tb.length = 300; vbSave(u, 'gửi thông báo "' + o.tieu_de + '" tới ' + j.n + ' người'); toast('Đã gửi thông báo tới ' + j.n + ' người', 'ok', o.popup ? 'Hiện popup khi nhân viên mở app.' : 'Nhân viên thấy ở chuông thông báo trên app.'); return j; },
       function (er) { toast('Chưa gửi được thông báo', 'err', er.message); throw er; });
@@ -20417,7 +20445,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     return Object.assign({ at: nowVn(), tol: +rule.lateGrace || 0, tols: +rule.earlyGrace || 0, mien: mien, nv: nv, viec: viec, kinds: kinds, sec: bcdSecs(u, need) }, bcdDated(u, need));
   }
   function bcdPush(u, quiet) {
-    var call = bcdCall(u); if (!call) return quiet ? Promise.resolve() : Promise.reject(new Error('Công ty chưa kết nối máy chủ chấm công – kết nối ở Chấm công Wi‑Fi.'));
+    var call = bcdCall(u); if (!call) return quiet ? Promise.resolve() : Promise.reject(new Error('Công ty chưa kết nối máy chủ chấm công – kết nối ở Bảng Chấm công.'));
     var B = bcdOf(u), ds = B.ds.map(function (d) { var o = JSON.parse(JSON.stringify(d)); o.nhan = bcdNhan(u, d); return o; });
     return call('bc', { cty: bcdCty(u), ds: ds, snap: bcdSnap(u) }).then(function () { B.at = nowVn(); saveUnits(); }).catch(function (er) { if (!quiet) throw er; });
   }
@@ -20430,7 +20458,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var B = bcdOf(u), conn = !!bcdCall(u);
     var head = pageHead('Gửi báo cáo định kỳ', 'Tự gửi báo cáo tóm tắt theo ngày, tuần, tháng tới đúng người qua chuông thông báo và thông báo đẩy trên app nhân viên' + (B.mau ? ' · <b>dữ liệu mẫu</b>' : '') + '.', '<button class="btn btn-primary" data-act="bcd-add">+ Tạo báo cáo</button>');
     var pick = us.length > 1 ? '<div class="seg" style="margin-bottom:12px">' + us.map(function (x) { return '<button class="' + (x.id === u.id ? 'on' : '') + '" data-act="bcd-u" data-id="' + x.id + '">' + esc(shortUnit(x.name)) + '</button>'; }).join('') + '</div>' : '';
-    var warn = conn ? '<div class="notice">' + ic('info') + '<div>Máy chủ chấm công tự gửi đúng giờ, <b>không cần mở phần mềm</b>. Số liệu chấm công tính ngay lúc gửi; Việc cần xử lý và biến động nhân sự lấy theo lần đồng bộ gần nhất' + (B.at ? ' (' + esc(B.at) + ')' : '') + '.</div></div>' : '<div class="notice warn">' + ic('info') + '<div><b>Chưa kết nối máy chủ chấm công</b> – báo cáo chỉ gửi được khi công ty đã kết nối (Chấm công → Chấm công Wi‑Fi).</div></div>';
+    var warn = conn ? '<div class="notice">' + ic('info') + '<div>Máy chủ chấm công tự gửi đúng giờ, <b>không cần mở phần mềm</b>. Số liệu chấm công tính ngay lúc gửi; Việc cần xử lý và biến động nhân sự lấy theo lần đồng bộ gần nhất' + (B.at ? ' (' + esc(B.at) + ')' : '') + '.</div></div>' : '<div class="notice warn">' + ic('info') + '<div><b>Chưa kết nối máy chủ chấm công</b> – báo cáo chỉ gửi được khi công ty đã kết nối (Chấm công → Bảng Chấm công).</div></div>';
     var cards = B.ds.length ? '<div class="bcd-list">' + B.ds.map(function (d) { var nh = bcdNhan(u, d);
       return '<div class="card bcd-c' + (d.bat ? '' : ' off') + '"><div class="bcd-h"><div><b>' + esc(d.ten) + '</b><small>' + esc(bcdTs(d)) + ' · số liệu ' + esc(bcdKyT(d.ky).toLowerCase()) + '</small></div><label class="sw" title="Bật / tắt"><input type="checkbox" data-bcd-on="' + d.id + '"' + (d.bat ? ' checked' : '') + '><span></span></label></div>' +
         '<div class="bcd-ct">' + (d.ct || []).map(function (c) { return '<span class="tag tag-mute">' + esc(bcdCtName(c)) + '</span>'; }).join('') + '</div>' +
@@ -23089,10 +23117,10 @@ function reportPrintOverlay(){if(!state.reportPrint)return'';const d=reportData(
   // gọi từ boot (app.js) sau khi có dữ liệu: các công ty tự nối với máy chủ này (không cần Mã kết nối)
   function svAfterBoot() {
     if (!SV || !SV.me) return; svChip();
-    // 17/11/2026: chỉ tự nối công ty đầu tiên; công ty thêm sau chọn ở trang Chấm công Wi‑Fi: dùng chung máy chủ này hoặc máy chủ riêng
+    // 17/11/2026: chỉ tự nối công ty đầu tiên; công ty thêm sau chọn ở trang Bảng Chấm công: dùng chung máy chủ này hoặc máy chủ riêng
     svFirstConnect();
   }
-  // 18/11/2026 1.0.2: máy chủ mới – công ty đầu tiên tạo SAU khi đăng nhập cũng tự nối (trước chỉ nối lúc mở phần mềm → phải bấm chọn ở Chấm công Wi‑Fi). Gọi lại từ wfAutoTick.
+  // 18/11/2026 1.0.2: máy chủ mới – công ty đầu tiên tạo SAU khi đăng nhập cũng tự nối (trước chỉ nối lúc mở phần mềm → phải bấm chọn ở Bảng Chấm công). Gọi lại từ wfAutoTick.
   function svFirstConnect() {
     if (!SV || !SV.me || !S.units || !S.units[0] || S.units.some(function (u) { return u.wf && u.wf.url; })) return false;
     var u0 = S.units[0]; u0.wf = Object.assign(u0.wf || {}, { url: location.origin, key: 'phien', since: Date.now() });
@@ -23185,7 +23213,7 @@ function reportPrintOverlay(){if(!state.reportPrint)return'';const d=reportData(
       if (dn) { html = dn; curPage = 'pqdeny'; }
       else if (isSoon(mm)) html = pageSoon(p);
       else if (fullOnly(p)) html = pageFullOnly(p); // 1.0.0 bản rút gọn
-      else if (p === 'ccwifi') html = PAGES.ccwifi(); /* 0.3.1: trang Chấm công Wi‑Fi trong chamcong.js */
+      else if (p === 'ccwifi') html = PAGES.ccwifi(); /* 0.3.1: trang Bảng Chấm công trong chamcong.js */
       else if (!S.units.length && p !== 'caidat' && p !== 'nhap') { curPage = 'start'; html = pageStart(p !== 'dash' ? p : ''); window.scrollTo(0, 0); } // 12/11 22:41: bấm chức năng khi chưa có dữ liệu → báo rõ, không im lặng
       else if (p === 'dash') html = pageDash();
       else if (p === 'nhap') html = pageNhap();
