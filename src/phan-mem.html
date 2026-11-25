@@ -1560,6 +1560,7 @@ button.op:hover{background:var(--surface-2);border-color:var(--line)}
 .dc.big{justify-content:flex-start;min-width:150px;font-weight:600;font-size:12.5px;padding:0 10px}
 .dc-list{display:flex;flex-direction:column}
 .dc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}.dc-row:first-child{border-top:0}
+.dc-nofile{position:relative}.dc-nofile::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#e0a03a;border:1.5px solid var(--surface,#fff)}
 .gt-opts{display:flex;flex-direction:column;gap:10px}.gt-opts .field{margin-left:26px;max-width:220px}
 .hp{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:900px){.hp{grid-template-columns:1fr}.hp-side .hp-list{max-height:240px}}
@@ -7027,7 +7028,10 @@ if (typeof module !== 'undefined') module.exports = XW;
         for (var j = 0; j < list.length; j++) if (String(list[j][key]) === k) { i = j; break; }
         if (x.del) { if (i >= 0) list.splice(i, 1); }
         else if (i >= 0) list[i] = Object.assign({}, list[i], x.row);
-        else list.push(Object.assign({}, x.row));
+        else { var row = Object.assign({}, x.row);
+          // KSB: restore only GT's missing key from its saved edit key; do not touch NV/QT allocation.
+          if (t === 'GT' && key && (row[key] == null || row[key] === '') && k && k !== 'undefined') row[key] = k;
+          list.push(row); }
       });
     });
     u.data = d; u.ver = (u.ver || 0) + 1; u._nv = null;
@@ -8256,12 +8260,24 @@ if (typeof module !== 'undefined') module.exports = XW;
   var DOC_NA = 'Không áp dụng', GT_FIX = { 'Mã NV': 1, 'Họ và tên': 1, 'Ghi chú hồ sơ': 1 };
   function docTypes(u) {
     if (u.docTypes && u.docTypes.length) return u.docTypes;
-    var seen = {}, out = []; (u.data.GT || []).forEach(function (r) { Object.keys(r).forEach(function (k) { if (!GT_FIX[k] && k.charAt(0) !== '_' && !seen[k]) { seen[k] = 1; out.push(k); } }); });
+    // Use the imported source, not a partial row created by editing one paper.
+    var src = u.base ? (u.base.GT || []) : (u.ovr && u.ovr.GT ? [] : (u.data.GT || []));
+    var seen = {}, out = []; src.forEach(function (r) { Object.keys(r).forEach(function (k) { if (!GT_FIX[k] && k.charAt(0) !== '_' && !seen[k]) { seen[k] = 1; out.push(k); } }); });
     if (out.length) Object.keys(DOC_OPT).forEach(function (k) { seen[k] = 1; }); // đơn vị chưa có cột CV vẫn hiện CV (mặc định Không áp dụng)
     var ord = DOC_DEF.filter(function (d) { return seen[d]; }).concat(out.filter(function (d) { return DOC_DEF.indexOf(d) < 0; }));
     return ord.length ? ord : DOC_DEF.slice();
   }
-  function gtRow(u, id) { var r = (u.data.GT || []).filter(function (x) { return x['Mã NV'] === id; })[0]; return r || null; }
+  function docFreeze(u) { if (!(u.docTypes && u.docTypes.length)) u.docTypes = docTypes(u).slice(); }
+  function docNoFile(u, id, k) { return typeof khoCount === 'function' && typeof KHO !== 'undefined' && KHO.ready && !khoCount(u, id, 'hoso', k); }
+  function gtRow(u, id) {
+    var r = (u.data.GT || []).filter(function (x) { return x['Mã NV'] === id; })[0];
+    var old = u.ovr && u.ovr.GT && u.ovr.GT[id];
+    // Only a matching, non-deleted saved patch with a missing key is evidence for restoration.
+    if (!r && u.base && old && !old.del && old.row && (old.row['Mã NV'] == null || old.row['Mã NV'] === '')) {
+      rebuildUnit(u); r = (u.data.GT || []).filter(function (x) { return x['Mã NV'] === id; })[0];
+    }
+    return r || null;
+  }
   function docVal(v) {
     if (v === null || v === undefined || String(v).trim() === '') return { st: 'miss' };
     if (typeof v === 'number' && v > 20000 && v < 80000) { var d = new Date(Date.UTC(1899, 11, 30) + v * 86400000); return { st: 'ok', d: d.toISOString().slice(0, 10) }; }
@@ -8275,7 +8291,8 @@ if (typeof module !== 'undefined') module.exports = XW;
   function hosoGap(u, e) { var info = missingOf(e, u), ds = docsOf(u, e), app = ds.filter(function (d) { return d.st !== 'na'; }), dm = app.filter(function (d) { return d.st === 'miss'; }).map(function (d) { return d.k; }); return { info: info, docs: dm, tot: NEED.length + app.length, miss: info.length + dm.length }; }
   function docChip(d, u, id, big) {
     var lab = d.st === 'ok' ? (d.d ? 'Nộp ' + vn(d.d) : (d.t || 'Đã nộp')) : d.st === 'na' ? 'Không áp dụng' : 'Còn thiếu';
-    return '<button type="button" class="dc dc-' + d.st + (big ? ' big' : '') + '" data-act="gt-cell" data-u="' + u.id + '" data-id="' + esc(id) + '" data-k="' + esc(d.k) + '" title="' + esc(d.k + ': ' + lab + ' – bấm để cập nhật') + '">' + (d.st === 'ok' ? '✓' : d.st === 'na' ? '–' : '✕') + (big ? '<span>' + esc(lab) + '</span>' : '') + '</button>';
+    var nf = d.st === 'ok' && docNoFile(u, id, d.k), title = lab + (nf ? ' – chưa có file scan' : '');
+    return '<button type="button" class="dc dc-' + d.st + (nf ? ' dc-nofile' : '') + (big ? ' big' : '') + '" data-act="gt-cell" data-u="' + u.id + '" data-id="' + esc(id) + '" data-k="' + esc(d.k) + '" title="' + esc(d.k + ': ' + title + ' – bấm để cập nhật') + '">' + (d.st === 'ok' ? '✓' : d.st === 'na' ? '–' : '✕') + (big ? '<span>' + esc(lab) + '</span>' : '') + '</button>';
   }
   ACTS['gt-cell'] = function (a, id) {
     var u = unitById(a.getAttribute('data-u')), k = a.getAttribute('data-k'), e = nvIndex(u)[id], r = gtRow(u, id) || {}, cur = docVal(r[k]);
@@ -8288,8 +8305,8 @@ if (typeof module !== 'undefined') module.exports = XW;
       var st = $('input[name="gtS"]:checked', m).value, v = '';
       if (st === 'ok') { var iso = $('#gtD', m)._get(); if (!iso) { $('#gtD', m).classList.add('bad'); toast('Ngày nộp chưa đúng', 'err', 'Nhập dd/mm/yyyy.'); return; } v = vn(iso); }
       else if (st === 'na') v = DOC_NA;
-      var patch = {}; patch[k] = v; if (!gtRow(u, id)) patch['Họ và tên'] = e['Họ và tên'];
-      editRow(u, 'GT', id, patch, e['Họ và tên'] + ' – ' + k + ': ' + (st === 'ok' ? 'đã nộp ' + v : st === 'na' ? 'không áp dụng' : 'còn thiếu'));
+      var patch = {}; patch[k] = v; patch['Mã NV'] = id; if (!gtRow(u, id)) patch['Họ và tên'] = e['Họ và tên'];
+      docFreeze(u); editRow(u, 'GT', id, patch, e['Họ và tên'] + ' – ' + k + ': ' + (st === 'ok' ? 'đã nộp ' + v : st === 'na' ? 'không áp dụng' : 'còn thiếu'));
       m.close(); commitEdits();
     });
   };
@@ -8338,7 +8355,7 @@ if (typeof module !== 'undefined') module.exports = XW;
             '<td><span class="nv-fill' + (g.miss ? ' part' : '') + '"><i style="width:' + pc + '%"></i></span><small class="cell-sub">' + (g.miss ? 'Thiếu ' + g.miss : 'Đủ') + '</small></td><td>' + (function () { var n = khoCount(u, p.e['Mã NV'], 'hoso'); return '<button type="button" class="kho-btn' + (n ? '' : ' empty') + '" data-act="kho" data-k="hoso" data-u="' + u.id + '" data-id="' + esc(p.e['Mã NV']) + '" title="Mở thư mục hồ sơ">' + ic('folder', 15) + (n || '0') + '</button>'; })() + '</td></tr>';
         }).join('') + '</tbody><tfoot><tr><td>Số người còn thiếu</td>' + cnt.map(function (n) { return '<td class="c' + (n ? ' bad' : '') + '">' + (n || '–') + '</td>'; }).join('') + '<td></td><td></td></tr></tfoot></table></div></div>';
     }).join('') || '<div class="card empty"><p>Không có ai khớp bộ lọc.</p></div>';
-    return tools + html + '<div class="org-leg"><span><i class="dc dc-ok sm">✓</i>Đã nộp</span><span><i class="dc dc-miss sm">✕</i>Còn thiếu</span><span><i class="dc dc-na sm">–</i>Không áp dụng</span><span class="faint">Danh mục giấy tờ là ví dụ thường gặp – mỗi đơn vị tự thêm, bỏ theo quy chế của mình</span></div>';
+    return tools + html + '<div class="org-leg"><span><i class="dc dc-ok sm">✓</i>Đã nộp</span><span><i class="dc dc-miss sm">✕</i>Còn thiếu</span><span><i class="dc dc-na sm">–</i>Không áp dụng</span><span><i class="dc dc-ok dc-nofile sm">✓</i>Đã nộp, chưa có file scan</span><span class="faint">Danh mục giấy tờ là ví dụ thường gặp – mỗi đơn vị tự thêm, bỏ theo quy chế của mình</span></div>';
   }
   ACTS['hs-view'] = function (a, id) { PS.hoso.view = id; render(); };
   ACTS['hs-open'] = function (a, id, ev) { if (ev) ev.preventDefault(); ps('hoso', {}); PS.hoso.view = 'nguoi'; PS.hoso.sel = a.getAttribute('data-u') + '|' + id; if (curPage !== 'hoso') go('hoso'); else render(); };
@@ -12863,7 +12880,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     var after = gross - nl - tax, kt = 0;
     s.items.filter(function (it) { return it.g === 'kt'; }).forEach(function (it) {
       var m = lgInp(u, ym, id, it.id), v = 0, f = '';
-      if (it.dk === 'union') { if (!E.union) return; if (it.kind === 'pctbh') { var cpU = ref * 0.1, raw = bhBase * (+it.amt || 0) / 100; v = Math.min(raw, cpU); f = lgPct(it.amt) + ' × ' + lgMoney(bhBase) + (raw > cpU ? ' (trần 10% lương cơ sở ' + lgMoney(cpU) + ')' : ''); } else { v = lgEmpAmt(E, it, +it.amt || 0); f = 'cố định'; } }
+      if (it.dk === 'union') { var ovU = OV['it.' + it.id], manualUnion = ovU != null && ovU !== '' && !isNaN(+ovU); if (!E.union && !manualUnion) return; if (!E.union) v = 0; else if (it.kind === 'pctbh') { var cpU = ref * 0.1, raw = bhBase * (+it.amt || 0) / 100; v = Math.min(raw, cpU); f = lgPct(it.amt) + ' × ' + lgMoney(bhBase) + (raw > cpU ? ' (trần 10% lương cơ sở ' + lgMoney(cpU) + ')' : ''); } else { v = lgEmpAmt(E, it, +it.amt || 0); f = 'cố định'; } }
       else { v = m != null ? m : it.kind === 'fix' ? lgEmpAmt(E, it, +it.amt || 0) : 0; f = m != null ? 'nhập tháng ' + HR.ymLabel(ym) : it.kind === 'fix' ? 'cố định' : 'nhập ở Bảng lương tháng'; }
       if (it.dk === 'union') { v = O('it.' + it.id, v); if (r.ovr['it.' + it.id]) f = 'sửa tay trên bảng lương'; }
       C.it[it.id] = v; if (!v && !opt.all) return;
@@ -14055,7 +14072,8 @@ if (typeof module !== 'undefined') module.exports = XW;
   function blSetVal(u, ym, id, k, type, val) {
     var M = lgM(u, ym), box = type === 'in' ? (M.inp) : (M.ovr = M.ovr || {}), o = box[id] || (box[id] = {});
     if (val === '') delete o[k]; else o[k] = val;
-    if (type === 'ov' && val !== '') { var r = lgCalc(u, ym, id); if (r && r.ovr[k] && Math.round(r.ovr[k].auto * 100) === Math.round(val * 100)) delete o[k]; }
+    var keepUnionZero = type === 'ov' && val === 0 && lgOf(u).items.some(function (it) { return it.dk === 'union' && k === 'it.' + it.id; });
+    if (type === 'ov' && val !== '' && !keepUnionZero) { var r = lgCalc(u, ym, id); if (r && r.ovr[k] && Math.round(r.ovr[k].auto * 100) === Math.round(val * 100)) delete o[k]; }
     if (!Object.keys(o).length) delete box[id];
   }
   var BL_DOWN = null; // 10/11 12:09 anh: bấm ô khác khi đang sửa → lưu ô cũ, mở luôn ô mới, giữ vị trí cuộn
