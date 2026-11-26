@@ -8,6 +8,9 @@ import qrcode from './qrcode.mjs';
 import { gpsReady, gpsAllowed, gpsVerify, gpsAdmin } from './ksb-gps.js';
 import { sendKsbFeedback } from './ksb-feedback.js';
 import { reportsAPI } from './ksb-reports.js';
+import { assetsTransactionAPI, protectedAssetUnitSave } from './ksb-assets-api.js';
+import {assetMailCron} from './ksb-assets-mail.js';
+import ASSET_ENGINE from './ksb-assets-engine.txt';
 import { assetCatalogAPI } from './ksb-asset-import.js';
 import APP_SOURCE from './app.html';
 import { withTableUI } from './ksb-table-ui.js';
@@ -21,7 +24,7 @@ import { TAY_LATIN, TAY_VI } from './font-tay.js'; // 12/11: phông viết tay c
 import { OG_QL_B64, OG_NV_B64 } from './og-anh.js'; // 08/11: ảnh chia sẻ Facebook/Zalo cho bản chạy thử
 import HRM_SOURCE from './phan-mem.html'; // 08/11: Phần mềm quản lý nhân sự toàn diện bản xem trước (build/index.html chép sang khi node build.js)
 
-const HRM_HTML = withTableUI(HRM_SOURCE, TABLE_UI_SCRIPT);
+const HRM_HTML = withTableUI(HRM_SOURCE.replace('<head>', () => '<head><script>' + ASSET_ENGINE + '</script>'), TABLE_UI_SCRIPT);
 
 const VER = '1.0.2-ksb.2';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
 // trước: VER '0.4.1'  // 07/11/2026: nối Phần mềm quản lý nhân sự toàn diện (đồng bộ nhân viên, lượt chấm, đơn nghỉ, xác nhận công)
@@ -1247,6 +1250,9 @@ async function api(req, env, url) {
       try { return json(await reportsAPI(db, U, url.searchParams, isoVN(now))); }
       catch (error) { return bad(error.status ? error.message : 'Chưa đọc được dữ liệu báo cáo.', error.status || 500); }
     }
+    if (r === 'tai-san-nghiep-vu' && req.method === 'POST') {
+      try { const result=await assetsTransactionAPI(db,U,body,{appUrl:new URL('/quan-tri?unit='+encodeURIComponent(body.unit)+'#taisan',req.url).href,mailConfigured:!!(cfg.mail_key&&cfg.mail_from)});if(body.payload?.guiEmail||body.action==='queueTestMail')req.ctx.waitUntil(assetMailCron(db,cfg,{daily:false,unitId:body.unit}).catch(()=>{}));return json(result); } catch(e) { return bad(e.message, e.status || 400); }
+    }
     if (r === 'tai-san-qlts' && req.method === 'POST') {
       try { return json(await assetCatalogAPI(db, U, body)); }
       catch (e) { return bad(e.status ? e.message : 'Chưa xử lý được danh mục tài sản.', e.status || 500); }
@@ -1268,6 +1274,12 @@ async function api(req, env, url) {
         if (old) { const op = (await db.prepare('SELECT v FROM qt_part WHERE k = ? ORDER BY i').bind(k).all()).results.map(x => x.v).join(''); try { a = JSON.parse(op).pq || null; } catch (e) { } }
         if (JSON.stringify(pqCore(a)) !== JSON.stringify(pqCore(b))) return bad('Chỉ quản trị viên mới sửa được phân quyền tài khoản.', 403);
       } else if (k === 'settings' && !U.sys && z) return bad('Dữ liệu cài đặt phải gửi dạng chưa nén.');
+      if(k.startsWith('unit:')) {
+        try { const guarded=await protectedAssetUnitSave(db,U,{...body,k,v,z,base});
+          if(guarded?.conflict){const e=guarded.conflict;return json({ok:false,xung_dot:true,ver:e.meta.ver,at:e.meta.at,nguoi:e.meta.nguoi,z:e.meta.z,v:e.text,loi:'Dữ liệu công ty vừa thay đổi; gộp lại với bản mới.'},409);}
+          if(guarded)return json({ok:true,ver:guarded.version,at:now,nguoi:U.ten});
+        }catch(e){return bad(e.message,e.status||400);}
+      }
       const ver = (old ? old.ver : 0) + 1, CH = 400000, st = [db.prepare('DELETE FROM qt_part WHERE k = ?').bind(k)]; let n = 0;
       for (let i = 0; i < v.length || i === 0; i += CH) { st.push(db.prepare('INSERT INTO qt_part (k, i, v) VALUES (?, ?, ?)').bind(k, n++, v.slice(i, i + CH))); if (!v.length) break; }
       const meta = body.meta ? JSON.stringify(body.meta).slice(0, 4000) : null;
@@ -1915,7 +1927,7 @@ function b64ToBytes(b64) { const s = atob(b64), a = new Uint8Array(s.length); fo
 const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'permissions-policy': 'camera=(self), microphone=(), geolocation=(self)' };
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(bcCron(env).catch(e => console.error('bcCron', e))); }, // 16/11: gửi báo cáo định kỳ (cron 15 phút/lần – wrangler.jsonc triggers)
+  async scheduled(ev, env, ctx) { ctx.waitUntil(bcCron(env).catch(e => console.error('bcCron', e)));ctx.waitUntil(getCfg(env.DB).then(cfg=>assetMailCron(env.DB,cfg)).catch(()=>{})); }, // 16/11: gửi báo cáo định kỳ (cron 15 phút/lần – wrangler.jsonc triggers)
   async fetch(req, env, ctx) {
     const url = new URL(req.url); req.ctx = ctx;
     let may = cookies(req).qtt_may, newMay = false;
@@ -1929,6 +1941,7 @@ export default {
       if (/^\/logo\.(png|webp|jpg|svg)$/.test(url.pathname)) { const c = await brCfg(env), lg = /^data:(image\/[a-z+]+);base64,(.*)$/.exec(c.br_logo || ''); if (!lg) return new Response('', { status: 404 }); return new Response(b64ToBytes(lg[2]), { headers: { 'content-type': lg[1], 'cache-control': 'max-age=600' } }); }
       if (url.pathname === '/icon.png') return new Response(b64ToBytes(ICON_PNG_B64), { headers: { 'content-type': 'image/png', 'cache-control': 'max-age=86400' } });
       if (url.pathname === '/font/tay-latin.woff2' || url.pathname === '/font/tay-vi.woff2') return new Response(b64ToBytes(url.pathname === '/font/tay-vi.woff2' ? TAY_VI : TAY_LATIN), { headers: { 'content-type': 'font/woff2', 'cache-control': 'public, max-age=2592000, immutable' } });
+      if (url.pathname === '/asset-qr.svg') { const unit=url.searchParams.get('unit')||'',ma=url.searchParams.get('ma')||'';if(!/^[A-Za-z0-9._-]{1,80}$/.test(unit)||!ma||ma.length>80)return new Response('Mã không hợp lệ',{status:400});return new Response(qrSvg(url.origin+'/quan-tri?unit='+encodeURIComponent(unit)+'&asset='+encodeURIComponent(ma)+'#taisan'),{headers:{'content-type':'image/svg+xml','cache-control':'no-store',...SEC}}); }
       if (url.pathname === '/qr-app.svg') return new Response(qrSvg(url.origin + '/'), { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'max-age=3600', 'access-control-allow-origin': '*' } }); // 12/11: mã QR mở app nhân viên (phần mềm hiện ở trang Ứng dụng nhân viên)
       if (url.pathname === '/icon.svg') return new Response(ICON_SVG, { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'max-age=86400' } });
       if (/^\/phan-mem\/?$/.test(url.pathname) && isDemo(env, url)) return new Response(HRM_HTML, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer' } });

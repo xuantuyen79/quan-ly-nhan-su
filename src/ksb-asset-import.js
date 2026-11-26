@@ -44,21 +44,21 @@ export async function catalogSnapshot(db) {
   const token = await digest(entries.map(e => ({ meta: e.meta, text: e.text })));
   return { entries, token };
 }
-async function writeAtomic(db, snapshot, unit, actor) {
-  const old = snapshot.entries.find(e => e.meta.k === ASSET_TARGET), version = old.meta.ver + 1;
+export async function writeAtomic(db, snapshot, unit, actor, targetKey = ASSET_TARGET, metadata = undefined) {
+  const old = snapshot.entries.find(e => e.meta.k === targetKey), version = old.meta.ver + 1;
   const text = await encodeUnit(unit), chunks = text.match(/.{1,400000}/g), nonce = crypto.randomUUID();
   const writer = String(actor || 'Quản trị viên').slice(0, 100) + ' · QLTS ' + nonce;
   const sameVersions = snapshot.entries.map(() => '(k=? AND ver=?)').join(' OR ');
   // Guard every unit, including the set of keys, so a concurrent import into
   // another company cannot invalidate the global duplicate check.
-  const update = db.prepare(`UPDATE qt_kv SET ver=?,at=?,nguoi=?,n=?,z=1,size=? WHERE k=? AND ver=?
+  const update = db.prepare(`UPDATE qt_kv SET ver=?,at=?,nguoi=?,n=?,z=1,size=?,meta=COALESCE(?,meta) WHERE k=? AND ver=?
     AND (SELECT COUNT(*) FROM qt_kv WHERE k LIKE 'unit:%')=?
     AND (SELECT COUNT(*) FROM qt_kv WHERE ${sameVersions})=?`).bind(
-    version, Date.now(), writer, chunks.length, text.length, ASSET_TARGET, old.meta.ver,
+    version, Date.now(), writer, chunks.length, text.length, metadata === undefined ? null : metadata, targetKey, old.meta.ver,
     snapshot.entries.length, ...snapshot.entries.flatMap(e => [e.meta.k, e.meta.ver]), snapshot.entries.length);
   const guard = 'EXISTS(SELECT 1 FROM qt_kv WHERE k=? AND ver=? AND nguoi=?)';
-  const statements = [update, db.prepare('DELETE FROM qt_part WHERE k=? AND ' + guard).bind(ASSET_TARGET, ASSET_TARGET, version, writer)];
-  chunks.forEach((chunk, i) => statements.push(db.prepare('INSERT INTO qt_part(k,i,v) SELECT ?,?,? WHERE ' + guard).bind(ASSET_TARGET, i, chunk, ASSET_TARGET, version, writer)));
+  const statements = [update, db.prepare('DELETE FROM qt_part WHERE k=? AND ' + guard).bind(targetKey, targetKey, version, writer)];
+  chunks.forEach((chunk, i) => statements.push(db.prepare('INSERT INTO qt_part(k,i,v) SELECT ?,?,? WHERE ' + guard).bind(targetKey, i, chunk, targetKey, version, writer)));
   // Never split this into several batches: all parts and metadata are atomic.
   const results = await db.batch(statements);
   if (results[0].meta.changes !== 1) stop('Dữ liệu vừa thay đổi; đọc lại và lập preview mới. Không force.');
