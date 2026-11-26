@@ -8,6 +8,7 @@ import qrcode from './qrcode.mjs';
 import { gpsReady, gpsAllowed, gpsVerify, gpsAdmin } from './ksb-gps.js';
 import { sendKsbFeedback } from './ksb-feedback.js';
 import { reportsAPI } from './ksb-reports.js';
+import { assetCatalogAPI } from './ksb-asset-import.js';
 import APP_SOURCE from './app.html';
 import { withTableUI } from './ksb-table-ui.js';
 import TABLE_UI_SCRIPT from './ksb-table-ui-runtime.txt';
@@ -1245,6 +1246,10 @@ async function api(req, env, url) {
     if (r === 'bao-cao' && req.method === 'GET') {
       try { return json(await reportsAPI(db, U, url.searchParams, isoVN(now))); }
       catch (error) { return bad(error.status ? error.message : 'Chưa đọc được dữ liệu báo cáo.', error.status || 500); }
+    }
+    if (r === 'tai-san-qlts' && req.method === 'POST') {
+      try { return json(await assetCatalogAPI(db, U, body)); }
+      catch (e) { return bad(e.status ? e.message : 'Chưa xử lý được danh mục tài sản.', e.status || 500); }
     }
     if (r === 'du-lieu') return json({ ok: true, now, list: (await db.prepare('SELECT k, ver, at, nguoi, z, meta, size FROM qt_kv ORDER BY k').all()).results.map(x => ({ ...x, meta: x.meta ? JSON.parse(x.meta) : null })) });
     if (r === 'kv' && req.method === 'GET') {
