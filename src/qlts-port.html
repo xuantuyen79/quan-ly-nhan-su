@@ -1930,7 +1930,7 @@ VIEW.ts = {
     var a = S.ix.ts[ma];
     if (!a) return ph({ crumb: '<a data-go="tai-san">Tài sản</a>', t: 'Không tìm thấy tài sản' }) + '<div class="card">' + trong('Không có tài sản mã ' + ma + '. Có thể đã bị xoá hoặc đổi mã.', 'search') + '</div>';
     var T = a.tinhTrang, m = S.muonMo[ma];
-    var chinh = T === 'Trong kho' ? nut('Cấp phát', 'capPhat', { k: 'btn-p', i: 'out', d: { ma: ma } })
+    var chinh = DUOC['Cấp phát'](a) ? nut('Cấp phát', 'capPhat', { k: 'btn-p', i: 'out', d: { ma: ma } })
       : T === 'Đang sử dụng' ? nut('Thu hồi', 'thuHoi', { k: 'btn-p', i: 'in', d: { ma: ma } })
       : T === 'Đang cho mượn' && m ? nut('Nhận trả', 'nhanTra', { k: 'btn-p', i: 'in', d: { id: m.id } })
       : T === 'Hỏng' || T === 'Đang sửa chữa' ? nut('Ghi bảo trì', 'baoTri', { k: 'btn-p', i: 'wrench', d: { ma: ma } })
@@ -1965,7 +1965,7 @@ VIEW.ts = {
       return '<div class="ts-o" style="min-width:0"><div class="av">' + esc(viTat(n.hoTen)) + '</div><div style="min-width:0"><div class="ts-ten"><a data-go="nv/' + esc(n.ma) + '">' + esc(n.hoTen) + '</a></div><div class="ts-ma">' + esc([n.chucVu, n.phongBan].filter(String).join(' · ')) + '</div></div></div>' +
         (n.sdt || n.email ? '<div class="mo" style="margin-top:10px;line-height:1.8">' + (n.sdt ? esc(n.sdt) + '<br>' : '') + esc(n.email) + '</div>' : '') +
         (m ? '<div class="xem" style="margin:12px 0 0">Đang mượn từ ' + ngay(m.ngayMuon) + ', hạn trả ' + ngay(m.hanTra) + (m.hanTra < hn() ? ' <b style="color:var(--red)">(quá hạn)</b>' : '') + '</div>' : '');
-    })(S.ix.nv[a.nguoiSD]) : '<div class="mo">' + (T === TL ? 'Đã thanh lý ngày ' + ngay(a.ngayTL) : a.phongBan ? 'Giao cho ' + esc(a.phongBan) + ', chưa gắn người' : 'Đang ở ' + esc(a.viTri || 'kho')) + '</div>';
+    })(S.ix.nv[a.nguoiSD]) : '<div class="mo">' + (T === TL ? 'Đã thanh lý ngày ' + ngay(a.ngayTL) : a.phongBan ? 'Giao cho ' + esc(a.phongBan) + ', chưa gắn người' : (a.viTri ? 'Đang ở ' + esc(a.viTri) : T==='Trong kho'||a.nguonQLTS==='Trong kho'?'Đang ở kho':'Chưa ghi nhận vị trí')) + '</div>';
     var tt = thaoTacTS(a);
 
     h += kkNhanh(a) + '<div class="luoi g21"><div class="luoi" style="align-content:start">' +
@@ -2085,7 +2085,7 @@ function thaoTacTS(a) {
   var T = a.tinhTrang, ma = a.ma, ds = [];
   function d(t, act, i, x) { if (!coQuyenAct(act)) return; ds.push('<div class="viec" data-act="' + act + '" data-ma="' + esc(ma) + '"' + (x ? dataAttr(x) : '') + '><div class="viec-ic c-purple">' + ic(i) + '</div><div class="viec-t">' + t + '</div>' + ic('chevr') + '</div>'); }
   if (T === TL) return '';
-  if (T === 'Trong kho') { d('Cấp phát cho nhân viên', 'capPhat', 'out'); d('Cho mượn', 'choMuon', 'clock'); }
+  if (DUOC['Cấp phát'](a)) d('Cấp phát cho nhân viên', 'capPhat', 'out'); if (T === 'Trong kho') d('Cho mượn', 'choMuon', 'clock');
   if (T === 'Đang sử dụng') { d('Thu hồi về kho', 'thuHoi', 'in'); d('Luân chuyển người dùng', 'luanChuyen', 'swap'); }
   if (T === 'Đang cho mượn' && S.muonMo[ma]) d('Nhận trả', 'nhanTra', 'in', { id: S.muonMo[ma].id });
   if (['Hỏng', 'Đang sửa chữa', 'Chờ thanh lý'].indexOf(T) >= 0 && (a.nguoiSD || a.phongBan)) d('Thu hồi về kho', 'thuHoi', 'in');
@@ -2413,7 +2413,7 @@ function moGD(loai, ds) {
   var list = S.d.ts.filter(DUOC[loai]), th = loai === 'Thu hồi';
   var nguoiGiu = th ? uniq(list.map(function (a) { return a.nguoiSD; })).map(function (m) { return [m, nvTen(m) + ' (' + (S.giu[m] || []).filter(DUOC['Thu hồi']).length + ' tài sản)']; }) : [];
   var body = seg('loai', [['Cấp phát', 'Cấp phát'], ['Thu hồi', 'Thu hồi'], ['Luân chuyển', 'Luân chuyển']], loai) + boQua(ds, DUOC[loai], loai.toLowerCase()) +
-    fcard('Tài sản' + (th ? ' cần thu hồi' : loai === 'Cấp phát' ? ' trong kho' : ' đang sử dụng'),
+    fcard('Tài sản' + (th ? ' cần thu hồi' : loai === 'Cấp phát' ? ' có thể bàn giao' : ' đang sử dụng'),
       (th && nguoiGiu.length ? '<div class="f"><label>Chọn nhanh theo người đang giữ</label>' +
         ssel('_chonNguoi', nguoiGiu.map(function (x) { return { v: x[0], t: x[1], s: (S.ix.nv[x[0]] || {}).phongBan || '' }; }), '', 'Chọn người để chọn hết tài sản người đó giữ') + '</div>' : '') +
       pk(list, ds) + '<div style="height:14px"></div>') +
@@ -2430,7 +2430,7 @@ function moGD(loai, ds) {
       '<label class="optb"><input type="checkbox" name="inBB"' + (nhoInBB() ? ' checked' : '') + '> Mở biên bản ' + loai.toLowerCase() + ' để in sau khi lưu</label>' +
       '<label class="optb"><input type="checkbox" name="guiEmail"' + (S.d.caiDat.emailGiaoNhan ? ' checked' : '') + '> Gửi email báo ' +
         (th ? 'người trả' : loai === 'Cấp phát' ? 'người nhận' : 'người giao và người nhận') + ' (nhân viên có email)</label>');
-  moDr({ t: loai + ' tài sản', s: th ? 'Thu tài sản về kho, bỏ người sử dụng' : loai === 'Cấp phát' ? 'Giao tài sản trong kho cho nhân viên hoặc phòng ban' : 'Chuyển tài sản đang dùng sang người khác', body: '<div class="gd-view">' + body + '</div>', nut: loai,
+  moDr({ t: loai + ' tài sản', s: th ? 'Thu tài sản về kho, bỏ người sử dụng' : loai === 'Cấp phát' ? 'Giao tài sản đủ điều kiện cho nhân viên hoặc phòng ban' : 'Chuyển tài sản đang dùng sang người khác', body: '<div class="gd-view">' + body + '</div>', nut: loai,
     sau: function () {
       S.segCb.loai = function (x) {
         var giu = layForm($('#drf'));
@@ -4640,7 +4640,7 @@ function moBB(kieu, key) {
   if (!x) { x = document.createElement('div'); x.id = 'bbx'; x.className = 'bbx'; document.body.appendChild(x); }
   x.innerHTML = '<div class="bbx-c"><div class="bbx-tb"><div style="min-width:0"><div class="dr-t">' + esc(M[bb.kieu].tieuDe) + '</div><div class="dr-s">' +
     (bb.so ? 'Số ' + esc(bb.so) + ' · ' : '') + ngay(bb.ngay) + ' · ' + (bb.soLuong || bb.ts.length) + ' tài sản' +
-    (bb.fileBB ? ' · <a href="' + esc(bb.fileBB) + '" target="_blank" rel="noopener">Mở PDF đã lưu trong kho QLNS ' + ic('ext') + '</a>' : '') + '</div></div>' +
+    (bb.fileBB ? ' · <a href="' + esc(bb.fileBB) + '" target="_blank" rel="noopener">Mở chứng từ đã lưu trong kho QLNS ' + ic('ext') + '</a>' : '') + '</div></div>' +
     '<div class="bbx-nut">' + (ds.length > 1 ? '<div class="bbx-ds">' + ds.map(function (so) {
       var b2 = bbGD(so), g2 = b2 && S.ix.nv[b2.rows[0].nguoiGiao];
       return '<button type="button" class="tab' + (so === bb.key ? ' on' : '') + '" data-act="chuyenBB" data-k="' + esc(so) + '">' + esc(g2 ? g2.hoTen : so) + '</button>';
@@ -4683,10 +4683,10 @@ function tuLuuPdfSau(kieu, ds) {
   if (!S.d.caiDat.tuLuuPdf || !ds.length || (S.d.cheDo === 'xem-thu' && !S.d.laChu)) return;
   var i = 0, xong = 0;
   (function tiep() {
-    if (i >= ds.length) { if (xong) bao('Đã lưu ' + (xong > 1 ? xong + ' biên bản' : 'biên bản') + ' PDF vào kho QLNS'); return; }
+    if (i >= ds.length) { if (xong) bao('Đã lưu ' + (xong > 1 ? xong + ' biên bản' : 'biên bản') + (S.d.pdfReady?' PDF':'') + ' vào kho QLNS'); return; }
     var bb = bbLay(kieu, ds[i++]); if (!bb) return tiep();
     luuPdf(bb).then(function (d) { setData(d); nhoFile(bb, d.fileBB); xong++; tiep(); })
-      .catch(function (e) { bao('Chưa lưu được PDF vào kho QLNS: ' + e.message, true); });
+      .catch(function (e) { bao('Chưa lưu được chứng từ vào kho QLNS: ' + e.message, true); });
   })();
 }
 /* ---- Bản đã ký: ảnh chụp / bản scan biên bản sau khi ký tay. Máy chủ lưu vào kho QLNS (thư mục "Biên bản <năm>"),
@@ -5070,6 +5070,18 @@ ACT.cdGuiThu=function(el){var done=dangXuLy(el,'Đang xử lý');api('guiThuNhac
 // Departments remain a shared QLNS master, including on the original catalog screen.
 var portCatalogAfter=VIEW['danh-muc'].sau;
 VIEW['danh-muc'].sau=function(){if(portCatalogAfter)portCatalogAfter();$$('[data-k="phongBan"],input[data-dm="phongBan"]').forEach(function(e){e.disabled=true;e.title='Dùng danh mục Phòng ban QLNS';});};
+// Reuse the backend eligibility projection and the existing confirmation dialog.
+DUOC['Cấp phát']=function(a){return !!a.allocation?.allowed;};
+var portAPIBase=portAPI;
+portAPI=function(fn,args){
+ if(fn==='recordMove'&&args[0]?.loai==='Cấp phát'){
+  var p=args[0],confirm=(p.ds||[]).filter(function(ma){return S.ix.ts[ma]?.allocation?.requiresReconciliation;});
+  if(confirm.length)return hoi('Xác nhận bàn giao ban đầu','Nguồn QLTS ghi Đang sử dụng: '+confirm.map(esc).join(', ')+'. Xác nhận đã kiểm tra hiện trạng và ghi nhận bàn giao mới cho người nhận trong QLNS; không coi tài sản đang nằm trong kho.','Xác nhận bàn giao',false).then(function(ok){if(!ok)throw new Error('Đã hủy bàn giao, dữ liệu chưa thay đổi');return portAPIBase(fn,[Object.assign({},p,{reconcileCodes:confirm})]);});
+ }
+ return portAPIBase(fn,args);
+};
+var portSaveDocument=ACT.luuBBDrive;
+ACT.luuBBDrive=function(el){if(S.d.pdfReady)return portSaveDocument(el);var bb=S.bbDang;if(!bb)return;chay(el,'luuPdfBienBan',[bb.kieu,bb.key,'',tenTepBB(bb)],'Đã lưu chứng từ vào kho QLNS. Dùng In / Lưu PDF để xuất tệp PDF trên máy.',function(d){nhoFile(bb,d.fileBB);moBB._dang=bb.key;moBB(moBB._kieu,moBB._ds);});};
 portStart();
 </script>
 </body></html>

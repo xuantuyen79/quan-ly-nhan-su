@@ -19,6 +19,7 @@ test('asset workflows on local D1: server rules, permission, concurrency, idempo
   await assert.rejects(qltsDocumentPDF(db,admin,{...body,version:0},browser),e=>e.status===409);
   await assert.rejects(qltsDocumentPDF(db,admin,{...body,table:'employees'},browser),e=>e.status===400);
   await assert.rejects(qltsDocumentPDF(db,admin,{...body,table:'nv',key:'UNKNOWN'},browser),e=>e.status===404);
+  const archived=await qltsDocumentPDF(db,admin,{...body,format:'html'},null);assert.equal(new TextDecoder().decode(archived),entry.unit.ts.ksbDocuments['gd|'+entry.unit.ts.ksb.gd[0].bienBan].html);
   assert.equal(calls,0);const bytes=await qltsDocumentPDF(db,admin,body,browser);assert.equal(new TextDecoder().decode(bytes).slice(0,5),'%PDF-');
   const report=await qltsDocumentPDF(db,admin,{...body,table:'nv',key:'TEST-A'},{quickAction:async(name,opts)=>{assert.match(opts.html,/TS-TEST/);return new Response('%PDF-1.7 current report');}});assert.equal(new TextDecoder().decode(report).slice(0,5),'%PDF-');
   await assert.rejects(qltsDocumentPDF(db,admin,body,{quickAction:async()=>new Response('not a PDF')}),e=>e.status===502);

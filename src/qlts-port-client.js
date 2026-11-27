@@ -31,4 +31,16 @@ ACT.cdGuiThu=function(el){var done=dangXuLy(el,'Đang xử lý');api('guiThuNhac
 // Departments remain a shared QLNS master, including on the original catalog screen.
 var portCatalogAfter=VIEW['danh-muc'].sau;
 VIEW['danh-muc'].sau=function(){if(portCatalogAfter)portCatalogAfter();$$('[data-k="phongBan"],input[data-dm="phongBan"]').forEach(function(e){e.disabled=true;e.title='Dùng danh mục Phòng ban QLNS';});};
+// Reuse the backend eligibility projection and the existing confirmation dialog.
+DUOC['Cấp phát']=function(a){return !!a.allocation?.allowed;};
+var portAPIBase=portAPI;
+portAPI=function(fn,args){
+ if(fn==='recordMove'&&args[0]?.loai==='Cấp phát'){
+  var p=args[0],confirm=(p.ds||[]).filter(function(ma){return S.ix.ts[ma]?.allocation?.requiresReconciliation;});
+  if(confirm.length)return hoi('Xác nhận bàn giao ban đầu','Nguồn QLTS ghi Đang sử dụng: '+confirm.map(esc).join(', ')+'. Xác nhận đã kiểm tra hiện trạng và ghi nhận bàn giao mới cho người nhận trong QLNS; không coi tài sản đang nằm trong kho.','Xác nhận bàn giao',false).then(function(ok){if(!ok)throw new Error('Đã hủy bàn giao, dữ liệu chưa thay đổi');return portAPIBase(fn,[Object.assign({},p,{reconcileCodes:confirm})]);});
+ }
+ return portAPIBase(fn,args);
+};
+var portSaveDocument=ACT.luuBBDrive;
+ACT.luuBBDrive=function(el){if(S.d.pdfReady)return portSaveDocument(el);var bb=S.bbDang;if(!bb)return;chay(el,'luuPdfBienBan',[bb.kieu,bb.key,'',tenTepBB(bb)],'Đã lưu chứng từ vào kho QLNS. Dùng In / Lưu PDF để xuất tệp PDF trên máy.',function(d){nhoFile(bb,d.fileBB);moBB._dang=bb.key;moBB(moBB._kieu,moBB._ds);});};
 portStart();

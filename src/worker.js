@@ -1255,7 +1255,7 @@ async function api(req, env, url) {
     }
     if (r === 'tai-san-pdf' && req.method === 'GET')return json({ok:true,on:!!env.BROWSER?.quickAction});
     if (r === 'tai-san-pdf' && req.method === 'POST') {
-      try { const bytes=await qltsDocumentPDF(db,U,body,env.BROWSER);return new Response(bytes,{headers:{...SEC,'content-type':'application/pdf','cache-control':'no-store'}}); }
+      try { const bytes=await qltsDocumentPDF(db,U,body,env.BROWSER);return new Response(bytes,{headers:{...SEC,'content-type':body.format==='html'?'text/html; charset=utf-8':'application/pdf','cache-control':'no-store'}}); }
       catch(e){return bad(e.message,e.status||400);}
     }
     if (r === 'tai-san-nghiep-vu' && req.method === 'POST') {

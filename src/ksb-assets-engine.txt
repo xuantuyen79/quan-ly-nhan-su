@@ -7,9 +7,9 @@ function assetActionEligibility(unit, x, action, type) {
  const state=x.ksbStatus||(pending?'Chờ đối chiếu':x.giu||x.phongBan?'Đang sử dụng':({'Sử dụng tốt':'Trong kho','Hỏng cần sửa':'Hỏng','Hỏng không dùng được':'Hỏng','Mất':'Thất lạc','Thanh lý':'Đã thanh lý'})[x.tt]||x.tt);
  const held=!!(x.giu||x.phongBan),loan=(unit.ts?.ksb?.mt||[]).some(r=>r.ma===x.ma&&!r.ngayTra);
  const no=reason=>({allowed:false,reason}),yes=requiresReconciliation=>({allowed:true,requiresReconciliation:!!requiresReconciliation,reason:requiresReconciliation?'Cần xác nhận hiện trạng trước khi lưu':'Đủ điều kiện'});
- if(state==='Đã thanh lý'||x.tt==='Đã hủy')return no('Đã thanh lý / ngừng quản lý');
+ if(state==='Đã thanh lý'||x.tt==='Đã hủy'||(unit.ts?.ksb?.tl||[]).some(r=>r.ma===x.ma))return no('Đã thanh lý / ngừng quản lý');
  if(action==='recordMove'){
-  if(type==='Cấp phát')return !held&&!loan&&(pending||state==='Trong kho')?yes(pending):no('Chỉ cấp phát tài sản đang trong kho hoặc đã xác nhận sẵn sàng; chưa có người/phòng ban giữ hoặc lượt mượn mở');
+  if(type==='Cấp phát'){const repair=(unit.ts?.ksb?.bt||[]).some(r=>r.ma===x.ma&&r.ketQua!=='Hoàn thành'),last=(unit.ts?.ksb?.gd||[]).filter(r=>r.ma===x.ma).at(-1),openMove=last&&last.loai!=='Thu hồi'&&!!(last.nguoiNhan||last.phongBan),initial=pending&&['Trong kho','Đang sử dụng'].includes(x.qltsImport?.status);return !held&&!loan&&!repair&&!openMove&&(initial||state==='Trong kho')?yes(initial&&x.qltsImport?.status==='Đang sử dụng'):no('Tài sản không sẵn sàng trong kho hoặc bàn giao ban đầu: kiểm tra người giữ, giao nhận và lượt mượn còn hiệu lực');}
   if(type==='Thu hồi')return held&&!loan&&['Đang sử dụng','Hỏng','Đang sửa chữa','Chờ thanh lý'].includes(state)?yes(false):no('Không có bàn giao QLNS cần thu hồi; tài sản mượn phải dùng Nhận trả');
   if(type==='Luân chuyển')return held&&!loan&&state==='Đang sử dụng'?yes(false):no('Chỉ luân chuyển tài sản đã bàn giao QLNS và đang sử dụng');
   return no('Loại giao dịch không hợp lệ');
@@ -942,8 +942,9 @@ function importAssets(rows, opt) {
  if(['recordMove','loanOut','dispose'].includes(action))for(const ma of payload.ds||[]){
   const x=T.ds.find(x=>x.ma===ma);if(!x)continue;const decision=assetActionEligibility(unit,x,action,payload.loai);
   if(!decision.allowed)throw new Error(ma+' · '+decision.reason);
-  if(decision.requiresReconciliation){
-   if(!Array.isArray(payload.reconcileCodes)||!payload.reconcileCodes.includes(ma))throw new Error(ma+' chưa ghi nhận người sử dụng; cần đối chiếu hiện trạng và xác nhận ngay trong biểu mẫu trước khi giao dịch');
+  const initialAllocation=action==='recordMove'&&payload.loai==='Cấp phát'&&x.tt==='Chờ đối chiếu';
+  if(decision.requiresReconciliation||initialAllocation){
+   if(decision.requiresReconciliation&&(!Array.isArray(payload.reconcileCodes)||!payload.reconcileCodes.includes(ma)))throw new Error(ma+' chưa ghi nhận người sử dụng; cần đối chiếu hiện trạng và xác nhận ngay trong biểu mẫu trước khi giao dịch');
    const a=dbFind_('ts',ma);reconciledBefore[ma]=chupTruoc_(a);if(action!=='dispose')a.tinhTrang='Trong kho';
    nhatKy_('Đối chiếu trước giao dịch',ma,'Nguồn QLTS: '+(x.qltsImport?.status||'Chưa rõ')+'; xác nhận không có người giữ/giao nhận chưa hoàn tất; '+actor);
   }
