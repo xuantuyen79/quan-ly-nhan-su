@@ -1,0 +1,1 @@
+import fs from 'node:fs';const source=fs.readFileSync(new URL('../src/qlts-port-adapter.js',import.meta.url),'utf8');fs.writeFileSync(new URL('../src/qlts-port-adapter.txt',import.meta.url),source.replaceAll('export function ','function ')+'\nwindow.KSBQLTS={data:qltsSourceData,command:qltsSourceCommand};\n');

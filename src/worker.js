@@ -11,6 +11,9 @@ import { reportsAPI } from './ksb-reports.js';
 import { assetsTransactionAPI, protectedAssetUnitSave } from './ksb-assets-api.js';
 import {assetMailCron} from './ksb-assets-mail.js';
 import ASSET_ENGINE from './ksb-assets-engine.txt';
+import QLTS_PORT from './qlts-port.html';
+import {qltsDocumentPDF} from './qlts-port-pdf.js';
+import QLTS_ADAPTER from './qlts-port-adapter.txt';
 import { assetCatalogAPI } from './ksb-asset-import.js';
 import APP_SOURCE from './app.html';
 import { withTableUI } from './ksb-table-ui.js';
@@ -24,7 +27,7 @@ import { TAY_LATIN, TAY_VI } from './font-tay.js'; // 12/11: phông viết tay c
 import { OG_QL_B64, OG_NV_B64 } from './og-anh.js'; // 08/11: ảnh chia sẻ Facebook/Zalo cho bản chạy thử
 import HRM_SOURCE from './phan-mem.html'; // 08/11: Phần mềm quản lý nhân sự toàn diện bản xem trước (build/index.html chép sang khi node build.js)
 
-const HRM_HTML = withTableUI(HRM_SOURCE.replace('<head>', () => '<head><script>' + ASSET_ENGINE + '</script>'), TABLE_UI_SCRIPT);
+const HRM_HTML = withTableUI(HRM_SOURCE.replace('<head>', () => '<head><script>' + ASSET_ENGINE + QLTS_ADAPTER + '\nwindow.KSBQLTSSource=' + JSON.stringify(withTableUI(QLTS_PORT, TABLE_UI_SCRIPT)).replace(/</g,'\\u003c') + ';</script>'), TABLE_UI_SCRIPT);
 
 const VER = '1.0.2-ksb.2';  // 13/11/2026 18:30 (bản 0.8.1 phần mềm): một tài khoản chung – tài khoản có quyền quản trị dùng mật khẩu, trang /quan-tri, dữ liệu phần mềm quản trị lưu trên máy chủ, mã cài đặt lần đầu. Trước: '0.4.6';  // 13/11/2026 14:55: nhiều người có quyền duyệt đơn (ai duyệt trước thì đơn chuyển trạng thái, ghi tên người duyệt) + màn Bộ phận của tôi. Trước: '0.4.5';  // 12/11/2026 22:54: ca có yêu cầu có mặt sớm (som, som_ngay) hiện trên app. Trước: '0.4.4';  // 12/11/2026: hành trình hội nhập trên app nhân viên (đi cùng phần mềm 0.6.1)
 // trước: VER '0.4.1'  // 07/11/2026: nối Phần mềm quản lý nhân sự toàn diện (đồng bộ nhân viên, lượt chấm, đơn nghỉ, xác nhận công)
@@ -1250,8 +1253,13 @@ async function api(req, env, url) {
       try { return json(await reportsAPI(db, U, url.searchParams, isoVN(now))); }
       catch (error) { return bad(error.status ? error.message : 'Chưa đọc được dữ liệu báo cáo.', error.status || 500); }
     }
+    if (r === 'tai-san-pdf' && req.method === 'GET')return json({ok:true,on:!!env.BROWSER?.quickAction});
+    if (r === 'tai-san-pdf' && req.method === 'POST') {
+      try { const bytes=await qltsDocumentPDF(db,U,body,env.BROWSER);return new Response(bytes,{headers:{...SEC,'content-type':'application/pdf','cache-control':'no-store'}}); }
+      catch(e){return bad(e.message,e.status||400);}
+    }
     if (r === 'tai-san-nghiep-vu' && req.method === 'POST') {
-      try { const result=await assetsTransactionAPI(db,U,body,{appUrl:new URL('/quan-tri?unit='+encodeURIComponent(body.unit)+'#taisan',req.url).href,mailConfigured:!!(cfg.mail_key&&cfg.mail_from)});if(body.payload?.guiEmail||body.action==='queueTestMail')req.ctx.waitUntil(assetMailCron(db,cfg,{daily:false,unitId:body.unit}).catch(()=>{}));return json(result); } catch(e) { return bad(e.message, e.status || 400); }
+      try { const result=await assetsTransactionAPI(db,U,body,{appUrl:new URL('/quan-tri?unit='+encodeURIComponent(body.unit)+'#taisan',req.url).href,mailConfigured:!!(cfg.mail_key&&cfg.mail_from),pdfConfigured:!!env.BROWSER?.quickAction});if(body.payload?.guiEmail||body.action==='queueTestMail')req.ctx.waitUntil(assetMailCron(db,cfg,{daily:false,unitId:body.unit}).catch(()=>{}));return json(result); } catch(e) { return bad(e.message, e.status || 400); }
     }
     if (r === 'tai-san-qlts' && req.method === 'POST') {
       try { return json(await assetCatalogAPI(db, U, body)); }

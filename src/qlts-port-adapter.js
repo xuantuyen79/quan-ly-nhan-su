@@ -1,0 +1,37 @@
+// Technical projection for the unmodified KSB GAS views; this is not another store.
+export function qltsSourceData(unit,engine,{date,canWrite=false,user='',origin='',files=[],staffState}={}){
+ const T=unit.ts||{},L=T.ksb||{};
+ date||=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ 
+ const nv=(unit.data?.NV||[]).map(x=>({ma:x['Mã NV'],hoTen:x['Họ và tên'],phongBan:x['Phòng ban']||'',chucVu:x['Chức danh công việc']||x['Chức vụ']||'',email:x['Email công ty']||x['Email']||'',viTriLamViec:x['Nơi làm việc']||'',trangThai:typeof staffState==='function'?(staffState(x)==='left'?'Đã nghỉ':staffState(x)==='future'?'Chưa vào làm':'Đang làm'):'Chưa xác minh',quanLyKho:false}));
+ const months=(a,b)=>{if(!a||!b)return 0;const x=a.split('-').map(Number),y=b.split('-').map(Number);return Math.max(0,(y[0]-x[0])*12+y[1]-x[1]-(y[2]<x[2]?1:0));};
+ const days=s=>s?Math.round((Date.parse(s)-Date.parse(date))/864e5):null;
+ const ts=(T.ds||[]).filter(x=>x.loai!=='dt').map(x=>{const disposal=(L.tl||[]).filter(r=>r.ma===x.ma).sort((a,b)=>a.ngay.localeCompare(b.ngay))[0],den=disposal&&disposal.ngay<date?disposal.ngay:date,term=(Number(x.khNam)||0)*12,used=Math.min(term,months(x.ngay,den)),price=Number(x.gia)||0,kh=term?price/term*used:0;return {ma:x.ma,ten:x.ten,loai:x.nhom||'',thuongHieu:x.thuongHieu||'',model:x.model||'',serial:x.serial||'',ngayMua:x.ngay||'',nhaCungCap:x.ncc||'',nguyenGia:x.gia,thoiGianKH:x.khNam,hanBH:x.baoHanh||'',ngayBTTiep:x.baoTri||'',anh:x.anhNguon||'',ghiChu:x.ghi||'',nguoiSD:x.giu||'',phongBan:x.phongBan||'',viTri:x.viTri||'',tinhTrang:x.ksbStatus||(x.tt==='Chờ đối chiếu'?'Chưa ghi nhận người sử dụng':x.giu||x.phongBan?'Đang sử dụng':({'Sử dụng tốt':'Trong kho','Thanh lý':'Đã thanh lý','Hỏng cần sửa':'Hỏng','Mất':'Thất lạc'})[x.tt]||x.tt),taoLuc:x.qlnsCreatedAt||x.taoNguon||'',khNam:term?price/(term/12):0,khLuyKe:kh,gtcl:Math.max(0,price-kh),thangKH:used,tongThangKH:term,hetKH:!!term&&used>=term,conBH:days(x.baoHanh),conBT:days(x.baoTri),ngayTL:disposal?.ngay||''};});
+ const dm=engine.catalogs(unit);dm.phongBan=[...new Set((unit.data?.PB||[]).map(p=>p['Tên phòng ban']).concat(nv.map(n=>n.phongBan)).filter(Boolean))];
+ const perms=canWrite?['ts.sua','ts.xoa','giaonhan','muontra','baotri','thanhly','kk.ghi','kk.quanly','baocao','danhmuc']:['baocao'];
+ const result={app:{ten:'Quản lý tài sản',thuongHieu:'KSB',phienBan:'1.5.1'},homNay:date,caiDat:{tenCongTy:unit.name,diaChi:unit.info?.diaChi||'',qr:origin+'/asset-qr.svg?unit='+encodeURIComponent(unit.id)+'&ma=',baoTruocBH:30,baoTruocBT:7,nhacBanKy:true,tuLuuPdf:false,mauBB:JSON.stringify(engine.templates(unit)),...(T.ksbConfig||{}),...(T.ksbMail||{})},dm,ttList:['Đang sử dụng','Trong kho','Đang cho mượn','Đang sửa chữa','Hỏng','Thất lạc','Chờ thanh lý','Đã thanh lý'],kkKq:['Có mặt','Thiếu','Hỏng','Sai vị trí'],ts,nv,url:origin+'/quan-tri?unit='+encodeURIComponent(unit.id)+'#taisan',ssUrl:'',cheDo:'chinh-thuc',laChu:false,me:{uid:user,name:user,perms}};
+ result.issuedDocuments=structuredClone(T.ksbDocuments||{});
+ for(const k of ['gd','bt','mt','tl','kk'])result[k]=structuredClone(L[k]||[]).map(r=>{const signed=(r.documents||[]).filter(d=>!d.removedAt&&d.field==='banKy');r.banKy=signed.length?JSON.stringify(signed.map(d=>{const meta=files.find(f=>f.id===d.file)||{};return {id:d.file,ten:meta.name||'Bản ký',url:'#ksb-file='+d.file,pdf:meta.type==='application/pdf'};})):'';if(r.fileBB)r.fileBB='#ksb-file='+r.fileBB;return r;});return result;
+}
+export function qltsSourceCommand(unit,fn,args=[]){
+ const ids=['undoMove','deleteMaint','deleteLoan','undoDisposal','deleteAudit'];
+ if(ids.includes(fn))return {action:fn,payload:{id:args[0]}};
+ if(['recordMove','loanOut','saveMaint','dispose','createAudit'].includes(fn))return {action:fn,payload:args[0]};
+ if(['updateMove','updateLoan','updateMaint','updateDisposal','loanReturn'].includes(fn))return {action:fn,payload:{...args[1],id:args[0]}};
+ if(fn==='setStatus')return {action:fn,payload:{ma:args[0],tt:args[1],ghiChu:args[2]}};
+ if(fn==='setAuditResults'||fn==='applyAudit')return {action:fn,payload:args[0]};
+ if(fn==='deleteAsset')return {action:'catalogDelete',payload:{ma:args[0]}};
+ if(fn==='saveLists'){const catalogs={...args[0]};delete catalogs.phongBan;return {action:'saveCatalogs',payload:{catalogs}};}
+ if(fn==='renameListItem'){if(args[0]==='phongBan')throw new Error('Phòng ban dùng chung QLNS; chỉnh tại danh mục QLNS');return {action:'renameCatalog',payload:{kind:args[0],old:args[1],name:args[2]}};}
+ if(fn==='uploadPhoto'||fn==='deletePhoto'){const x=unit.ts?.ds?.find(x=>x.ma===args[0]);if(!x)throw new Error('Không có tài sản');return {action:'catalogSave',payload:{rows:[{...x,create:false,anhNguon:fn==='uploadPhoto'?args[1]:''}]}};}
+ if(fn==='batNhacHan')return {action:'saveMailConfig',payload:{config:{...(unit.ts?.ksbMail||{}),nhacHan:!!args[0],gioGui:+args[1]}}};
+ if(fn==='guiThuNhacHan')return {action:'queueTestMail',payload:{email:(unit.ts?.ksbMail?.emailNhan||'').split(/[,;\s]+/).filter(Boolean)[0]||''}};
+ if(fn==='saveSettings'&&!args[0]?.mauBB)return {action:'saveSourceSettings',payload:args[0]};
+ if(fn==='saveSettings'&&args[0]?.mauBB)return {action:'saveTemplates',payload:{templates:JSON.parse(args[0].mauBB)}};
+ if(fn==='importAssets')return {action:'sourceImportAssets',payload:{rows:args[0],opt:args[1]||{}}};
+ if(fn==='saveAsset'&&args[0]?.loTaiSan)return {action:'sourceImportAssets',payload:{rows:args[0].loTaiSan,opt:{chiThemMoi:true,anhLo:args[0].anhLo}}};
+ if(fn==='saveAsset'||fn==='importAssets'){
+  const p=args[0],list=fn==='importAssets'?p.filter(a=>args[1]?.trung==='cap-nhat'||!(unit.ts?.ds||[]).some(x=>x.ma===a.ma)):p.loTaiSan||[p],create=fn==='importAssets'?true:!!args[1];return {action:list.length?'catalogSave':null,skipped:fn==='importAssets'?p.length-list.length:0,payload:{rows:list.map(a=>{const x=(unit.ts?.ds||[]).find(x=>x.ma===a.ma)||{};return {id:x.id,create:fn==='importAssets'?!x.id:create,loai:'vl',ma:a.ma,ten:a.ten,nhom:a.loai,thuongHieu:a.thuongHieu,model:a.model,serial:a.serial,ngay:a.ngayMua,ncc:a.nhaCungCap,gia:a.nguyenGia,khNam:a.thoiGianKH,baoHanh:a.hanBH,baoTri:a.ngayBTTiep,anhNguon:p.anhLo||a.anh,ghi:a.ghiChu,viTri:a.viTri};})}};
+ }
+ throw new Error('Kết nối QLNS cho thao tác '+fn+' chưa hoàn tất');
+}

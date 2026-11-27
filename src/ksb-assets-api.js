@@ -1,17 +1,21 @@
 import {catalogSnapshot,decodeUnit,writeAtomic,canonical,digest} from './ksb-asset-import.js';
 import {runAssetAction} from './ksb-assets-engine.js';
 function fail(msg,status=409){throw Object.assign(new Error(msg),{status});}
-export async function assetsTransactionAPI(db,user,body,context={}){
+export async function authorizeAssetWriter(db,user,unitId){
  if(!user)fail('Chưa đăng nhập',401);
- if(!/^[A-Za-z0-9._-]{1,80}$/.test(body.unit||''))fail('Đơn vị không hợp lệ',400);
- if(!/^[A-Za-z0-9._-]{12,100}$/.test(body.requestId||''))fail('Thiếu mã giao dịch',400);
+ if(!/^[A-Za-z0-9._-]{1,80}$/.test(unitId||''))fail('Đơn vị không hợp lệ',400);
  if(!user.sys){
   const m=await db.prepare("SELECT * FROM qt_kv WHERE k='settings'").first();if(!m)fail('Không có quyền tài sản',403);
   const chunks=await db.prepare("SELECT v FROM qt_part WHERE k='settings' ORDER BY i").all();
   const settings=await decodeUnit(chunks.results.map(x=>x.v).join(''),m.z),pq=settings.pq;
   const person=pq?.users?.find(x=>x.nv===user.ma&&!x.off),role=pq?.roles?.find(x=>x.id===person?.role);
-  if(!pq?.on||!person||!(role?.sys||role?.q?.taisan==='s')||person.pb?.length||person.dv&&person.dv!=='all'&&!(Array.isArray(person.dv)?person.dv.some(d=>(typeof d==='string'?d:d?.id)===body.unit):person.dv===body.unit))fail('Không có quyền sửa tài sản trong đơn vị này',403);
+  if(!pq?.on||!person||!(role?.sys||role?.q?.taisan==='s')||person.pb?.length||person.dv&&person.dv!=='all'&&!(Array.isArray(person.dv)?person.dv.some(d=>(typeof d==='string'?d:d?.id)===unitId):person.dv===unitId))fail('Không có quyền sửa tài sản trong đơn vị này',403);
  }
+}
+export async function assetsTransactionAPI(db,user,body,context={}){
+ await authorizeAssetWriter(db,user,body.unit);
+ if(!/^[A-Za-z0-9._-]{12,100}$/.test(body.requestId||''))fail('Thiếu mã giao dịch',400);
+ if(body.action==='saveSourceSettings'&&body.payload?.tuLuuPdf&&context.pdfConfigured===false)fail('Chưa cấu hình bộ sinh PDF máy chủ Cloudflare',400);
  if(body.action==='queueTestMail'&&context.mailConfigured===false)fail('Chưa thiết lập email QLNS. Vào Cài đặt → Gửi email tự động.',400);
  const snapshot=await catalogSnapshot(db),entry=snapshot.entries.find(x=>x.meta.k==='unit:'+body.unit);
  if(!entry)fail('Không tìm thấy công ty',404);
@@ -25,6 +29,9 @@ export async function assetsTransactionAPI(db,user,body,context={}){
   const record=await db.prepare('SELECT meta FROM qt_kv WHERE k=?').bind('kho:'+file).first();let meta;try{meta=JSON.parse(record?.meta||'null');}catch{}
   if(!meta||meta.u!==body.unit||meta.kho!=='ts'||meta.ref!==body.payload.key)fail('Tệp chưa được lưu đúng đơn vị và biên bản',400);
  }
+ const images=body.action==='catalogSave'?(body.payload?.rows||[]).map(r=>r.anhNguon):body.action==='sourceImportAssets'?[...(body.payload?.rows||[]).map(r=>r.anh),body.payload?.opt?.anhLo]:[];
+ for(const image of images)if(String(image||'').startsWith('kho:')){const file=String(image).slice(4);if(!/^f[A-Za-z0-9._-]{6,100}$/.test(file))fail('Ảnh không hợp lệ',400);const record=await db.prepare('SELECT meta FROM qt_kv WHERE k=?').bind('kho:'+file).first();let meta;try{meta=JSON.parse(record?.meta||'null');}catch{}if(!meta||meta.u!==body.unit||meta.kho!=='ts'||meta.ref!=='asset-photo')fail('Ảnh không thuộc kho tài sản của đơn vị',400);}
+ if(body.action==='sourceImportAssets')for(const row of body.payload?.rows||[]){if(snapshot.entries.some(e=>e.meta.k!==entry.meta.k&&(e.unit.ts?.ds||[]).some(x=>x.ma===row.ma)))fail('Mã tài sản '+row.ma+' đã thuộc đơn vị khác',409);}
  if(body.action==='catalogSave')for(const v of body.payload?.rows||[]){const matches=snapshot.entries.flatMap(e=>(e.unit.ts?.ds||[]).filter(x=>x.ma===v.ma||v.id&&x.id===v.id).map(x=>({key:e.meta.k,x})));const creating=v.create===undefined?!!body.payload.create:!!v.create;if(creating&&matches.length||!creating&&(matches.length!==1||matches[0].key!==entry.meta.k))fail('Mã tài sản trùng hoặc không thuộc đúng đơn vị',409);}
  const {unit,result}=runAssetAction(entry.unit,body.action,body.action==='recordMove'?{...body.payload,appUrl:context.appUrl||''}:body.payload,user.ten);
  (unit.ts.ksb.requests||=[]).push({id:body.requestId,result,hash:requestHash}); // Never drop used operation IDs: retries cannot repeat a transaction.

@@ -1,0 +1,5 @@
+{
+  "sha256": "ed908339697fdec51559e906e7d32acc0b37442d55a903549c62a041d9c3e842",
+  "source": "QLTS 2/index.html",
+  "adapter": "qlts-port-client.js"
+}

@@ -1,5 +1,24 @@
 // KSB: business functions ported from the customized QLTS 2/Code.gs.
 // Storage/auth adapters below replace Sheets/Apps Script; business functions retain source conditions.
+// Same decision helper drives the picker and the Worker; source custody always wins over legacy labels.
+export function assetActionEligibility(unit, x, action, type) {
+ if(!x||x.loai==='dt')return {allowed:false,reason:'Không phải tài sản vật lý'};
+ const pending=x.tt==='Chờ đối chiếu'&&(!x.ksbStatus||x.ksbStatus==='Chờ đối chiếu');
+ const state=x.ksbStatus||(pending?'Chờ đối chiếu':x.giu||x.phongBan?'Đang sử dụng':({'Sử dụng tốt':'Trong kho','Hỏng cần sửa':'Hỏng','Hỏng không dùng được':'Hỏng','Mất':'Thất lạc','Thanh lý':'Đã thanh lý'})[x.tt]||x.tt);
+ const held=!!(x.giu||x.phongBan),loan=(unit.ts?.ksb?.mt||[]).some(r=>r.ma===x.ma&&!r.ngayTra);
+ const no=reason=>({allowed:false,reason}),yes=requiresReconciliation=>({allowed:true,requiresReconciliation:!!requiresReconciliation,reason:requiresReconciliation?'Cần xác nhận hiện trạng trước khi lưu':'Đủ điều kiện'});
+ if(state==='Đã thanh lý'||x.tt==='Đã hủy')return no('Đã thanh lý / ngừng quản lý');
+ if(action==='recordMove'){
+  if(type==='Cấp phát')return !held&&!loan&&(pending||state==='Trong kho')?yes(pending):no('Chỉ cấp phát tài sản đang trong kho hoặc đã xác nhận sẵn sàng; chưa có người/phòng ban giữ hoặc lượt mượn mở');
+  if(type==='Thu hồi')return held&&!loan&&['Đang sử dụng','Hỏng','Đang sửa chữa','Chờ thanh lý'].includes(state)?yes(false):no('Không có bàn giao QLNS cần thu hồi; tài sản mượn phải dùng Nhận trả');
+  if(type==='Luân chuyển')return held&&!loan&&state==='Đang sử dụng'?yes(false):no('Chỉ luân chuyển tài sản đã bàn giao QLNS và đang sử dụng');
+  return no('Loại giao dịch không hợp lệ');
+ }
+ if(action==='loanOut')return !held&&!loan&&(pending||state==='Trong kho')?yes(pending):no('Tài sản chưa sẵn sàng cho mượn');
+ if(action==='dispose')return !held&&!loan&&state!=='Đang sửa chữa'?yes(pending):no('Cần thu hồi hoặc kết thúc giao dịch trước; còn người/phòng ban giữ, đang mượn hoặc đang sửa chữa');
+ if(action==='saveMaint'||action==='setStatus')return yes(false);
+ return yes(false);
+}
 export function runAssetAction(original, action, payload, actor = 'Quản trị viên', now = new Date().toISOString()) {
  const unit = structuredClone(original); snapshotAssetDocuments(unit, actor, now); const T = unit.ts ||= {ds:[],pg:[]}; T.ds ||= []; T.pg ||= [];
  const ledger = T.ksb ||= {gd:[],bt:[],mt:[],tl:[],kk:[],nk:[]};
@@ -789,7 +808,7 @@ function deleteAsset(ma) {
    const cu=dbFind_('ts',v.ma),create=v.create===undefined?!!p.create:!!v.create;
    if(!create&&(!cu||v.id&&T.ds.find(x=>x.ma===v.ma)?.id!==v.id))throw new Error('Không đổi mã/định danh tài sản');
    if(v.gia!=null&&(!Number.isFinite(+v.gia)||+v.gia<0||+v.gia>Number.MAX_SAFE_INTEGER))throw new Error('Nguyên giá không hợp lệ');
-   if(v.anhNguon&&!/^(https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/i.test(v.anhNguon))throw new Error('Liên kết ảnh phải là HTTP(S) hoặc ảnh hợp lệ');
+   if(v.anhNguon&&!/^(kho:f[A-Za-z0-9._-]{6,100}$|https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/i.test(v.anhNguon))throw new Error('Liên kết ảnh phải là HTTP(S) hoặc ảnh hợp lệ');
    const oldPrice=cu?.nguyenGia,oldTerm=cu?.thoiGianKH;
    saveAsset({ma:v.ma,ten:v.ten,loai:v.nhom,thuongHieu:v.thuongHieu,model:v.model,serial:v.serial,ngayMua:v.ngay,nhaCungCap:v.ncc,nguyenGia:v.gia,thoiGianKH:v.khNam,hanBH:v.baoHanh,ngayBTTiep:v.baoTri,viTri:v.viTri,ghiChu:v.ghi,anh:v.anhNguon!==undefined?v.anhNguon:cu?.anh||''},create);
    const a=dbFind_('ts',v.ma);if(!create&&oldPrice===v.gia)a.nguyenGia=oldPrice;if(!create&&oldTerm===v.khNam)a.thoiGianKH=oldTerm;
@@ -821,11 +840,115 @@ function deleteAsset(ma) {
   for(const r of found){if(r[p.field]!==p.file)throw new Error('Tài liệu vừa thay đổi; tải lại trước khi gỡ');const docs=r.documents||=[];for(const d of docs)if(d.field===p.field&&d.file===p.file){d.removedAt=now;d.removedBy=actor;}const prior=docs.filter(d=>d.field===p.field&&d.file!==p.file&&!d.removedAt).at(-1);r[p.field]=prior?.file||'';}
   nhatKy_('Gỡ tham chiếu tài liệu',p.key,p.field+' · giữ tệp và lịch sử');return {};
  }
- const allowed = {queueTestMail,renameCatalog,queueDailyMail,saveMailConfig,detachDocument,saveCatalogs,saveTemplates,catalogSave,catalogDelete,updateMove,undoMove,updateMaint,deleteMaint,updateLoan,deleteLoan,updateDisposal,undoDisposal,deleteAudit,attachDocument,recordMove,saveMaint,loanOut,loanReturn,dispose,createAudit,setAuditResults,applyAudit,setStatus};
+
+ // GAS import rules are kept verbatim below; the batch writer commits the cloned unit atomically in D1.
+ function NHAP_SUA_TS_(){return ['ten','loai','thuongHieu','model','serial','ngayMua','nhaCungCap','nguyenGia','thoiGianKH','hanBH','viTri','ngayBTTiep','anh','ghiChu'];}
+ function coGiaTri_(x){return x!==undefined&&x!==null&&String(x).trim()!=='';}
+ function themDanhMuc_(them){const c=getAssetCatalogs(unit);for(const k of Object.keys(c))if(k!=='phongBan')c[k]=[...new Set(c[k].concat(them[k]||[]))];T.ksbCatalogs=c;}
+ function ghiLoTaiSanMoi_(list,image){if(image&&!/^kho:f[A-Za-z0-9._-]{6,100}$/.test(image)&&(!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image)||image.length>8000000))throw new Error('Ảnh không hợp lệ hoặc quá lớn; chưa lưu lô.');if(image)for(const a of list)a.anh=image;dbAppend_('ts',list);return {moi:list.length,daXacMinh:list.filter(a=>dbFind_('ts',a.ma)===a).length,ma:list.map(a=>a.ma)};}
+ function sourceImportAssets(p){if(!Array.isArray(p.rows))throw new Error('Danh sách nhập không hợp lệ');const departments=new Set((unit.data?.PB||[]).map(x=>x['Tên phòng ban']).concat(nv.map(x=>x.phongBan)).filter(Boolean));for(const r of p.rows){if(r.phongBan&&!departments.has(r.phongBan))throw new Error('Phòng ban '+r.phongBan+' chưa có trong QLNS');if(r.anh&&!/^(kho:f[A-Za-z0-9._-]{6,100}$|https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/i.test(r.anh))throw new Error('Ảnh không hợp lệ');}return importAssets(p.rows,p.opt);}
+function importAssets(rows, opt) {
+  var __g = authGate_('importAssets', arguments); if (__g) return __g;
+  return api_(function () {
+    return khoaTaoTaiSan_(function () {
+      opt = opt || {};
+      var T = TT_(), ton = {}, nv = {}, gap = {}, loi = [], moi = [], sua = {}, boQua = 0, tao = bayGio_(), dm = { loai: [], phongBan: [], viTri: [], nhaCungCap: [] };
+      dbRows_('ts').forEach(function (a) { ton[a.ma] = a; });
+      dbRows_('nv').forEach(function (n) { nv[n.ma] = n; });
+      if (!rows || !rows.length) throw new Error('Không có dòng nào để nhập');
+      if (opt.chiThemMoi && (!Array.isArray(rows) || rows.length < 2 || rows.length > 50)) throw new Error('Mỗi lần thêm lô từ 2 đến 50 tài sản.');
+      if (rows.length > 5000) throw new Error('Mỗi lần nhập tối đa 5.000 tài sản');
+      rows.forEach(function (r) {
+        var dong = 'Dòng ' + (r.dong || '?') + ': ';
+        try {
+          var ma = String(r.ma || '').trim(), ten = String(r.ten || '').trim();
+          if (!ten) throw 'thiếu tên tài sản';
+          if (!ma) throw 'thiếu mã tài sản';
+          if (!/^[A-Za-z0-9._\/-]+$/.test(ma)) throw 'mã "' + ma + '" chỉ được gồm chữ không dấu, số và - _ . /';
+          if (gap[ma]) throw 'mã ' + ma + ' bị trùng trong file';
+          gap[ma] = 1;
+          if (opt.chiThemMoi) {
+            var so = ma.match(/^(.*?)(\d{5,})$/);
+            if (!so || Number(so[2]) < 1 || Number(so[2]) > 99999) throw 'mã tự sinh phải có ít nhất 5 chữ số, trong giới hạn 99999';
+            if (ton[ma]) throw 'mã ' + ma + ' đã tồn tại. Tải lại dữ liệu và kiểm tra lô mới';
+            ngayHopLe_(r.ngayMua, 'Ngày mua');
+            if (!isFinite(Number(r.nguyenGia)) || !isFinite(Number(r.thoiGianKH))) throw 'nguyên giá/khấu hao không hợp lệ';
+          }
+          var o = { ma: ma, ten: ten };
+          ['loai', 'thuongHieu', 'model', 'serial', 'nhaCungCap', 'viTri', 'anh', 'ghiChu', 'phongBan'].forEach(function (k) { o[k] = String(r[k] || '').trim(); });
+          ['ngayMua', 'hanBH', 'ngayBTTiep'].forEach(function (k) {
+            var x = r[k]; if (x === undefined || x === null || String(x).trim() === '') { o[k] = ''; return; }
+            o[k] = ngayChuoi_(x); if (!o[k]) throw 'ngày "' + x + '" không đọc được';
+          });
+          o.nguyenGia = Math.round(Number(r.nguyenGia) || 0); if (o.nguyenGia < 0) throw 'nguyên giá âm';
+          o.thoiGianKH = Number(r.thoiGianKH) || 0; if (o.thoiGianKH < 0 || o.thoiGianKH > 100) throw 'thời gian khấu hao phải từ 0 đến 100 năm';
+          if (o.hanBH && o.ngayMua && o.hanBH < o.ngayMua) throw 'hạn bảo hành trước ngày mua';
+          var nguoi = String(r.nguoiSD || '').trim();
+          if (opt.chiThemMoi) { nguoi = ''; o.phongBan = ''; }
+          if (nguoi && !nv[nguoi]) throw 'không có nhân viên mã ' + nguoi;
+          var tt = String(r.tinhTrang || '').trim();
+          if (opt.chiThemMoi) tt = T.KHO;
+          if (tt && TT_LIST_().indexOf(tt) < 0) throw 'tình trạng "' + tt + '" không hợp lệ';
+          if (tt === T.TL) throw 'tài sản đã thanh lý không nhập được, nhập rồi dùng chức năng Thanh lý';
+          if (tt === T.MUON) throw 'tình trạng Đang cho mượn không nhập được, nhập là Trong kho rồi ghi Cho mượn';
+          if (!tt) tt = nguoi || o.phongBan ? T.DUNG : T.KHO;
+          if (tt === T.KHO) { nguoi = ''; o.phongBan = ''; }
+          if (nguoi && !o.phongBan) o.phongBan = nv[nguoi].phongBan || '';
+          if (!o.viTri) o.viTri = tt === T.KHO ? 'Kho chính' : (nguoi && nv[nguoi].viTriLamViec) || '';
+          ['loai', 'phongBan', 'viTri', 'nhaCungCap'].forEach(function (k) { if (o[k]) dm[k].push(o[k]); });
+          if (ton[ma]) {
+            if (opt.trung !== 'cap-nhat') { boQua++; return; }
+            // chỉ ghi đè ô file CÓ giá trị; ô trống trong file giữ nguyên dữ liệu cũ
+            var p = {};
+            NHAP_SUA_TS_().forEach(function (k) { if (coGiaTri_(r[k])) p[k] = o[k]; });
+            if (ton[ma].tinhTrang !== T.KHO) delete p.viTri; // vị trí tài sản đang dùng đi theo cấp phát
+            sua[ma] = p;
+            return;
+          }
+          o.tinhTrang = tt; o.nguoiSD = nguoi; o.taoLuc = tao;
+          moi.push(o);
+        } catch (e) { loi.push(dong + (e && e.message ? e.message : e)); }
+      });
+      if (loi.length) throw new Error(loi.length + ' dòng lỗi, chưa nhập gì. ' + loi.slice(0, 6).join('; ') + (loi.length > 6 ? '; ...' : ''));
+      if (opt.chiThemMoi) {
+        var tongGia = moi.reduce(function (s, r) { return s + r.nguyenGia; }, 0);
+        if (!Number.isSafeInteger(tongGia)) throw new Error('Tổng nguyên giá vượt giới hạn số chính xác; chưa lưu lô.');
+        var kq = ghiLoTaiSanMoi_(moi, opt.anhLo);
+        nhatKy_('Thêm lô tài sản', kq.ma.join(', '), kq.moi + ' tài sản; đã đọc lại xác minh đủ');
+        var dl;
+        try { dl = duLieu_(); }
+        catch (e) { throw new Error('Đã xác minh lưu đủ ' + kq.moi + '/' + kq.moi + ' tài sản nhưng chưa tải lại được dữ liệu. Không lưu lại; tải lại ứng dụng để đối chiếu.'); }
+        dl.loTaiSan = kq; return dl;
+      }
+      if (moi.length) dbAppend_('ts', moi);
+      if (Object.keys(sua).length) dbUpdate_('ts', sua);
+      if (opt.themDanhMuc) themDanhMuc_(dm);
+      nhatKy_('Nhập tài sản', '', moi.length + ' mới, ' + Object.keys(sua).length + ' cập nhật, ' + boQua + ' bỏ qua');
+      var d = duLieu_(); d.ketQua = { moi: moi.length, capNhat: Object.keys(sua).length, boQua: boQua }; return d;
+    });
+  });
+}
+
+ function saveSourceSettings(p){
+  saveTemplates({templates:T.ksbTemplates||getAssetTemplates(unit),config:{baoTruocBH:+p.baoTruocBH,baoTruocBT:+p.baoTruocBT}});
+  saveMailConfig({config:{...(T.ksbMail||{}),...p,gioGui:+p.gioGui}});
+  T.ksbConfig={...(T.ksbConfig||{}),nhacBanKy:!!p.nhacBanKy,tuLuuPdf:!!p.tuLuuPdf};return {};
+ }
+ const allowed = {sourceImportAssets,saveSourceSettings,queueTestMail,renameCatalog,queueDailyMail,saveMailConfig,detachDocument,saveCatalogs,saveTemplates,catalogSave,catalogDelete,updateMove,undoMove,updateMaint,deleteMaint,updateLoan,deleteLoan,updateDisposal,undoDisposal,deleteAudit,attachDocument,recordMove,saveMaint,loanOut,loanReturn,dispose,createAudit,setAuditResults,applyAudit,setStatus};
  if(!Object.hasOwn(allowed,action)) throw new Error('Thao tác tài sản không hợp lệ');
 
  // Do not let importing a legacy source status count as a completed QLNS handover.
- if(['recordMove','loanOut'].includes(action)) for(const ma of payload.ds||[]){const x=T.ds.find(x=>x.ma===ma);if(x?.tt==='Chờ đối chiếu'&&!x.ksbStatus)throw new Error(ma+' chưa ghi nhận người sử dụng; cần đối chiếu hiện trạng trước khi giao dịch');}
+ const reconciledBefore={};
+ if(['recordMove','loanOut','dispose'].includes(action))for(const ma of payload.ds||[]){
+  const x=T.ds.find(x=>x.ma===ma);if(!x)continue;const decision=assetActionEligibility(unit,x,action,payload.loai);
+  if(!decision.allowed)throw new Error(ma+' · '+decision.reason);
+  if(decision.requiresReconciliation){
+   if(!Array.isArray(payload.reconcileCodes)||!payload.reconcileCodes.includes(ma))throw new Error(ma+' chưa ghi nhận người sử dụng; cần đối chiếu hiện trạng và xác nhận ngay trong biểu mẫu trước khi giao dịch');
+   const a=dbFind_('ts',ma);reconciledBefore[ma]=chupTruoc_(a);if(action!=='dispose')a.tinhTrang='Trong kho';
+   nhatKy_('Đối chiếu trước giao dịch',ma,'Nguồn QLTS: '+(x.qltsImport?.status||'Chưa rõ')+'; xác nhận không có người giữ/giao nhận chưa hoàn tất; '+actor);
+  }
+  if(action==='recordMove'&&payload.loai!=='Cấp phát'&&payload.nguoiGiao&&payload.nguoiGiao!==x.giu)throw new Error(ma+' người đang giữ vừa thay đổi; tải lại trước khi giao dịch');
+ }
  if(action==='recordMove'&&payload.phongBan){const departments=new Set((unit.data?.PB||[]).map(r=>r['Tên phòng ban']).concat(nv.map(n=>n.phongBan)).filter(Boolean));if(!departments.has(payload.phongBan))throw new Error('Phòng ban nhận không có trong danh mục QLNS của đơn vị');}
  if(action==='dispose') for(const ma of payload.ds||[]){const x=dbFind_('ts',ma);if(x&&(x.nguoiSD||x.phongBan||x.tinhTrang==='Đang sửa chữa'||ledger.mt.some(r=>r.ma===ma&&!r.ngayTra)))throw new Error(ma+' còn giao dịch hoặc người sử dụng; kết thúc/thu hồi trước khi thanh lý');}
  const before=Object.fromEntries(Object.entries(ledger).map(([k,v])=>[k,v.length]));
@@ -833,12 +956,13 @@ function deleteAsset(ma) {
  const oneId=['undoMove','deleteMaint','deleteLoan','undoDisposal','deleteAudit'];
  const result = action==='setStatus'?setStatus(payload.ma,payload.tt,payload.ghiChu):twoArg.includes(action)?allowed[action](payload.id||payload.key,payload):oneId.includes(action)?allowed[action](payload.id||payload.key||payload.dot):allowed[action](payload);
 
+ for(const k of ['gd','mt','tl'])for(const r of ledger[k].slice(before[k]))if(reconciledBefore[r.ma]){if(k!=='mt')r.truoc=reconciledBefore[r.ma];r.sourceReconciliation={sourceStatus:T.ds.find(x=>x.ma===r.ma)?.qltsImport?.status||'',actor,at:now};}
  if(action==='recordMove'&&payload.guiEmail){result.queuedEmail=(ledger.mail||[]).length-(before.mail||0);result.daGuiEmail=0;}
  if(action==='catalogDelete')T.ds=T.ds.filter(x=>x.loai==='dt'||assets.some(a=>a.ma===x.ma));
- for(const a of assets){let x=T.ds.find(x=>x.ma===a.ma);if(!x){x={id:a._qlns?.id||'ts-'+crypto.randomUUID(),ma:a.ma,ten:a.ten,loai:'vl',legalOwner:'',giu:'',giuTu:'',phongBan:'',ls:[],anh:[],qlnsCreatedAt:now};T.ds.push(x);}if(action==='catalogSave'&&a._qlns){Object.assign(x,{ten:a.ten,nhom:a.loai,thuongHieu:a.thuongHieu||'',model:a.model||'',serial:a.serial||'',ngay:a.ngayMua||'',ncc:a.nhaCungCap||'',gia:a.nguyenGia,khNam:a.thoiGianKH,baoHanh:a.hanBH||'',ghi:a.ghiChu||'',ttGhi:a._qlns.ttGhi||'',anhNguon:a.anh||''});if(Array.isArray(a._qlns.anh))x.anh=a._qlns.anh;if(a._qlns.pct!==undefined)x.pct=a._qlns.pct;if(a.loai&&!(T.nhom||=[]).includes(a.loai))T.nhom.push(a.loai);}
+ for(const a of assets){let x=T.ds.find(x=>x.ma===a.ma);if(!x){x={id:a._qlns?.id||'ts-'+crypto.randomUUID(),ma:a.ma,ten:a.ten,loai:'vl',legalOwner:'',giu:'',giuTu:'',phongBan:'',ls:[],anh:[],qlnsCreatedAt:now};T.ds.push(x);}if(action==='catalogSave'&&a._qlns||action==='sourceImportAssets'){a._qlns||={};Object.assign(x,{ten:a.ten,nhom:a.loai,thuongHieu:a.thuongHieu||'',model:a.model||'',serial:a.serial||'',ngay:a.ngayMua||'',ncc:a.nhaCungCap||'',gia:a.nguyenGia,khNam:a.thoiGianKH,baoHanh:a.hanBH||'',ghi:a.ghiChu||'',ttGhi:a._qlns.ttGhi||'',anhNguon:a.anh||''});if(Array.isArray(a._qlns.anh))x.anh=a._qlns.anh;if(a._qlns.pct!==undefined)x.pct=a._qlns.pct;if(a.loai&&!(T.nhom||=[]).includes(a.loai))T.nhom.push(a.loai);}
  if(action==='renameCatalog'){if(payload.kind==='loai')x.nhom=a.loai;if(payload.kind==='nhaCungCap')x.ncc=a.nhaCungCap||'';}
  const old=JSON.stringify(asset(x));if(old===JSON.stringify(a))continue;
-  x.ksbStatus=a.tinhTrang;x.giu=a.nguoiSD||'';x.phongBan=a.phongBan||'';x.viTri=a.viTri||'';x.baoTri=a.ngayBTTiep||'';
+  x.ksbStatus=a.tinhTrang;if(a.tinhTrang==='Chờ đối chiếu')delete x.ksbStatus;x.giu=a.nguoiSD||'';x.phongBan=a.phongBan||'';x.viTri=a.viTri||'';x.baoTri=a.ngayBTTiep||'';
   x.tt=({'Trong kho':'Sử dụng tốt','Đang sử dụng':'Sử dụng tốt','Hỏng':'Hỏng cần sửa','Thất lạc':'Mất','Đã thanh lý':'Thanh lý'})[a.tinhTrang]||a.tinhTrang;
   if(!x.giu)x.giuTu=''; else if(action==='recordMove'||action==='loanOut')x.giuTu=payload.ngay||payload.ngayMuon;
  }
