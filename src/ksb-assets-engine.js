@@ -368,13 +368,14 @@ function soBienBan_(loai, ngay, daCap) {
     // Đọc cả kiểu cũ BBCP[-/]YYYY[-/]NNN để tránh cấp lại cùng số thứ tự.
     preEsc = loai === 'Cấp phát' ? '(?:BBBG|BBCP)' : pre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
     re = new RegExp('^' + preEsc + '[-/]' + nam + '[-/](\\d+)$'),
+    reNew = new RegExp('^(\\d+)/' + nam + '/' + preEsc + '$'),
     max = 0;
   dbRows_(bang).concat((ledger.voided||[]).filter(v=>v.table===bang).map(v=>v.record)).map(function (r) { return r.bienBan; }).concat(Object.keys(daCap || {})).forEach(function (b) {
-    var x = String(b || '').match(re); if (x) max = Math.max(max, Number(x[1]));
+    var x = String(b || '').match(re) || String(b || '').match(reNew); if (x) max = Math.max(max, Number(x[1]));
     // Tương thích số kiểm kê cũ không có dấu: BBKK2026002.
     if (loai === 'Kiểm kê') { var cu = String(b || '').match(/^BBKK(\d{4})(\d+)$/); if (cu && cu[1] === nam) max = Math.max(max, Number(cu[2])); }
   });
-  var so = pre + '/' + nam + '/' + String(max + 1).padStart(3,'0');
+  var so = String(max + 1).padStart(3,'0') + '/' + nam + '/' + pre;
   // BEGIN KSB_BB_DIAG_20261021_V1 generated
   try { bbDiag_('soBienBan.return', { max: max, number: bbDiagSo_(so) }); } catch (ignored) {}
   // END KSB_BB_DIAG_20261021_V1 generated
@@ -818,7 +819,7 @@ function deleteAsset(ma) {
  function catalogDelete(p){const x=T.ds.find(x=>x.ma===p.ma);if(!x)throw new Error('Không có tài sản');if(x.giu||x.ls?.length||T.pg.some(d=>(d.ds||[]).some(r=>r.id===x.id||r.ma===x.ma)))throw new Error('Tài sản đã có lịch sử, không được xóa');deleteAsset(p.ma);return {};}
  function saveTemplates(p){
   const value=p.templates;if(!value||typeof value!=='object'||Array.isArray(value)||JSON.stringify(value).length>49000)throw new Error('Mẫu biên bản không hợp lệ hoặc quá 49.000 ký tự');
-  const m=structuredClone(value),meta=renderAssetDocument(unit,'templateMeta',null);for(const [kind,t] of Object.entries(m)){if(kind==='chung')continue;if(!t||typeof t!=='object'||Array.isArray(t))throw new Error('Cấu hình mẫu '+kind+' không hợp lệ');if(t.cot!==undefined&&(!Array.isArray(t.cot)||t.cot.length<2||new Set(t.cot).size!==t.cot.length||t.cot.some(k=>!(meta.columns[kind]||[]).some(c=>c[0]===k))))throw new Error('Mẫu '+kind+' cần ít nhất hai cột hợp lệ, không trùng');}m['Cấp phát']||={};m['Cấp phát'].kyHieu='BBBG';m['Cấp phát'].tieuDe='BIÊN BẢN BÀN GIAO TÀI SẢN';m['Kiểm kê']||={};m['Kiểm kê'].kyHieu='BBKK';
+  const m=structuredClone(value),meta=renderAssetDocument(unit,'templateMeta',null);for(const [kind,t] of Object.entries(m)){if(kind==='chung')continue;if(!t||typeof t!=='object'||Array.isArray(t))throw new Error('Cấu hình mẫu '+kind+' không hợp lệ');if(t.cot!==undefined&&(!Array.isArray(t.cot)||t.cot.length<2||new Set(t.cot).size!==t.cot.length||t.cot.some(k=>!(meta.columns[kind]||[]).some(c=>c[0]===k))))throw new Error('Mẫu '+kind+' cần ít nhất hai cột hợp lệ, không trùng');}m['Cấp phát']||={};m['Cấp phát'].kyHieu='BBBG';m['Cấp phát'].tieuDe='BIÊN BẢN BÀN GIAO TÀI SẢN';m['Kiểm kê']||={};m['Kiểm kê'].kyHieu='BBKK';m.chung||={};m.chung.quocHieu=false;
   T.ksbTemplates=m;for(const k of ['baoTruocBH','baoTruocBT']){const n=p.config?.[k];if(n!==undefined){if(!Number.isFinite(n)||n<0||n>365)throw new Error('Ngưỡng nhắc hạn từ 0 đến 365 ngày');(T.ksbConfig||={})[k]=n;}}
   nhatKy_('Sửa mẫu biên bản KSB','','');return {};
  }
@@ -1025,7 +1026,7 @@ var CHO_CHEN = {
 function choChen(k) { return CHO_CHUNG.concat(CHO_CHEN[laGD(k) ? 'gd' : k] || []); }
 var KET_2BAN = 'Biên bản được lập thành 02 bản có giá trị như nhau, mỗi bên giữ 01 bản.';
 var MAU_BB_MAC_DINH = {
-  chung: { quocHieu: true, logo: '', font: 'Times New Roman', coChu: '13', noiLap: '' },
+  chung: { quocHieu: false, logo: '', font: 'Times New Roman', coChu: '13', noiLap: '' },
   'Cấp phát': { tieuDe: 'BIÊN BẢN BÀN GIAO TÀI SẢN', kyHieu: 'BBBG', nhanGiao: 'BÊN GIAO', nhanNhan: 'BÊN NHẬN',
     moDau: 'Hôm nay, {ngayChu}, tại {congTy}, chúng tôi gồm:', truocBang: 'Hai bên cùng tiến hành bàn giao {soLuong} tài sản dưới đây:',
     cot: ['stt', 'ma', 'ten', 'serial', 'tinhTrang', 'ghiChu'],
@@ -1079,6 +1080,7 @@ function layMauBB() {
   m['Cấp phát'].kyHieu = 'BBBG';
   m['Cấp phát'].tieuDe = 'BIÊN BẢN BÀN GIAO TÀI SẢN';
   m['Kiểm kê'].kyHieu = 'BBKK';
+  m.chung.quocHieu = false;
   return m;
 }
 function nvCo(ma) { return ma ? S.ix.nv[ma] || null : null; }
@@ -1152,11 +1154,7 @@ function htmlBB(bb, mau, pdf) {
     soBB: bb.so || '', soLuong: String(bb.soLuong || bb.ts.length) };
   Object.keys(bb.gt || {}).forEach(function (k) { gt[k] = bb.gt[k]; });
   // Bố cục riêng khi có logo, không quốc hiệu; chỉ đảo số chuẩn để trình bày, không sửa bb.so.
-  var dauLogo = !!C.logo && !C.quocHieu, soIn = bb.so || '';
-  if (dauLogo) {
-    var soChuan = String(soIn).match(/^(BBBG|BBTH|BBLC|BBBT|BBTL|BBKK)\/(\d{4})\/(\d{3,})$/);
-    if (soChuan) soIn = soChuan[3] + '/' + soChuan[2] + '/' + soChuan[1];
-  }
+  var dauLogo = true, soIn = bb.so || '';
   // thông tin trống thì để dòng chấm cho viết tay
   function thay(t) { return esc(t || '').replace(/\{(\w+)\}/g, function (x, k) { return k in gt ? (gt[k] === '' ? '..........' : esc(gt[k])) : x; }).replace(/\n/g, '<br>'); }
   function ben(b) {
@@ -1191,7 +1189,7 @@ function htmlBB(bb, mau, pdf) {
     'td.cty{width:46%;font-weight:bold;text-transform:uppercase;font-size:.88em}table.lg{border-collapse:collapse;margin:0 auto}td.lg-a{width:1%;vertical-align:middle!important;padding-right:10px!important}td.lg-a img{max-height:54px;max-width:96px;display:block}td.lg-c{vertical-align:middle!important}.so{font-weight:normal;text-transform:none;margin-top:4px}.dc{font-weight:normal;text-transform:none;font-size:.92em;margin-top:2px}' +
     'td.qh{font-weight:bold;font-size:.88em}.dl{font-size:1.08em;text-decoration:underline}' +
     '.ngay-lap{text-align:right;font-style:italic;margin-top:10px}' +
-    (dauLogo ? '.dau-logo{margin-bottom:12px}.dau-logo img{display:block;max-width:140px;max-height:72px;width:auto;height:auto}table.dau-thong-tin{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 18px}table.dau-thong-tin td{padding:0;vertical-align:top}table.dau-thong-tin .so-in{width:40%;padding-right:12px;text-align:left;overflow-wrap:break-word}table.dau-thong-tin .ngay-in{text-align:right;font-style:italic;overflow-wrap:break-word}' : '') +
+    (dauLogo ? '.dau-logo{display:flex;align-items:center;gap:16px;margin-bottom:12px}.dau-logo img{display:block;max-width:140px;max-height:72px;width:auto;height:auto}table.dau-thong-tin{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 18px}table.dau-thong-tin td{padding:0;vertical-align:top}table.dau-thong-tin .so-in{width:40%;padding-right:12px;text-align:left;overflow-wrap:break-word}table.dau-thong-tin .ngay-in{text-align:right;font-style:italic;overflow-wrap:break-word}' : '') +
     'h1{text-align:center;font-size:1.22em;margin:18px 0 12px;text-transform:uppercase}' +
     'p{margin:6px 0}p.ben{margin:6px 0 2px}.thut{display:inline-block;margin-left:22px;min-width:220px}' +
     'table.ds{width:100%;border-collapse:collapse;margin:8px 0 10px;font-size:.92em}table.ds th,table.ds td{border:1px solid #000;padding:4px 6px;vertical-align:top}' +
@@ -1200,7 +1198,7 @@ function htmlBB(bb, mau, pdf) {
     '.hep{width:34px}.giua{text-align:center}.phai{text-align:right;white-space:nowrap}.nw{white-space:nowrap}' +
     'table.ky{margin-top:20px;page-break-inside:avoid}table.ky b{display:block}table.ky i{display:block;font-size:.85em}table.ky .ten{padding-top:72px;font-weight:bold}' +
     '</style></head><body><div class="trang">' +
-    (dauLogo ? '<div class="dau-logo"><img src="' + esc(C.logo) + '" alt=""></div>' +
+    (dauLogo ? '<div class="dau-logo">' + (C.logo ? '<img src="' + esc(C.logo) + '" alt="">' : '') + '<div class="cty">' + esc(cd.tenCongTy || '') + '</div></div>' +
       '<table class="dau-thong-tin"><tr><td class="so-in">' + (soIn ? 'Số: ' + esc(soIn) : '') + '</td><td class="ngay-in">' +
       (diaDanhBB(C, cd) ? esc(diaDanhBB(C, cd)) + ', ' : '') + gt.ngayChu + '</td></tr></table>' :
     '<table class="dau"><tr><td class="cty">' + (C.logo ? '<table class="lg"><tr><td class="lg-a"><img src="' + esc(C.logo) + '" alt=""></td><td class="lg-c">' : '') + // logo nằm bên trái tên công ty, không chiếm thêm dòng
@@ -1219,7 +1217,7 @@ function htmlBB(bb, mau, pdf) {
 }
 function banKyCua(rows) { return rows.map(function (r) { return r.banKy; }).filter(Boolean)[0] || ''; }
 function bbGia(kieu, mau) {
-  var M = (mau || layMauBB())[kieu] || {}, h = hn(), nam = h.slice(0, 4), so = (M.kyHieu || 'BB') + '/' + nam + '/001';
+  var M = (mau || layMauBB())[kieu] || {}, h = hn(), nam = h.slice(0, 4), so = '001/' + nam + '/' + (M.kyHieu || 'BB');
   var A = { hoTen: 'Nguyễn Văn An', chucVu: 'Nhân viên kinh doanh', phongBan: 'Phòng Kinh doanh' },
     B = { hoTen: 'Trần Thị Bình', chucVu: 'Nhân viên hành chính', phongBan: 'Phòng Hành chính' },
     C = { hoTen: 'Lê Minh Châu', chucVu: 'Giám đốc', phongBan: 'Ban Giám đốc' };
@@ -1246,7 +1244,7 @@ function bbGia(kieu, mau) {
     bb.ts = x2.map(function (a, i) { return { ma: a.ma, ten: a.ten, ngayMua: muaLuc, nguyenGia: a.nguyenGia, khLuyKe: a.nguyenGia - a.gtcl, gtcl: a.gtcl, hinhThuc: 'Bán lại', giaTriThuHoi: thu[i], laiLo: thu[i] - a.gtcl, ghiChu: '' }; });
   } else if (kieu === 'Kiểm kê') {
     var kq = [['Có mặt', '', ''], ['Hỏng', '', 'Màn hình sọc'], ['Sai vị trí', 'Phòng họp lớn', '']];
-    bb.key = 'KK-' + h.replace(/-/g, ''); bb.so = 'BBKK/' + nam + '/001'; bb.soLuong = ds.length;
+    bb.key = 'KK-' + h.replace(/-/g, ''); bb.so = '001/' + nam + '/BBKK'; bb.soLuong = ds.length;
     bb.gt = { dot: bb.key, nguoiKiem: B.hoTen, phamVi: 'Phòng Kinh doanh', coMat: '1', thieu: '0', hong: '1', saiViTri: '1', chuaKiem: '0' };
     bb.kyTen = [B.hoTen, '', ''];
     bb.ts = ds.map(function (a, i) { return { ma: a.ma, ten: a.ten, viTriSo: 'Trụ sở chính - Tầng 3', nguoiSo: A.hoTen, ketQua: kq[i][0], viTriTT: kq[i][1], ghiChu: kq[i][2] }; })
