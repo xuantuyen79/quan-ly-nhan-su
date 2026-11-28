@@ -10,3 +10,14 @@ test('all six number types continue legacy counters; issued numbers/HTML stay un
 });
 test('mixed reversed, legacy alias, cancelled and four-digit counters are never recycled',()=>{let u=base();u.ts.ksb.voided=[{table:'gd',record:{bienBan:'BBCP-2026-030'}},{table:'gd',record:{bienBan:'025/2026/BBBG'}},{table:'gd',record:{bienBan:'BBBG/2025/999'}}];u=step(u,'recordMove',{loai:'Cấp phát',ds:['DEV-F1'],ngay:day,nguoiNhan:'A'});assert.equal(u.ts.ksb.gd.at(-1).bienBan,'031/2026/BBBG');u=step(u,'undoMove',{id:'031/2026/BBBG'});u=step(u,'recordMove',{loai:'Cấp phát',ds:['DEV-F1'],ngay:day,nguoiNhan:'B'});assert.equal(u.ts.ksb.gd.at(-1).bienBan,'032/2026/BBBG');u.ts.ksb.voided.push({table:'gd',record:{bienBan:'999/2026/BBBG'}});u=step(u,'recordMove',{loai:'Cấp phát',ds:['DEV-F2'],ngay:day,nguoiNhan:'A'});assert.equal(u.ts.ksb.gd.at(-1).bienBan,'1000/2026/BBBG');});
 test('all seven current templates use configured left logo/company, no national heading; templates cannot alter issued HTML',()=>{let u=base();const types=['Cấp phát','Thu hồi','Luân chuyển','Bảo trì','Thanh lý','Kiểm kê','Nhân viên'];assert.equal(getAssetTemplates(u).chung.quocHieu,false);for(const type of types){const html=doc(u,'preview',type);assert.match(html,/class="dau-logo"/);assert(html.includes(logo));assert.match(html,/KSB DEV/);assert.doesNotMatch(html,/CỘNG HOÀ|Độc lập - Tự do - Hạnh phúc/);}u=step(u,'recordMove',{loai:'Cấp phát',ds:['DEV-F1'],ngay:day,nguoiNhan:'A'});const issued=doc(u,'gd','001/2026/BBBG'),templates=getAssetTemplates(u);templates['Cấp phát'].dieuKhoan='NEW CLAUSE';u=step(u,'saveTemplates',{templates});assert.equal(doc(u,'gd','001/2026/BBBG'),issued);});
+test('configured QLNS logo overrides saved template logo only for new renderings',()=>{
+ let u=base();const stale='data:image/png;base64,b2xk';u.ts.ksbTemplates.chung.logo=stale;u.brand={logo};
+ const html=doc(u,'preview','Thu hồi');assert(html.includes(logo));assert(!html.includes(stale));assert.match(html,/<div class="dau-logo"><img[^>]+><\/div>/);
+ u=step(u,'recordMove',{loai:'Cấp phát',ds:['DEV-F1'],ngay:day,nguoiNhan:'A'});const frozen=doc(u,'gd','001/2026/BBBG');
+ u.brand.logo='data:image/png;base64,bmV3';assert.equal(doc(u,'gd','001/2026/BBBG'),frozen);
+});
+test('global settings logo reaches newly frozen document while prior archive stays exact',()=>{
+ const u=base();delete u.brand;u.ts.ksbTemplates.chung.logo='data:image/png;base64,b2xk';u.ts.ksbDocuments={'gd|OLD':{html:'<p>Frozen original</p>'}};
+ const next=run(u,'recordMove',{loai:'Cấp phát',ds:['DEV-F1'],ngay:day,nguoiNhan:'A'},'DEV',day+'T08:00:00Z',{logo}).unit;
+ assert(doc(next,'gd','001/2026/BBBG').includes(logo));assert.deepEqual(next.ts.ksbDocuments['gd|OLD'],u.ts.ksbDocuments['gd|OLD']);assert.deepEqual(next.brand,u.brand);
+});

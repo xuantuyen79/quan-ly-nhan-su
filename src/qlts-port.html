@@ -653,7 +653,7 @@ td.so .ibtn+.ibtn{margin-left:4px}
 }
 </style>
 
-<style>.ksb-hscroll{position:relative;z-index:7}</style></head>
+<style>.ksb-hscroll{position:relative;z-index:7}/* QLNS owns the single navigation rail; keep source IDs for its existing render hooks. */.app>.sb,.sb-nen,.tb .tb-menu{display:none!important}.app,.main{width:100%;max-width:100%;min-width:0}.pg{min-width:0;max-width:100%;box-sizing:border-box}</style></head>
 <body>
 <div id="root"></div>
 <script>
@@ -4592,7 +4592,7 @@ function htmlBB(bb, mau, pdf) {
     '.hep{width:34px}.giua{text-align:center}.phai{text-align:right;white-space:nowrap}.nw{white-space:nowrap}' +
     'table.ky{margin-top:20px;page-break-inside:avoid}table.ky b{display:block}table.ky i{display:block;font-size:.85em}table.ky .ten{padding-top:72px;font-weight:bold}' +
     '</style></head><body><div class="trang">' +
-    (dauLogo ? '<div class="dau-logo">' + (C.logo ? '<img src="' + esc(C.logo) + '" alt="">' : '') + '<div class="cty">' + esc(cd.tenCongTy || '') + '</div></div>' +
+    (dauLogo ? '<div class="dau-logo">' + (C.logo ? '<img src="' + esc(C.logo) + '" alt="">' : '') + '</div>' +
       '<table class="dau-thong-tin"><tr><td class="so-in">' + (soIn ? 'Số: ' + esc(soIn) : '') + '</td><td class="ngay-in">' +
       (diaDanhBB(C, cd) ? esc(diaDanhBB(C, cd)) + ', ' : '') + gt.ngayChu + '</td></tr></table>' :
     '<table class="dau"><tr><td class="cty">' + (C.logo ? '<table class="lg"><tr><td class="lg-a"><img src="' + esc(C.logo) + '" alt=""></td><td class="lg-c">' : '') + // logo nằm bên trái tên công ty, không chiếm thêm dòng
@@ -5043,7 +5043,7 @@ window.addEventListener('message',function(e){if(e.source!==parent||e.origin!==P
 NAV=NAV.filter(function(g){return g.n!=='Nhân sự';}).map(function(g){return {n:g.n,ds:g.ds.filter(function(x){return x[0]!=='phan-quyen';})};});
 ['themNV','suaNV','xoaNV','nhapNV'].forEach(function(k){QUYEN_ACT[k]='qlns.employee-editor';});
 var sourceLaQT=laQT;laQT=function(){return false;};
-function portStart(){veKhung();return api('bootstrap').then(function(d){setData(d);apQuyen();S.route=d.initialAsset?parseH('ts/'+encodeURIComponent(d.initialAsset)):parseH(location.hash||'tai-san');render();}).catch(function(e){$('#pg').textContent=e.message;});}
+function portStart(){veKhung();return api('bootstrap').then(function(d){setData(d);apQuyen();S.route=d.initialAsset?parseH('ts/'+encodeURIComponent(d.initialAsset)):parseH(d.initialRoute||location.hash||'tai-san');render();}).catch(function(e){$('#pg').textContent=e.message;});}
 window.addEventListener('hashchange',function(){if(S.d)go(location.hash,true);});
 // Approved integration: the original dashboard KPI and list share a screen.
 var portListView=VIEW['tai-san'].ve;

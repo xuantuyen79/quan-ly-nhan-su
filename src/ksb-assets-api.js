@@ -1,6 +1,12 @@
 import {catalogSnapshot,decodeUnit,writeAtomic,canonical,digest} from './ksb-asset-import.js';
 import {runAssetAction} from './ksb-assets-engine.js';
 function fail(msg,status=409){throw Object.assign(new Error(msg),{status});}
+export async function assetConfiguredLogo(db,unit){
+ if(unit.brand?.logo)return unit.brand.logo;
+ const m=await db.prepare("SELECT * FROM qt_kv WHERE k='settings'").first();if(!m)return '';
+ const chunks=await db.prepare("SELECT v FROM qt_part WHERE k='settings' ORDER BY i").all();
+ const settings=await decodeUnit(chunks.results.map(x=>x.v).join(''),m.z);return settings.brand?.logo||'';
+}
 export async function authorizeAssetWriter(db,user,unitId){
  if(!user)fail('Chưa đăng nhập',401);
  if(!/^[A-Za-z0-9._-]{1,80}$/.test(unitId||''))fail('Đơn vị không hợp lệ',400);
@@ -33,7 +39,7 @@ export async function assetsTransactionAPI(db,user,body,context={}){
  for(const image of images)if(String(image||'').startsWith('kho:')){const file=String(image).slice(4);if(!/^f[A-Za-z0-9._-]{6,100}$/.test(file))fail('Ảnh không hợp lệ',400);const record=await db.prepare('SELECT meta FROM qt_kv WHERE k=?').bind('kho:'+file).first();let meta;try{meta=JSON.parse(record?.meta||'null');}catch{}if(!meta||meta.u!==body.unit||meta.kho!=='ts'||meta.ref!=='asset-photo')fail('Ảnh không thuộc kho tài sản của đơn vị',400);}
  if(body.action==='sourceImportAssets')for(const row of body.payload?.rows||[]){if(snapshot.entries.some(e=>e.meta.k!==entry.meta.k&&(e.unit.ts?.ds||[]).some(x=>x.ma===row.ma)))fail('Mã tài sản '+row.ma+' đã thuộc đơn vị khác',409);}
  if(body.action==='catalogSave')for(const v of body.payload?.rows||[]){const matches=snapshot.entries.flatMap(e=>(e.unit.ts?.ds||[]).filter(x=>x.ma===v.ma||v.id&&x.id===v.id).map(x=>({key:e.meta.k,x})));const creating=v.create===undefined?!!body.payload.create:!!v.create;if(creating&&matches.length||!creating&&(matches.length!==1||matches[0].key!==entry.meta.k))fail('Mã tài sản trùng hoặc không thuộc đúng đơn vị',409);}
- const {unit,result}=runAssetAction(entry.unit,body.action,body.action==='recordMove'?{...body.payload,appUrl:context.appUrl||''}:body.payload,user.ten);
+ const {unit,result}=runAssetAction(entry.unit,body.action,body.action==='recordMove'?{...body.payload,appUrl:context.appUrl||''}:body.payload,user.ten,undefined,{logo:await assetConfiguredLogo(db,entry.unit)});
  (unit.ts.ksb.requests||=[]).push({id:body.requestId,result,hash:requestHash}); // Never drop used operation IDs: retries cannot repeat a transaction.
  const version=await writeAtomic(db,snapshot,unit,user.ten,'unit:'+body.unit);
  return {ok:true,ts:unit.ts,unitVersion:unit.ver,version,result};

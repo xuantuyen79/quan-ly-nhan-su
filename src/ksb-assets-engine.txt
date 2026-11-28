@@ -19,7 +19,7 @@ function assetActionEligibility(unit, x, action, type) {
  if(action==='saveMaint'||action==='setStatus')return yes(false);
  return yes(false);
 }
-function runAssetAction(original, action, payload, actor = 'Quản trị viên', now = new Date().toISOString()) {
+function runAssetAction(original, action, payload, actor = 'Quản trị viên', now = new Date().toISOString(), options = {}) {
  const unit = structuredClone(original); snapshotAssetDocuments(unit, actor, now); const T = unit.ts ||= {ds:[],pg:[]}; T.ds ||= []; T.pg ||= [];
  const ledger = T.ksb ||= {gd:[],bt:[],mt:[],tl:[],kk:[],nk:[]};
  for (const k of ['gd','bt','mt','tl','kk','nk']) ledger[k] ||= [];
@@ -978,7 +978,7 @@ function importAssets(rows, opt) {
  for(const [so,list] of Object.entries(groups)){const r=list[0],ma=r.loai==='Thu hồi'?r.nguoiGiao:r.nguoiNhan,person=nv.find(n=>n.ma===ma)||{};
   T.pg.push({ksbLedger:true,so,loai:r.loai==='Thu hồi'?'thu':r.loai==='Luân chuyển'?'luan':'giao',ngay:r.ngay,ma:ma||'',ten:person.hoTen||r.phongBan||'',pb:r.phongBan||'',cd:person.chucVu||'',ghi:r.ghiChu||'',nguoi:(previousProfileDocs.find(p=>p.so===so)||{}).nguoi||r._actor||actor,ds:list.map(row=>{const x=T.ds.find(x=>x.ma===row.ma)||{};return {id:x.id,ma:row.ma,ten:x.ten||row.ma,loai:x.loai,nhom:x.nhom,ghi:x.ghi||'',gia:x.gia,tt:row.tinhTrangGiao||'',ht:row.tinhTrangGiao||'',so};})});
  }
- snapshotAssetDocuments(unit,actor,now,['updateMove','updateMaint','updateDisposal','setAuditResults','applyAudit'].includes(action)?{action,payload}:null);
+ snapshotAssetDocuments(unit,actor,now,['updateMove','updateMaint','updateDisposal','setAuditResults','applyAudit'].includes(action)?{action,payload}:null,options.logo);
  T.v=(T.v||0)+1;unit.ver=(unit.ver||0)+1;
  return {unit,result};
 }
@@ -1081,6 +1081,7 @@ function layMauBB() {
   m['Cấp phát'].tieuDe = 'BIÊN BẢN BÀN GIAO TÀI SẢN';
   m['Kiểm kê'].kyHieu = 'BBKK';
   m.chung.quocHieu = false;
+  m.chung.logo = options.logo || unit.brand?.logo || m.chung.logo;
   return m;
 }
 function nvCo(ma) { return ma ? S.ix.nv[ma] || null : null; }
@@ -1198,7 +1199,7 @@ function htmlBB(bb, mau, pdf) {
     '.hep{width:34px}.giua{text-align:center}.phai{text-align:right;white-space:nowrap}.nw{white-space:nowrap}' +
     'table.ky{margin-top:20px;page-break-inside:avoid}table.ky b{display:block}table.ky i{display:block;font-size:.85em}table.ky .ten{padding-top:72px;font-weight:bold}' +
     '</style></head><body><div class="trang">' +
-    (dauLogo ? '<div class="dau-logo">' + (C.logo ? '<img src="' + esc(C.logo) + '" alt="">' : '') + '<div class="cty">' + esc(cd.tenCongTy || '') + '</div></div>' +
+    (dauLogo ? '<div class="dau-logo">' + (C.logo ? '<img src="' + esc(C.logo) + '" alt="">' : '') + '</div>' +
       '<table class="dau-thong-tin"><tr><td class="so-in">' + (soIn ? 'Số: ' + esc(soIn) : '') + '</td><td class="ngay-in">' +
       (diaDanhBB(C, cd) ? esc(diaDanhBB(C, cd)) + ', ' : '') + gt.ngayChu + '</td></tr></table>' :
     '<table class="dau"><tr><td class="cty">' + (C.logo ? '<table class="lg"><tr><td class="lg-a"><img src="' + esc(C.logo) + '" alt=""></td><td class="lg-c">' : '') + // logo nằm bên trái tên công ty, không chiếm thêm dòng
@@ -1318,7 +1319,7 @@ function getAssetCatalogs(unit){
 
 // Issued documents retain their exact HTML. An explicit correction creates a new
 // revision and keeps the prior content; changing templates or asset names does not.
-function snapshotAssetDocuments(unit, actor, at, correction=null){
+function snapshotAssetDocuments(unit, actor, at, correction=null, logo=''){
  const T=unit.ts;if(!T?.ksb)return;const docs=T.ksbDocuments||={},L=T.ksb;
  for(const kind of ['gd','bt','tl','kk']){const groups=new Map();for(const row of L[kind]||[]){const key=kind==='kk'?row.dot:row.bienBan||row.id;if(key&&!groups.has(key))groups.set(key,row);}
  for(const [key,row] of groups){const id=kind+'|'+key,prior=docs[id];let refresh=false;
@@ -1329,7 +1330,7 @@ function snapshotAssetDocuments(unit, actor, at, correction=null){
  ||action==='applyAudit'&&kind==='kk'&&p===key;}
  if(prior&&!refresh)continue;
  const view=structuredClone(unit);if(prior?.templates)view.ts.ksbTemplates=structuredClone(prior.templates);
- const html=renderAssetDocument(view,kind,key,{fresh:true});if(prior?.html===html)continue;
+ const html=renderAssetDocument(view,kind,key,{fresh:true,logo});if(prior?.html===html)continue;
  docs[id]={html,templates:prior?.templates||getAssetTemplates(unit),at,actor,versions:prior?[...(prior.versions||[]),{html:prior.html,at:prior.at,actor:prior.actor}]:[]};
  }}
 }

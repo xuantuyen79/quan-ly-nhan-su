@@ -7,7 +7,7 @@ window.addEventListener('message',function(e){if(e.source!==parent||e.origin!==P
 NAV=NAV.filter(function(g){return g.n!=='Nhân sự';}).map(function(g){return {n:g.n,ds:g.ds.filter(function(x){return x[0]!=='phan-quyen';})};});
 ['themNV','suaNV','xoaNV','nhapNV'].forEach(function(k){QUYEN_ACT[k]='qlns.employee-editor';});
 var sourceLaQT=laQT;laQT=function(){return false;};
-function portStart(){veKhung();return api('bootstrap').then(function(d){setData(d);apQuyen();S.route=d.initialAsset?parseH('ts/'+encodeURIComponent(d.initialAsset)):parseH(location.hash||'tai-san');render();}).catch(function(e){$('#pg').textContent=e.message;});}
+function portStart(){veKhung();return api('bootstrap').then(function(d){setData(d);apQuyen();S.route=d.initialAsset?parseH('ts/'+encodeURIComponent(d.initialAsset)):parseH(d.initialRoute||location.hash||'tai-san');render();}).catch(function(e){$('#pg').textContent=e.message;});}
 window.addEventListener('hashchange',function(){if(S.d)go(location.hash,true);});
 // Approved integration: the original dashboard KPI and list share a screen.
 var portListView=VIEW['tai-san'].ve;

@@ -1,4 +1,4 @@
-import {authorizeAssetWriter} from './ksb-assets-api.js';
+import {authorizeAssetWriter,assetConfiguredLogo} from './ksb-assets-api.js';
 import {catalogSnapshot} from './ksb-asset-import.js';
 import {renderAssetDocument} from './ksb-assets-engine.js';
 export async function qltsDocumentPDF(db,user,body,browser){
@@ -9,7 +9,7 @@ export async function qltsDocumentPDF(db,user,body,browser){
  if(entry.meta.ver!==body.version)throw Object.assign(new Error('Dữ liệu vừa thay đổi. Tải lại trước khi lưu PDF.'),{status:409});
  if(body.table==='nv'&&!(entry.unit.data?.NV||[]).some(n=>n['Mã NV']===body.key))throw Object.assign(new Error('Không có nhân viên trong đơn vị'),{status:404});
  const rows=entry.unit.ts?.ksb?.[body.table]||[],record=rows.find(r=>r.id===body.key),documentKey=record?(body.table==='kk'?record.dot:record.bienBan||record.id):body.key;
- const html=renderAssetDocument(entry.unit,body.table,documentKey);
+ const html=renderAssetDocument(entry.unit,body.table,documentKey,{logo:await assetConfiguredLogo(db,entry.unit)});
  if(body.format==='html')return new TextEncoder().encode(html);
  if(!browser?.quickAction)throw Object.assign(new Error('Chưa cấu hình Browser Run để sinh và lưu PDF tự động; không có dữ liệu nào bị thay đổi.'),{status:503});
  // Only server-issued HTML is rendered. Never execute submitted client HTML or a client URL.
