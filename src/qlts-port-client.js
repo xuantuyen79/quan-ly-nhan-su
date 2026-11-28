@@ -7,6 +7,9 @@ window.addEventListener('message',function(e){if(e.source!==parent||e.origin!==P
 NAV=NAV.filter(function(g){return g.n!=='Nhân sự';}).map(function(g){return {n:g.n,ds:g.ds.filter(function(x){return x[0]!=='phan-quyen';})};});
 ['themNV','suaNV','xoaNV','nhapNV'].forEach(function(k){QUYEN_ACT[k]='qlns.employee-editor';});
 var sourceLaQT=laQT;laQT=function(){return false;};
+// Route-scoped visual integration; the existing renderer, permissions and actions are unchanged.
+var portCatalogRender=render;
+render=function(){document.body.classList.toggle('qlts-qlns-catalog',!!S.route&&['tong-quan','tai-san'].indexOf(S.route.name)>=0);return portCatalogRender.apply(this,arguments);};
 function portStart(){veKhung();return api('bootstrap').then(function(d){setData(d);apQuyen();S.route=d.initialAsset?parseH('ts/'+encodeURIComponent(d.initialAsset)):parseH(d.initialRoute||location.hash||'tai-san');render();}).catch(function(e){$('#pg').textContent=e.message;});}
 window.addEventListener('hashchange',function(){if(S.d)go(location.hash,true);});
 // Approved integration: the original dashboard KPI and list share a screen.

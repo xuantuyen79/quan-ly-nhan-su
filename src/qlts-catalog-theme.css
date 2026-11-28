@@ -1,0 +1,55 @@
+/* QLNS visual language, limited to the overview/catalog acceptance scope.
+   Never injected into issued document or print-preview iframe content. */
+@media screen {
+body.qlts-qlns-catalog{
+ --bg:#F4F6EF;--card:#fff;--text:#1C2416;--ink:#1C2416;--muted:#56604B;--faint:#8D979F;
+ --line:#DEE4D3;--line-soft:#DEE4D3;--line2:#EBEFE2;--soft:#E6EFDC;--soft2:#EBEFE2;
+ --accent:#4D7A36;--field:#B9C7A6;--field-h:#4D7A36;--row-h:#EBEFE2;--r:10px;
+ --g-accent:#4D7A36;--g-accent-h:#5C8C43;--sh-accent:none;--sh-card:none;
+ font-family:"Lexend","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+ font-weight:400;background:var(--bg);color:var(--text);
+}
+.qlts-qlns-catalog .tb{background:var(--bg);backdrop-filter:none;border-bottom:0;padding:0;height:auto;min-height:48px;gap:10px;flex-wrap:wrap}
+.qlts-qlns-catalog .tb-tim{height:38px;border-radius:10px;flex-basis:360px}
+.qlts-qlns-catalog .tb-phai{gap:8px;flex-wrap:wrap}
+.qlts-qlns-catalog .pg{padding-top:18px;padding-bottom:32px}
+.qlts-qlns-catalog .ph{margin-bottom:18px;gap:12px}
+.qlts-qlns-catalog .ph h1{font-size:24px;line-height:1.3;letter-spacing:-.01em}
+.qlts-qlns-catalog .ph .sub{font-size:13px}
+.qlts-qlns-catalog .ph-act{gap:8px}
+.qlts-qlns-catalog .btn{height:38px;padding:0 14px;border-radius:10px;font-size:13.5px;gap:7px;box-shadow:none}
+.qlts-qlns-catalog .btn-s{background:#fff;border-color:var(--field)}
+.qlts-qlns-catalog .btn-p{background:var(--accent);border-color:var(--accent)}
+.qlts-qlns-catalog .btn-sm{height:32px;padding:0 10px;font-size:12.5px}
+.qlts-qlns-catalog .ibtn{border-color:var(--field);box-shadow:none}
+.qlts-qlns-catalog .card{padding:18px;border-radius:14px;box-shadow:none}
+.qlts-qlns-catalog .stat{padding:16px 18px;border-radius:14px;box-shadow:none}
+.qlts-qlns-catalog .stat-v{font-size:28px;font-weight:600;letter-spacing:-.02em}
+.qlts-qlns-catalog .stat-l{font-size:12.5px;font-weight:500}
+.qlts-qlns-catalog .stat-ic{width:38px;height:38px;border-radius:10px}
+.qlts-qlns-catalog .luoi{gap:14px}
+.qlts-qlns-catalog .tabs{margin-left:0;margin-right:0;padding-left:0;padding-right:0;max-width:100%}
+.qlts-qlns-catalog .tab{border-radius:7px;border-color:var(--field);box-shadow:none}
+.qlts-qlns-catalog .tab.on{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.qlts-qlns-catalog .dr-h{background:#fff}
+.qlts-qlns-catalog .loc{gap:8px;margin-bottom:14px}
+.qlts-qlns-catalog .o-tim{height:38px;border-radius:10px}
+.qlts-qlns-catalog .ss-chip .ss-o{min-height:38px;border-radius:10px;border-color:var(--field)}
+.qlts-qlns-catalog .bang-wrap{margin:0 -18px -18px}
+.qlts-qlns-catalog table.bang{font-size:13px}
+.qlts-qlns-catalog .bang th{background:var(--soft2);color:var(--muted);font-size:12px;padding:11px 14px}
+.qlts-qlns-catalog .bang td{padding:11px 14px}
+.qlts-qlns-catalog .pt{padding:14px 18px;font-size:12.5px}
+.qlts-qlns-catalog .pt select{border-color:var(--field);border-radius:7px}
+.qlts-qlns-catalog .md-c{border-radius:14px;box-shadow:0 18px 48px -18px #16212b52}
+.qlts-qlns-catalog .md-t{font-size:18px;font-weight:600}
+@media(max-width:640px){
+ .qlts-qlns-catalog .ph h1{font-size:21px}
+ .qlts-qlns-catalog .tb-tim{flex:1 1 100%;min-width:0}
+ .qlts-qlns-catalog .tb-phai{margin-left:0;width:100%}
+ .qlts-qlns-catalog .ph-act{width:100%}
+ .qlts-qlns-catalog .ph-act .btn{white-space:normal;height:auto;min-height:38px;padding:8px 12px}
+ .qlts-qlns-catalog .card{padding:14px}
+ .qlts-qlns-catalog .bang-wrap{margin:0 -14px -14px}
+}
+}
