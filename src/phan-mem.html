@@ -11835,12 +11835,12 @@ if (typeof module !== 'undefined') module.exports = XW;
      Công ty đã nối máy chủ: tự đồng bộ ngay khi mở phần mềm / vừa nối, ~15 giây sau mỗi thay đổi dữ liệu (tối đa 1 lần/phút),
      và 5 phút một lần khi đang mở phần mềm. Chỉ chạy với tài khoản có quyền sửa Bảng Chấm công; lỗi mạng thì tự thử lại lần sau.
      Nút "Đồng bộ ngay" vẫn giữ khi cần lấy dữ liệu tức thì. ----- */
-  var WF_BUSY = 0, WF_AUTO = { dirty: 0, err: {} };
+  var WF_BUSY = 0, WF_AUTO = { dirty: 0, err: {} }, WF_PENDING = new WeakMap();
   function wfSync(u) {
-    if (u._wfP) return u._wfP;
-    WF_BUSY++; var end = function () { WF_BUSY--; u._wfP = null; u._wfAuto = Date.now(); };
-    u._wfP = wfSync0(u).then(function (r) { if (u.wf) u.wf.atTs = Date.now(); end(); return r; }, function (er) { end(); throw er; });
-    return u._wfP;
+    if (WF_PENDING.has(u)) return WF_PENDING.get(u);
+    WF_BUSY++; var end = function () { WF_BUSY--; WF_PENDING.delete(u); u._wfAuto = Date.now(); };
+    var pending = wfSync0(u).then(function (r) { if (u.wf) u.wf.atTs = Date.now(); end(); return r; }, function (er) { end(); throw er; });
+    WF_PENDING.set(u, pending); return pending;
   }
   function wfAutoMark() { if (!WF_BUSY) WF_AUTO.dirty = WF_AUTO.dirty || Date.now(); } // gọi từ saveUnits (app.js)
   function wfAutoOk() {
@@ -11853,7 +11853,7 @@ if (typeof module !== 'undefined') module.exports = XW;
     if (!S || !S.units || !S.units.length || !wfAutoOk()) return;
     if (typeof svFirstConnect === 'function') svFirstConnect();
     var now = Date.now(), vis = document.visibilityState === 'visible', dirty = WF_AUTO.dirty && now - WF_AUTO.dirty > 15000;
-    var us = S.units.filter(function (u) { if (!wfOn(u) || u._wfP) return false; var last = u._wfAuto || 0; return first || !last || (dirty && now - last > 60000) || (vis && now - last > 300000); });
+    var us = S.units.filter(function (u) { if (!wfOn(u) || WF_PENDING.has(u)) return false; var last = u._wfAuto || 0; return first || !last || (dirty && now - last > 60000) || (vis && now - last > 300000); });
     if (!us.length) return; if (dirty) WF_AUTO.dirty = 0;
     us.reduce(function (p, u) { return p.then(function () { return wfSync(u).then(function () { delete WF_AUTO.err[u.id]; if (curPage === 'ccwifi' && !document.querySelector('.modal-bg')) render(); }, function (er) { if (!WF_AUTO.err[u.id]) toast('Chưa tự đồng bộ được với máy chủ – ' + shortUnit(u.name), 'err', er.message + ' Phần mềm tự thử lại sau ít phút.'); WF_AUTO.err[u.id] = 1; }); }); }, Promise.resolve());
   }
